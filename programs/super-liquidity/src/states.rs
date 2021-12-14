@@ -9,17 +9,14 @@ pub struct GlobalState {
     pub admin_account: Pubkey,
 }
 
-//-----------------------------------------------------
-pub struct CoinInfo {
-    pub mint: Pubkey,
-    pub min: u64,
-    pub max: u64,
-}
 
 //-----------------------------------------------------
 #[account]
-pub struct UserVault {
-    pub coins: Vec<CoinInfo>,
+pub struct UserCoinVault {
+    pub mint: Pubkey,
+    pub amount: u64,
+    pub min: u64,
+    pub max: u64,
 
     pub buy_fee: u32,
     pub sell_fee: u32,
@@ -27,6 +24,6 @@ pub struct UserVault {
     // pause operations
     pub pause: bool,
 }
-impl UserVault {}
+impl UserCoinVault {}
 
 //-----------------------------------------------------

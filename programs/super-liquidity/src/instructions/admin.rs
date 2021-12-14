@@ -35,7 +35,7 @@ pub struct InitUserVault<'info> {
     pub user_account: AccountInfo<'info>,
 
     #[account(zero)] // must be created but empty, ready to be initialized
-    pub user_vault: ProgramAccount<'info, UserVault>,
+    pub user_vault: ProgramAccount<'info, UserCoinVault>,
 
     pub system_program: AccountInfo<'info>,
 }
@@ -85,7 +85,7 @@ pub struct UpdateUserVault<'info> {
     pub admin_account: AccountInfo<'info>,
 
     #[account(mut)]
-    pub user_vault: ProgramAccount<'info, UserVault>,
+    pub user_vault: ProgramAccount<'info, UserCoinVault>,
 }
 impl<'info> UpdateUserVault<'info> {
     pub fn process(&mut self, min_fee: u32, max_fee: u32) -> ProgramResult {

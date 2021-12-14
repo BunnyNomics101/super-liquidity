@@ -1,0 +1,27 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "cargo",
+			"subcommand": "build",
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": "build",
+			"label": "Rust: cargo build - super-liquidity"
+		},
+		{
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"anchor",
+				"build"
+			],
+			"group": "build",
+			"problemMatcher": [
+				"$rustc"
+			],
+			"label": "npx anchor build"
+		},
+	]
+}

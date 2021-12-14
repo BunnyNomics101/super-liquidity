@@ -1,4 +1,4 @@
-use crate::states::UserVault;
+use crate::states::UserCoinVault;
 use anchor_lang::prelude::*;
 
 //-----------------------------------------------------
@@ -7,7 +7,7 @@ pub struct Withdraw<'info> {
     #[account(mut)]
     pub state: AccountInfo<'info>,
     #[account(mut)]
-    pub user_vault: ProgramAccount<'info, UserVault>,
+    pub user_vault: ProgramAccount<'info, UserCoinVault>,
     #[account(mut)]
     pub defi_token_mint: AccountInfo<'info>,
     #[account(mut)]
