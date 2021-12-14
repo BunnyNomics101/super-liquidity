@@ -1,0 +1,26 @@
+[package]
+name = "super-liquidity"
+version = "0.0.0"
+description = "Delphor.finance super-liquidity"
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "super_liquidity"
+
+[features]
+no-entrypoint = []
+no-idl = []
+cpi = ["no-entrypoint"]
+default = []
+anchor-debug = []
+
+[dependencies]
+solana-program = "*"
+anchor-lang = "0.19.0"
+anchor-spl = "0.19.0"
+
+# kept here even if it generates a warning
+# in case this project is moved and/or compiled on its own
+[profile.release]
+overflow-checks = true

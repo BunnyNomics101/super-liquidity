@@ -1,0 +1,17 @@
+anchor_version = "0.19.0"
+
+[programs.localnet]
+super_liquidity = "Def7dYpDD44MxCctkJBfwrzoQFAGrycYo5cpdknMgsqS"
+
+[programs.devnet]
+super_liquidity = "Def7dYpDD44MxCctkJBfwrzoQFAGrycYo5cpdknMgsqS"
+
+[registry]
+url = "https://anchor.projectserum.com"
+
+[provider]
+cluster = "localnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "bash test.sh"
