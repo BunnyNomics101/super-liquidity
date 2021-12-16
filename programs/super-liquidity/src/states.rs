@@ -1,9 +1,8 @@
 use anchor_lang::prelude::*;
-use delphor_finance::{calc::proportional, error::CommonError, Fee};
 
 //-----------------------------------------------------
 ///delphor-user-program PDA
-#[state]
+#[account]
 pub struct GlobalState {
     // Authority (admin address)
     pub admin_account: Pubkey,

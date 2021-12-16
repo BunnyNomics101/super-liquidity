@@ -1,8 +1,7 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::declare_id;
-use anchor_lang::solana_program::pubkey::Pubkey;
+// use anchor_lang::solana_program::pubkey::Pubkey;
 
-use instructions::{admin::*, deposit_sol::*, deposit_stake_account::*, liquid_unstake::*};
+use instructions::{admin::*, deposit::*, withdraw::*};
 
 ///error
 pub mod error;
@@ -36,8 +35,8 @@ pub mod super_liquidity {
     }
 
     ///create user vault
-    pub fn init_user_vault(ctx: Context<InitUserVault>) -> ProgramResult {
-        ctx.accounts.process()
+    pub fn init_user_vault(ctx: Context<InitUserVault>, min_fee: u32, max_fee: u32) -> ProgramResult {
+        ctx.accounts.process(min_fee, max_fee)
     }
 
     ///update user state

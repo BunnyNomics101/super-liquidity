@@ -1,7 +1,4 @@
-use crate::constant::*;
-use crate::error::*;
 use crate::states::*;
-use anchor_lang::anchor_spl::token::{Mint, TokenAccount, Transfer};
 use anchor_lang::prelude::*;
 
 //-----------------------------------------------------
@@ -11,8 +8,8 @@ pub struct Initialize<'info> {
     #[account(signer)]
     pub admin_account: AccountInfo<'info>,
 
-    #[account(zero)]
-    pub global_state: State<'info, GlobalState>,
+    #[account()]
+    pub global_state: Account<'info, GlobalState>,
 }
 impl<'info> Initialize<'info> {
     pub fn process(&mut self) -> ProgramResult {
@@ -26,7 +23,7 @@ impl<'info> Initialize<'info> {
 pub struct InitUserVault<'info> {
     // global state
     #[account(has_one = admin_account)]
-    pub global_state: ProgramAccount<'info, GlobalState>,
+    pub global_state: Account<'info, GlobalState>,
 
     // admin account, signer
     #[account(signer)]
@@ -35,16 +32,12 @@ pub struct InitUserVault<'info> {
     pub user_account: AccountInfo<'info>,
 
     #[account(zero)] // must be created but empty, ready to be initialized
-    pub user_vault: ProgramAccount<'info, UserCoinVault>,
+    pub user_vault: Account<'info, UserCoinVault>,
 
     pub system_program: AccountInfo<'info>,
 }
 impl<'info> InitUserVault<'info> {
     pub fn process(&mut self, buy_fee: u32, sell_fee: u32) -> ProgramResult {
-        self.user_vault.global_state = self.global_state;
-
-        self.user_vault.coins = vec![CoinInfo, 50];
-
         self.user_vault.buy_fee = buy_fee;
         self.user_vault.sell_fee = sell_fee;
         self.user_vault.pause = false;
@@ -57,7 +50,7 @@ impl<'info> InitUserVault<'info> {
 pub struct ChangeAuthority<'info> {
     // global state
     #[account(mut, has_one = admin_account)]
-    pub global_state: ProgramAccount<'info, GlobalState>,
+    pub global_state: Account<'info, GlobalState>,
 
     // current admin account (must match the one in GlobalState)
     #[account(signer)]
@@ -78,17 +71,17 @@ impl<'info> ChangeAuthority<'info> {
 pub struct UpdateUserVault<'info> {
     // global state
     #[account(has_one = admin_account)]
-    pub global_state: ProgramAccount<'info, GlobalState>,
+    pub global_state: Account<'info, GlobalState>,
 
     // admin account
     #[account(signer)]
     pub admin_account: AccountInfo<'info>,
 
     #[account(mut)]
-    pub user_vault: ProgramAccount<'info, UserCoinVault>,
+    pub user_vault: Account<'info, UserCoinVault>,
 }
 impl<'info> UpdateUserVault<'info> {
-    pub fn process(&mut self, min_fee: u32, max_fee: u32) -> ProgramResult {
+    pub fn process(&mut self, sell_fee: u32, buy_fee: u32) -> ProgramResult {
         self.user_vault.buy_fee = buy_fee;
         self.user_vault.sell_fee = sell_fee;
         Ok(())
