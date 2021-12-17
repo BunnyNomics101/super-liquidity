@@ -1,0 +1,28 @@
+{
+  "name": "super-liquidity",
+  "version": "0.1.0",
+  "description": "solana ultra-capital-efficient liquidity providing protocol",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "@project-serum/anchor-cli": "^0.19.0"
+  },
+  "scripts": {
+    "build": "npx anchor build",
+    "test": "npx anchor test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Delphor-finance/super-liquidity.git"
+  },
+  "keywords": [
+    "solana",
+    "liquidity"
+  ],
+  "author": "delphor.finance",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Delphor-finance/super-liquidity/issues"
+  },
+  "homepage": "https://github.com/Delphor-finance/super-liquidity#readme"
+}
