@@ -47,6 +47,10 @@ describe('deposit', () => {
         // Create user and program token accounts
         await mintToAccount(program.provider, usdcMint, userUsdc, amount,
                             program.provider.wallet.publicKey);
+
+        let userUsdcData = await getTokenAccount(program.provider, userUsdc);
+        assert.ok(userUsdcData.amount.eq(amount));
+
         vaultUsdc = await createTokenAccount(program.provider, usdcMint, program.programId);
     
         /*
@@ -56,13 +60,13 @@ describe('deposit', () => {
     })
 
     // TODO: Make deposits work.
-    // Current error: "Signature verification failed"
+    // Current error: "Error: 3007: The given account is owned by a different program than expected"
     xit("Deposit tokens", async() => {
         await program.rpc.deposit(amount, {
             accounts: {
                 coinVault: vaultUsdc,
                 getTokenFrom: userUsdc,
-                getTokenFromAuthority: userUsdc,
+                getTokenFromAuthority: program.provider.wallet.publicKey,
                 tokenStorePda: userData,
                 systemProgram: anchor.web3.SystemProgram.programId,
                 tokenProgram: TOKEN_PROGRAM_ID,
