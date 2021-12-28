@@ -35,8 +35,8 @@ pub mod super_liquidity {
     }
 
     ///create user vault
-    pub fn init_user_vault(ctx: Context<InitUserVault>, min_fee: u32, max_fee: u32) -> ProgramResult {
-        ctx.accounts.process(min_fee, max_fee)
+    pub fn init_user_vault(ctx: Context<InitUserVault>, bump: u8, min_fee: u32, max_fee: u32) -> ProgramResult {
+        ctx.accounts.process(bump, min_fee, max_fee)
     }
 
     ///update user state
