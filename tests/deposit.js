@@ -15,7 +15,14 @@ describe("deposit", () => {
   const program = anchor.workspace.SuperLiquidity;
 
   let programSigner;
-  let usdcMint, userUsdc, vaultUsdc, userData;
+  let usdcMint,
+    userUsdc,
+    usdcStore,
+    userData,
+    tokenStoreAuthority,
+    coinVault,
+    coinVaultBump,
+    tokenStoreAuthorityBump;
   let amount;
 
   it("Create test tokens", async () => {
@@ -25,15 +32,6 @@ describe("deposit", () => {
       program.provider.wallet.PublicKey
     );
 
-    /*
-        // program signer PDA - sign transactions for the program
-        const [_programSigner, nonce] = await anchor.web3.PublicKey.findProgramAddress(
-            [usdcMint.toBuffer()],
-            program.programId
-        )
-        programSigner = _programSigner;
-        */
-
     userUsdc = await createTokenAccount(
       program.provider,
       usdcMint,
@@ -41,14 +39,9 @@ describe("deposit", () => {
     );
 
     // Associated account PDA - store user data
-    /*
-        userData = await anchor.web3.PublicKey.findProgramAddress(
-            [userUsdc.toBase58()],
-            program.programId);
-        */
-    userData = await program.account.userCoinVault.associatedAddress(
-      program.provider.wallet.publicKey,
-      usdcMint
+    [coinVault, coinVaultBump] = await anchor.web3.PublicKey.findProgramAddress(
+      [program.provider.wallet.publicKey.toBuffer(), usdcMint.toBuffer()],
+      program.programId
     );
 
     amount = new anchor.BN(5 * 10 ** 6);
@@ -64,10 +57,16 @@ describe("deposit", () => {
     let userUsdcData = await getTokenAccount(program.provider, userUsdc);
     assert.ok(userUsdcData.amount.eq(amount));
 
-    vaultUsdc = await createTokenAccount(
+    [tokenStoreAuthority, tokenStoreAuthorityBump] =
+      await anchor.web3.PublicKey.findProgramAddress(
+        [Buffer.from("store_auth")],
+        program.programId
+      );
+
+    usdcStore = await createTokenAccount(
       program.provider,
       usdcMint,
-      program.programId
+      tokenStoreAuthority
     );
 
     /*
@@ -81,10 +80,10 @@ describe("deposit", () => {
   it("Deposit tokens", async () => {
     await program.rpc.deposit(amount, {
       accounts: {
-        coinVault: userUsdc,
+        coinVault: coinVault,
         getTokenFrom: userUsdc,
         getTokenFromAuthority: program.provider.wallet.publicKey,
-        tokenStorePda: vaultUsdc,
+        tokenStorePda: usdcStore,
         systemProgram: anchor.web3.SystemProgram.programId,
         tokenProgram: TOKEN_PROGRAM_ID,
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
