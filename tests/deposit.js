@@ -68,15 +68,9 @@ describe("deposit", () => {
       usdcMint,
       tokenStoreAuthority
     );
-
-    /*
-        msolMint = await createMint(program.provider, programSigner);
-        usermSol = await createTokenAccount(program.provider, msolMint, program.provider.wallet.publicKey);
-        */
   });
 
-  // TODO: Make deposits work.
-  // Current error: "Error: 3007: The given account is owned by a different program than expected"
+  // TODO: Initialize coinVault in the program
   it("Deposit tokens", async () => {
     await program.rpc.deposit(amount, {
       accounts: {
