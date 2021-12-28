@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "description": "solana ultra-capital-efficient liquidity providing protocol",
   "main": "index.js",
-  "dependencies": {},
+  "dependencies": {
+    "@project-serum/anchor": "^0.19.1-beta.1",
+    "@project-serum/common": "^0.0.1-beta.3"
+  },
   "devDependencies": {
     "@project-serum/anchor-cli": "^0.19.0"
   },
