@@ -31,14 +31,20 @@ describe('deposit', () => {
         programSigner = _programSigner;
         */
 
-        // TODO: Associated account PDA - store user data
+        userUsdc = await createTokenAccount(program.provider, usdcMint, program.provider.wallet.publicKey);
+
+        // Associated account PDA - store user data
+        /*
+        userData = await anchor.web3.PublicKey.findProgramAddress(
+            [userUsdc.toBase58()],
+            program.programId);
+        */
         userData = await program.account.userCoinVault.associatedAddress(
             program.provider.wallet.publicKey,
             usdcMint);
-        
+
         amount = new anchor.BN(5 * 10 ** 6)
         // Create user and program token accounts
-        userUsdc = await createTokenAccount(program.provider, usdcMint, program.provider.wallet.publicKey);
         await mintToAccount(program.provider, usdcMint, userUsdc, amount,
                             program.provider.wallet.publicKey);
         vaultUsdc = await createTokenAccount(program.provider, usdcMint, program.programId);
@@ -50,13 +56,13 @@ describe('deposit', () => {
     })
 
     // TODO: Make deposits work.
-    // Current error: "Error: 3007: The given account is owned by a different program than expected"
+    // Current error: "Signature verification failed"
     xit("Deposit tokens", async() => {
         await program.rpc.deposit(amount, {
             accounts: {
                 coinVault: vaultUsdc,
                 getTokenFrom: userUsdc,
-                getTokenFromAuthority: program.provider.wallet.publicKey,
+                getTokenFromAuthority: userUsdc,
                 tokenStorePda: userData,
                 systemProgram: anchor.web3.SystemProgram.programId,
                 tokenProgram: TOKEN_PROGRAM_ID,
