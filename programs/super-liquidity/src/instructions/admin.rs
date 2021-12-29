@@ -36,10 +36,8 @@ impl<'info> Initialize<'info> {
 #[derive(Accounts)]
 #[instruction(bump: u8)]
 pub struct InitUserVault<'info> {
-    /*
     // global state
     pub global_state: Account<'info, GlobalState>,
-    */
 
     // user account, signer
     pub user_account: Signer<'info>,
@@ -68,6 +66,7 @@ impl<'info> InitUserVault<'info> {
         self.user_vault.buy_fee = buy_fee;
         self.user_vault.sell_fee = sell_fee;
         self.user_vault.pause = false;
+        self.user_vault.mint = self.mint.key();
         Ok(())
     }
 }

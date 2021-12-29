@@ -1,6 +1,8 @@
 const anchor = require("@project-serum/anchor");
 const assert = require("assert");
 
+// TODO: Refactoring
+
 const {
   TOKEN_PROGRAM_ID,
   getTokenAccount,
@@ -22,7 +24,9 @@ describe("deposit", () => {
     tokenStoreAuthority,
     coinVault,
     coinVaultBump,
-    tokenStoreAuthorityBump;
+    tokenStoreAuthorityBump,
+    globalState, 
+    globalStateBump;
   let amount;
 
   it("Create test tokens", async () => {
@@ -70,10 +74,25 @@ describe("deposit", () => {
     );
   });
 
+  it("Initialize global state", async() => {
+    [globalState, globalStateBump] = await anchor.web3.PublicKey.findProgramAddress(
+        [program.provider.wallet.publicKey.toBuffer()],
+        program.programId
+      );
+
+    await program.rpc.initialize(globalStateBump, {
+        accounts: {
+            adminAccount: program.provider.wallet.publicKey,
+            globalState: globalState,
+            systemProgram: anchor.web3.SystemProgram.programId,
+        }
+    })
+  })
+
   it("Initialize vault", async () => {
     await program.rpc.initUserVault(coinVaultBump, 0, 0, {
       accounts: {
-//          globalState: usdcStore,
+          globalState: globalState,
           userAccount: program.provider.wallet.publicKey,
           mint: usdcMint,
           userVault: coinVault,
@@ -82,8 +101,7 @@ describe("deposit", () => {
     });
   });
 
-  // TODO: Initialize coinVault in the program
-  xit("Deposit tokens", async () => {
+  it("Deposit tokens", async () => {
     await program.rpc.deposit(amount, {
       accounts: {
         coinVault: coinVault,
@@ -95,5 +113,11 @@ describe("deposit", () => {
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
       },
     });
+
+    userUsdcData = await getTokenAccount(program.provider, userUsdc);
+    assert.ok(userUsdcData.amount.eq(new anchor.BN(0)));
+
+    programUsdcData = await getTokenAccount(program.provider, usdcStore);
+    assert.ok(programUsdcData.amount.eq(amount));
   });
 });

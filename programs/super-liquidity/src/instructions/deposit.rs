@@ -15,7 +15,7 @@ pub struct Deposit<'info> {
     #[account(signer)]
     pub get_token_from_authority: AccountInfo<'info>, // owner or delegate_authority
 
-    #[account()]
+    #[account(mut)]
     pub token_store_pda: Account<'info, TokenAccount>, // Account where the program will store the tokens
 
     pub system_program: AccountInfo<'info>,
