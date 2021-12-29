@@ -4,16 +4,29 @@ use anchor_spl::token::Mint;
 
 //-----------------------------------------------------
 #[derive(Accounts)]
+#[instruction(bump: u8)]
 pub struct Initialize<'info> {
     // admin account
     #[account(signer)]
     pub admin_account: AccountInfo<'info>,
 
-    #[account()]
+    // Global state, create PDA
+    #[account(
+        init,
+        payer = admin_account,
+        space = 8 + core::mem::size_of::<GlobalState>() + 128, // 128 bytes future expansion
+        seeds = [
+            admin_account.key().as_ref(),
+        ],
+        bump = bump,
+    )]
     pub global_state: Account<'info, GlobalState>,
+
+    pub system_program: AccountInfo<'info>,
 }
 impl<'info> Initialize<'info> {
-    pub fn process(&mut self) -> ProgramResult {
+    #[allow(unused_variables)]
+    pub fn process(&mut self, bump: u8) -> ProgramResult {
         self.global_state.admin_account = *self.admin_account.key;
         Ok(())
     }
@@ -32,7 +45,7 @@ pub struct InitUserVault<'info> {
     // for what token
     pub mint: Account<'info, Mint>,
 
-    // user vauld, create PDA
+    // user vault, create PDA
     #[account(
         init,
         payer = user_account,

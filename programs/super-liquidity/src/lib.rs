@@ -30,8 +30,8 @@ pub mod super_liquidity {
     // ---- Admin --
     // -------------
     ///create global state
-    pub fn initialize(ctx: Context<Initialize>) -> ProgramResult {
-        ctx.accounts.process()
+    pub fn initialize(ctx: Context<Initialize>, bump: u8) -> ProgramResult {
+        ctx.accounts.process(bump)
     }
 
     ///create user vault
