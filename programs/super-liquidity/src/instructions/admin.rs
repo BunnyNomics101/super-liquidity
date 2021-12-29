@@ -23,8 +23,10 @@ impl<'info> Initialize<'info> {
 #[derive(Accounts)]
 #[instruction(bump: u8)]
 pub struct InitUserVault<'info> {
+    /*
     // global state
     pub global_state: Account<'info, GlobalState>,
+    */
 
     // user account, signer
     pub user_account: Signer<'info>,

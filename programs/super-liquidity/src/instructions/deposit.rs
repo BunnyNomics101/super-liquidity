@@ -8,15 +8,15 @@ use crate::error::*;
 #[derive(Accounts)]
 pub struct Deposit<'info> {
     #[account(mut)]
-    pub coin_vault: Account<'info, UserCoinVault>,
+    pub coin_vault: Account<'info, UserCoinVault>, // User PDA according to the deposited token
 
     #[account(mut)]
-    pub get_token_from: Account<'info, TokenAccount>,
+    pub get_token_from: Account<'info, TokenAccount>, // Account where user have tokens
     #[account(signer)]
     pub get_token_from_authority: AccountInfo<'info>, // owner or delegate_authority
 
     #[account()]
-    pub token_store_pda: Account<'info, TokenAccount>,
+    pub token_store_pda: Account<'info, TokenAccount>, // Account where the program will store the tokens
 
     pub system_program: AccountInfo<'info>,
     pub token_program: AccountInfo<'info>,
