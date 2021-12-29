@@ -70,8 +70,20 @@ describe("deposit", () => {
     );
   });
 
+  it("Initialize vault", async () => {
+    await program.rpc.initUserVault(coinVaultBump, 0, 0, {
+      accounts: {
+//          globalState: usdcStore,
+          userAccount: program.provider.wallet.publicKey,
+          mint: usdcMint,
+          userVault: coinVault,
+          systemProgram: anchor.web3.SystemProgram.programId, 
+      },
+    });
+  });
+
   // TODO: Initialize coinVault in the program
-  it("Deposit tokens", async () => {
+  xit("Deposit tokens", async () => {
     await program.rpc.deposit(amount, {
       accounts: {
         coinVault: coinVault,
