@@ -63,10 +63,15 @@ pub struct InitUserVault<'info> {
 impl<'info> InitUserVault<'info> {
     #[allow(unused_variables)]
     pub fn process(&mut self, bump: u8, buy_fee: u32, sell_fee: u32) -> ProgramResult {
-        self.user_vault.buy_fee = buy_fee;
-        self.user_vault.sell_fee = sell_fee;
-        self.user_vault.pause = false;
-        self.user_vault.mint = self.mint.key();
+        *self.user_vault = UserCoinVault{
+            buy_fee,
+            sell_fee,
+            pause: false,
+            mint: self.mint.key(),
+            amount: 0,
+            min: 0,
+            max: 0
+        };
         Ok(())
     }
 }
