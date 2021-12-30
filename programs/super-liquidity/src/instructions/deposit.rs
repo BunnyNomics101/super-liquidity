@@ -8,7 +8,7 @@ use crate::error::*;
 #[derive(Accounts)]
 pub struct Deposit<'info> {
     #[account(mut)]
-    pub coin_vault: Account<'info, UserCoinVault>, // User PDA according to the deposited token
+    pub user_vault: Account<'info, UserCoinVault>, // User PDA according to the deposited token
 
     #[account(mut)]
     pub get_token_from: Account<'info, TokenAccount>, // Account where user have tokens
@@ -25,11 +25,11 @@ impl<'info> Deposit<'info> {
     pub fn process(&mut self, amount: u64) -> ProgramResult {
 
         // check mint
-        if self.get_token_from.mint != self.coin_vault.mint {
+        if self.get_token_from.mint != self.user_vault.mint {
             msg!(
                 "Invalid get_token_from.mint {}. Expected {}",
                 self.get_token_from.mint,
-                self.coin_vault.mint,
+                self.user_vault.mint,
             );
             return Err(ProgramError::InvalidAccountData)
         }
@@ -51,8 +51,7 @@ impl<'info> Deposit<'info> {
             return Err(ProgramError::InsufficientFunds);
         }
     
-
-        //TODO check token_store_pda == find_program_address(coin_vault.mint,"TSTORE").0
+        //TODO check token_store_pda == find_program_address(user_vault.mint,"TSTORE").0
 
         anchor_spl::token::transfer(
             CpiContext::new(

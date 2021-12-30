@@ -22,10 +22,10 @@ describe("deposit", () => {
     usdcStore,
     userData,
     tokenStoreAuthority,
-    coinVault,
-    coinVaultBump,
+    userVault,
+    userVaultBump,
     tokenStoreAuthorityBump,
-    globalState, 
+    globalState,
     globalStateBump;
   let amount;
 
@@ -43,7 +43,7 @@ describe("deposit", () => {
     );
 
     // Associated account PDA - store user data
-    [coinVault, coinVaultBump] = await anchor.web3.PublicKey.findProgramAddress(
+    [userVault, userVaultBump] = await anchor.web3.PublicKey.findProgramAddress(
       [program.provider.wallet.publicKey.toBuffer(), usdcMint.toBuffer()],
       program.programId
     );
@@ -74,29 +74,30 @@ describe("deposit", () => {
     );
   });
 
-  it("Initialize global state", async() => {
-    [globalState, globalStateBump] = await anchor.web3.PublicKey.findProgramAddress(
+  it("Initialize global state", async () => {
+    [globalState, globalStateBump] =
+      await anchor.web3.PublicKey.findProgramAddress(
         [program.provider.wallet.publicKey.toBuffer()],
         program.programId
       );
 
     await program.rpc.initialize(globalStateBump, {
-        accounts: {
-            adminAccount: program.provider.wallet.publicKey,
-            globalState: globalState,
-            systemProgram: anchor.web3.SystemProgram.programId,
-        }
-    })
-  })
+      accounts: {
+        adminAccount: program.provider.wallet.publicKey,
+        globalState: globalState,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      },
+    });
+  });
 
   it("Initialize vault", async () => {
-    await program.rpc.initUserVault(coinVaultBump, 0, 0, {
+    await program.rpc.initUserVault(userVaultBump, 0, 0, {
       accounts: {
-          globalState: globalState,
-          userAccount: program.provider.wallet.publicKey,
-          mint: usdcMint,
-          userVault: coinVault,
-          systemProgram: anchor.web3.SystemProgram.programId, 
+        globalState: globalState,
+        userAccount: program.provider.wallet.publicKey,
+        mint: usdcMint,
+        userVault: userVault,
+        systemProgram: anchor.web3.SystemProgram.programId,
       },
     });
   });
@@ -104,7 +105,7 @@ describe("deposit", () => {
   it("Deposit tokens", async () => {
     await program.rpc.deposit(amount, {
       accounts: {
-        coinVault: coinVault,
+        userVault: userVault,
         getTokenFrom: userUsdc,
         getTokenFromAuthority: program.provider.wallet.publicKey,
         tokenStorePda: usdcStore,
