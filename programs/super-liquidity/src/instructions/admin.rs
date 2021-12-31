@@ -1,6 +1,7 @@
 use crate::states::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
+use anchor_spl::token::{TokenAccount, InitializeAccount};
 
 //-----------------------------------------------------
 #[derive(Accounts)]
@@ -72,6 +73,57 @@ impl<'info> InitUserVault<'info> {
             min: 0,
             max: 0
         };
+        Ok(())
+    }
+}
+
+//-----------------------------------------------------
+#[derive(Accounts)]
+#[instruction(bump: u8)]
+pub struct InitTokenStore<'info> {
+    // global state
+    pub global_state: Account<'info, GlobalState>,
+
+    // admin account, signer
+    pub admin_account: Signer<'info>,
+
+    // for what token
+    pub mint: Account<'info, Mint>,
+
+    pub token_store_authority: AccountInfo<'info>,
+
+    // token store, token account
+    #[account(
+        init,
+        payer = admin_account,
+        space = core::mem::size_of::<TokenAccount>(),
+        seeds = [
+            global_state.key().as_ref(),
+            mint.key().as_ref(),
+        ],
+        bump = bump,
+    )]
+    pub token_store: AccountInfo<'info>,
+
+    pub system_program: AccountInfo<'info>,
+    pub token_program: AccountInfo<'info>,
+    pub rent: AccountInfo<'info>,
+}
+impl<'info> InitTokenStore<'info> {
+    #[allow(unused_variables)]
+    pub fn process(&mut self, bump: u8) -> ProgramResult {
+        anchor_spl::token::initialize_account(
+            CpiContext::new(
+                self.token_program.clone(),
+                InitializeAccount {
+                    account: self.token_store.to_account_info(),
+                    mint: self.mint.to_account_info(),
+                    authority: self.token_store_authority.clone(),
+                    rent: self.rent.to_account_info(),
+                },
+            ),
+        )?;
+
         Ok(())
     }
 }

@@ -17,8 +17,8 @@ pub mod super_liquidity {
     declare_id!("GD7B9rYsWeuLyYMTDa9z5C7osPg5gMDZZZqpF5NEmGXD");
 
     ///deposit
-    pub fn deposit(ctx: Context<Deposit>, amount: u64) -> ProgramResult {
-        ctx.accounts.process(amount)
+    pub fn deposit(ctx: Context<Deposit>, bump: u8, amount: u64) -> ProgramResult {
+        ctx.accounts.process(bump, amount)
     }
 
     ///withdraw
@@ -37,6 +37,11 @@ pub mod super_liquidity {
     ///create user vault
     pub fn init_user_vault(ctx: Context<InitUserVault>, bump: u8, min_fee: u32, max_fee: u32) -> ProgramResult {
         ctx.accounts.process(bump, min_fee, max_fee)
+    }
+
+    ///initialize token store
+    pub fn init_token_store(ctx: Context<InitTokenStore>, bump: u8) -> ProgramResult {
+        ctx.accounts.process(bump)
     }
 
     ///update user state
