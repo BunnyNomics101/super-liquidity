@@ -10,6 +10,8 @@ const TOKEN_PROGRAM_ID = new anchor.web3.PublicKey(
   TokenInstructions.TOKEN_PROGRAM_ID.toString()
 );
 
+const ASSOCIATED_TOKEN_PROGRAM_ID = new anchor.web3.PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
+
 // Our own sleep function.
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -129,6 +131,78 @@ async function createMintToAccountInstrs(
   ];
 }
 
+function createAssociatedTokenAccountInstruction(associatedProgramId,
+  programId, mint, associatedAccount, owner, payer) {
+  const data = Buffer.alloc(0);
+  let keys = [{
+    pubkey: payer,
+    isSigner: true,
+    isWritable: true
+  }, {
+    pubkey: associatedAccount,
+    isSigner: false,
+    isWritable: true
+  }, {
+    pubkey: owner,
+    isSigner: false,
+    isWritable: false
+  }, {
+    pubkey: mint,
+    isSigner: false,
+    isWritable: false
+  }, {
+    pubkey: anchor.web3.SystemProgram.programId,
+    isSigner: false,
+    isWritable: false
+  }, {
+    pubkey: programId,
+    isSigner: false,
+    isWritable: false
+  }, {
+    pubkey: anchor.web3.SYSVAR_RENT_PUBKEY,
+    isSigner: false,
+    isWritable: false
+  }];
+  return new anchor.web3.TransactionInstruction({
+    keys,
+    programId: associatedProgramId,
+    data
+  });
+}
+
+async function getAssociatedTokenAccount(mint, owner) {
+  return anchor.utils.token.associatedAddress({ mint: mint, owner: owner });
+}
+
+async function createAssociatedTokenAccount(
+  provider,
+  mint,
+  owner
+) {
+  let associated = await getAssociatedTokenAccount(mint, owner);
+
+  try {
+    let tokenAccountInfo = await getTokenAccount(provider, associated, mint);
+    return associated; //if the account exists
+  } catch {
+    const tx = new anchor.web3.Transaction();
+
+    tx.add(
+      await createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        mint,
+        associated,
+        owner,
+        provider.wallet.publicKey
+      )
+    );
+
+    await provider.send(tx, []);
+  }
+  return associated;
+}
+
 module.exports = {
   TOKEN_PROGRAM_ID,
   sleep,
@@ -136,4 +210,5 @@ module.exports = {
   createMint,
   createTokenAccount,
   mintToAccount,
+  createAssociatedTokenAccount
 };

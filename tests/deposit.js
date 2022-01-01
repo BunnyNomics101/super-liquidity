@@ -1,100 +1,52 @@
 const anchor = require("@project-serum/anchor");
 const assert = require("assert");
 
-const TOKEN_PROGRAM_ID = new anchor.web3.PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
-const ASSOCIATED_TOKEN_PROGRAM_ID = new anchor.web3.PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
-
-function createAssociatedTokenAccountInstruction(associatedProgramId,
-  programId, mint, associatedAccount, owner, payer) {
-  const data = Buffer.alloc(0);
-  let keys = [{
-      pubkey: payer,
-      isSigner: true,
-      isWritable: true
-  }, {
-      pubkey: associatedAccount,
-      isSigner: false,
-      isWritable: true
-  }, {
-      pubkey: owner,
-      isSigner: false,
-      isWritable: false
-  }, {
-      pubkey: mint,
-      isSigner: false,
-      isWritable: false
-  }, {
-      pubkey: anchor.web3.SystemProgram.programId,
-      isSigner: false,
-      isWritable: false
-  }, {
-      pubkey: programId,
-      isSigner: false,
-      isWritable: false
-  }, {
-      pubkey: anchor.web3.SYSVAR_RENT_PUBKEY,
-      isSigner: false,
-      isWritable: false
-  }];
-  return new anchor.web3.TransactionInstruction({
-      keys,
-      programId: associatedProgramId,
-      data
-  });
-}
-
-// TODO: Refactoring
-
 const {
+  TOKEN_PROGRAM_ID,
   getTokenAccount,
   createMint,
   createTokenAccount,
   mintToAccount,
+  createAssociatedTokenAccount
 } = require("./utils");
 
-async function getAssociatedTokenAccount(mint, owner) {
-  return anchor.utils.token.associatedAddress({ mint: mint, owner: owner });
+/*
+const {
+  clusterApiUrl,
+  Connection
+} = require('@solana/web3.js');
+
+// Create connection
+function createConnection(url = clusterApiUrl('devnet')) {
+  return new Connection(url);
 }
 
-async function createAssociatedTokenAccount(
-  provider,
-  mint,
-  owner
-) {
-  let associated = await getAssociatedTokenAccount(mint, owner);
+const connection = createConnection();
 
-  try {
-    let tokenAccountInfo = await getTokenAccount(provider, associated, mint);
-    return associated; //if the account exists
-  } catch {
-    const tx = new anchor.web3.Transaction();
-
-    tx.add(
-      await createAssociatedTokenAccountInstruction(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        mint,
-        associated,
-        owner,
-        provider.wallet.publicKey
-      )
-    );
-
-    await provider.send(tx, []);
-  }
-  return associated;
+// Get balance
+async function getBalance(connection, publicKey) {
+  return connection.getBalance(publicKey);
 }
+*/
 
 describe("deposit", () => {
   anchor.setProvider(anchor.Provider.env());
 
   const program = anchor.workspace.SuperLiquidity;
+  const provider = program.provider;
+  const adminAccount = provider.wallet.publicKey;
+  const alice = anchor.web3.Keypair.generate().publicKey;
 
-  let programSigner;
+  /*
+  it("Check alice balance", async function() {
+    const balance = await getBalance(connection, adminAccount);
+    console.log('Balance:', balance);
+  })
+  */
+
   let usdcMint,
     userUsdc,
     usdcStore,
-    userData,
     tokenStoreAuthority,
     userVault,
     userVaultBump,
@@ -106,33 +58,27 @@ describe("deposit", () => {
   it("Create test tokens", async () => {
     // Create USDC mint
     usdcMint = await createMint(
-      program.provider,
-      program.provider.wallet.PublicKey
+      provider,
+      adminAccount
     );
 
     userUsdc = await createTokenAccount(
-      program.provider,
+      provider,
       usdcMint,
-      program.provider.wallet.publicKey
-    );
-
-    // Associated account PDA - store user data
-    [userVault, userVaultBump] = await anchor.web3.PublicKey.findProgramAddress(
-      [program.provider.wallet.publicKey.toBuffer(), usdcMint.toBuffer()],
-      program.programId
+      alice
     );
 
     amount = new anchor.BN(5 * 10 ** 6);
     // Create user and program token accounts
     await mintToAccount(
-      program.provider,
+      provider,
       usdcMint,
       userUsdc,
       amount,
-      program.provider.wallet.publicKey
+      adminAccount
     );
 
-    let userUsdcData = await getTokenAccount(program.provider, userUsdc);
+    let userUsdcData = await getTokenAccount(provider, userUsdc);
     assert.ok(userUsdcData.amount.eq(amount));
 
     [tokenStoreAuthority, tokenStoreAuthorityBump] =
@@ -140,26 +86,18 @@ describe("deposit", () => {
         [Buffer.from("store_auth")],
         program.programId
       );
-
-    /*
-    usdcStore = await createTokenAccount(
-      program.provider,
-      usdcMint,
-      tokenStoreAuthority
-    );
-    */
   });
 
   it("Initialize global state", async () => {
     [globalState, globalStateBump] =
       await anchor.web3.PublicKey.findProgramAddress(
-        [program.provider.wallet.publicKey.toBuffer()],
+        [adminAccount.toBuffer()],
         program.programId
       );
 
     await program.rpc.initialize(globalStateBump, {
       accounts: {
-        adminAccount: program.provider.wallet.publicKey,
+        adminAccount: adminAccount,
         globalState: globalState,
         systemProgram: anchor.web3.SystemProgram.programId,
       },
@@ -167,40 +105,24 @@ describe("deposit", () => {
   });
 
   it("Initialize token store", async () => {
-    /*
-    [usdcStore, usdcStoreBump] = await anchor.web3.PublicKey.findProgramAddress(
-      [globalState.toBuffer(), usdcMint.toBuffer()],
-      program.programId
-    );
-    */
-
     usdcStore = await createAssociatedTokenAccount(
-      program.provider,
+      provider,
       usdcMint,
       tokenStoreAuthority
     );
-
-    /*
-    await program.rpc.initTokenStore(usdcStoreBump, {
-      accounts: {
-        globalState: globalState,
-        adminAccount: program.provider.wallet.publicKey,
-        mint: usdcMint,
-        tokenStoreAuthority: tokenStoreAuthority,
-        tokenStore: usdcStore,
-        systemProgram: anchor.web3.SystemProgram.programId,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-      },
-    });
-    */
   });
 
   it("Initialize vault", async () => {
+    // Associated account PDA - store user data
+    [userVault, userVaultBump] = await anchor.web3.PublicKey.findProgramAddress(
+      [alice.toBuffer(), usdcMint.toBuffer()],
+      program.programId
+    );
+
     await program.rpc.initUserVault(userVaultBump, 0, 0, {
       accounts: {
         globalState: globalState,
-        userAccount: program.provider.wallet.publicKey,
+        userAccount: alice,
         mint: usdcMint,
         userVault: userVault,
         systemProgram: anchor.web3.SystemProgram.programId,
@@ -208,7 +130,7 @@ describe("deposit", () => {
     });
   });
 
-  it("Deposit tokens", async () => {
+  xit("Deposit tokens", async () => {
     await program.rpc.deposit(0, amount, {
       accounts: {
         globalState: globalState,
@@ -216,7 +138,7 @@ describe("deposit", () => {
         tokenStoreAuthority: tokenStoreAuthority,
         mint: usdcMint,
         getTokenFrom: userUsdc,
-        getTokenFromAuthority: program.provider.wallet.publicKey,
+        getTokenFromAuthority: alice,
         tokenStorePda: usdcStore,
         systemProgram: anchor.web3.SystemProgram.programId,
         tokenProgram: TOKEN_PROGRAM_ID,
@@ -224,10 +146,10 @@ describe("deposit", () => {
       },
     });
 
-    userUsdcData = await getTokenAccount(program.provider, userUsdc);
+    userUsdcData = await getTokenAccount(provider, userUsdc);
     assert.ok(userUsdcData.amount.eq(new anchor.BN(0)));
 
-    programUsdcData = await getTokenAccount(program.provider, usdcStore);
+    programUsdcData = await getTokenAccount(provider, usdcStore);
     assert.ok(programUsdcData.amount.eq(amount));
   });
 });
