@@ -3,6 +3,7 @@
 const anchor = require("@project-serum/anchor");
 const serumCmn = require("@project-serum/common");
 const TokenInstructions = require("@project-serum/serum").TokenInstructions;
+const { Connection } = require("@solana/web3.js");
 
 // TODO: remove this constant once @project-serum/serum uses the same version
 //       of @solana/web3.js as anchor (or switch packages).
@@ -10,7 +11,9 @@ const TOKEN_PROGRAM_ID = new anchor.web3.PublicKey(
   TokenInstructions.TOKEN_PROGRAM_ID.toString()
 );
 
-const ASSOCIATED_TOKEN_PROGRAM_ID = new anchor.web3.PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
+const ASSOCIATED_TOKEN_PROGRAM_ID = new anchor.web3.PublicKey(
+  "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+);
 
 // Our own sleep function.
 function sleep(ms) {
@@ -131,42 +134,56 @@ async function createMintToAccountInstrs(
   ];
 }
 
-function createAssociatedTokenAccountInstruction(associatedProgramId,
-  programId, mint, associatedAccount, owner, payer) {
+function createAssociatedTokenAccountInstruction(
+  associatedProgramId,
+  programId,
+  mint,
+  associatedAccount,
+  owner,
+  payer
+) {
   const data = Buffer.alloc(0);
-  let keys = [{
-    pubkey: payer,
-    isSigner: true,
-    isWritable: true
-  }, {
-    pubkey: associatedAccount,
-    isSigner: false,
-    isWritable: true
-  }, {
-    pubkey: owner,
-    isSigner: false,
-    isWritable: false
-  }, {
-    pubkey: mint,
-    isSigner: false,
-    isWritable: false
-  }, {
-    pubkey: anchor.web3.SystemProgram.programId,
-    isSigner: false,
-    isWritable: false
-  }, {
-    pubkey: programId,
-    isSigner: false,
-    isWritable: false
-  }, {
-    pubkey: anchor.web3.SYSVAR_RENT_PUBKEY,
-    isSigner: false,
-    isWritable: false
-  }];
+  let keys = [
+    {
+      pubkey: payer,
+      isSigner: true,
+      isWritable: true,
+    },
+    {
+      pubkey: associatedAccount,
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: owner,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: mint,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: anchor.web3.SystemProgram.programId,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: programId,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: anchor.web3.SYSVAR_RENT_PUBKEY,
+      isSigner: false,
+      isWritable: false,
+    },
+  ];
   return new anchor.web3.TransactionInstruction({
     keys,
     programId: associatedProgramId,
-    data
+    data,
   });
 }
 
@@ -174,11 +191,7 @@ async function getAssociatedTokenAccount(mint, owner) {
   return anchor.utils.token.associatedAddress({ mint: mint, owner: owner });
 }
 
-async function createAssociatedTokenAccount(
-  provider,
-  mint,
-  owner
-) {
+async function createAssociatedTokenAccount(provider, mint, owner) {
   let associated = await getAssociatedTokenAccount(mint, owner);
 
   try {
@@ -203,6 +216,24 @@ async function createAssociatedTokenAccount(
   return associated;
 }
 
+
+// Create connection
+function createConnection(url = "http://127.0.0.1:8899") {
+  return new Connection(url);
+}
+
+const connection = createConnection();
+
+// Get balance
+async function getBalance(publicKey) {
+  return connection.getBalance(publicKey);
+}
+
+async function airdropLamports(publicKey) {
+  let airdropTx = await connection.requestAirdrop(publicKey, anchor.web3.LAMPORTS_PER_SOL);
+  await connection.confirmTransaction(airdropTx);
+}
+
 module.exports = {
   TOKEN_PROGRAM_ID,
   sleep,
@@ -210,5 +241,7 @@ module.exports = {
   createMint,
   createTokenAccount,
   mintToAccount,
-  createAssociatedTokenAccount
+  createAssociatedTokenAccount,
+  getBalance,
+  airdropLamports
 };

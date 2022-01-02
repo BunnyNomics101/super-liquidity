@@ -7,27 +7,10 @@ const {
   createMint,
   createTokenAccount,
   mintToAccount,
-  createAssociatedTokenAccount
+  createAssociatedTokenAccount,
+  getBalance,
+  airdropLamports,
 } = require("./utils");
-
-/*
-const {
-  clusterApiUrl,
-  Connection
-} = require('@solana/web3.js');
-
-// Create connection
-function createConnection(url = clusterApiUrl('devnet')) {
-  return new Connection(url);
-}
-
-const connection = createConnection();
-
-// Get balance
-async function getBalance(connection, publicKey) {
-  return connection.getBalance(publicKey);
-}
-*/
 
 describe("deposit", () => {
   anchor.setProvider(anchor.Provider.env());
@@ -35,14 +18,15 @@ describe("deposit", () => {
   const program = anchor.workspace.SuperLiquidity;
   const provider = program.provider;
   const adminAccount = provider.wallet.publicKey;
-  const alice = anchor.web3.Keypair.generate().publicKey;
+  const alice = anchor.web3.Keypair.generate();
 
-  /*
-  it("Check alice balance", async function() {
-    const balance = await getBalance(connection, adminAccount);
-    console.log('Balance:', balance);
-  })
-  */
+  it("Airdrop lamports to alice", async function () {
+    let balance = await getBalance(alice.publicKey);
+    assert.ok(balance == 0);
+    await airdropLamports(alice.publicKey);
+    balance = await getBalance(alice.publicKey);
+    assert.ok(balance == anchor.web3.LAMPORTS_PER_SOL);
+  });
 
   let usdcMint,
     userUsdc,
@@ -57,26 +41,13 @@ describe("deposit", () => {
 
   it("Create test tokens", async () => {
     // Create USDC mint
-    usdcMint = await createMint(
-      provider,
-      adminAccount
-    );
+    usdcMint = await createMint(provider, adminAccount);
 
-    userUsdc = await createTokenAccount(
-      provider,
-      usdcMint,
-      alice
-    );
+    userUsdc = await createTokenAccount(provider, usdcMint, alice.publicKey);
 
     amount = new anchor.BN(5 * 10 ** 6);
     // Create user and program token accounts
-    await mintToAccount(
-      provider,
-      usdcMint,
-      userUsdc,
-      amount,
-      adminAccount
-    );
+    await mintToAccount(provider, usdcMint, userUsdc, amount, adminAccount);
 
     let userUsdcData = await getTokenAccount(provider, userUsdc);
     assert.ok(userUsdcData.amount.eq(amount));
@@ -112,21 +83,26 @@ describe("deposit", () => {
     );
   });
 
+  /*
+  Transaction simulation failed: Error processing Instruction 0: 
+  Cross-program invocation with unauthorized signer or writable account
+  */
   it("Initialize vault", async () => {
     // Associated account PDA - store user data
     [userVault, userVaultBump] = await anchor.web3.PublicKey.findProgramAddress(
-      [alice.toBuffer(), usdcMint.toBuffer()],
+      [alice.publicKey.toBuffer(), usdcMint.toBuffer()],
       program.programId
     );
 
     await program.rpc.initUserVault(userVaultBump, 0, 0, {
       accounts: {
         globalState: globalState,
-        userAccount: alice,
+        userAccount: alice.publicKey,
         mint: usdcMint,
         userVault: userVault,
         systemProgram: anchor.web3.SystemProgram.programId,
       },
+      signers: [alice],
     });
   });
 
@@ -138,7 +114,7 @@ describe("deposit", () => {
         tokenStoreAuthority: tokenStoreAuthority,
         mint: usdcMint,
         getTokenFrom: userUsdc,
-        getTokenFromAuthority: alice,
+        getTokenFromAuthority: alice.publicKey,
         tokenStorePda: usdcStore,
         systemProgram: anchor.web3.SystemProgram.programId,
         tokenProgram: TOKEN_PROGRAM_ID,
