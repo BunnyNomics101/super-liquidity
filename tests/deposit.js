@@ -83,10 +83,6 @@ describe("deposit", () => {
     );
   });
 
-  /*
-  Transaction simulation failed: Error processing Instruction 0: 
-  Cross-program invocation with unauthorized signer or writable account
-  */
   it("Initialize vault", async () => {
     // Associated account PDA - store user data
     [userVault, userVaultBump] = await anchor.web3.PublicKey.findProgramAddress(

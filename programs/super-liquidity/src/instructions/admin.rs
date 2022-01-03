@@ -41,6 +41,7 @@ pub struct InitUserVault<'info> {
     pub global_state: Account<'info, GlobalState>,
 
     // user account, signer
+    #[account(mut)]
     pub user_account: Signer<'info>,
 
     // for what token
