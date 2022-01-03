@@ -29,12 +29,12 @@ describe("deposit", () => {
   });
 
   let usdcMint,
-    userUsdc,
+    aliceUsdc,
     usdcStore,
-    tokenStoreAuthority,
-    userVault,
-    userVaultBump,
     tokenStoreAuthorityBump,
+    tokenStoreAuthority,
+    aliceUsdcVault,
+    aliceUsdcVaultBump,
     globalState,
     globalStateBump;
   let amount;
@@ -43,13 +43,13 @@ describe("deposit", () => {
     // Create USDC mint
     usdcMint = await createMint(provider, adminAccount);
 
-    userUsdc = await createTokenAccount(provider, usdcMint, alice.publicKey);
+    aliceUsdc = await createTokenAccount(provider, usdcMint, alice.publicKey);
 
     amount = new anchor.BN(5 * 10 ** 6);
     // Create user and program token accounts
-    await mintToAccount(provider, usdcMint, userUsdc, amount, adminAccount);
+    await mintToAccount(provider, usdcMint, aliceUsdc, amount, adminAccount);
 
-    let userUsdcData = await getTokenAccount(provider, userUsdc);
+    let userUsdcData = await getTokenAccount(provider, aliceUsdc);
     assert.ok(userUsdcData.amount.eq(amount));
 
     [tokenStoreAuthority, tokenStoreAuthorityBump] =
@@ -85,40 +85,42 @@ describe("deposit", () => {
 
   it("Initialize vault", async () => {
     // Associated account PDA - store user data
-    [userVault, userVaultBump] = await anchor.web3.PublicKey.findProgramAddress(
-      [alice.publicKey.toBuffer(), usdcMint.toBuffer()],
-      program.programId
-    );
+    [aliceUsdcVault, aliceUsdcVaultBump] =
+      await anchor.web3.PublicKey.findProgramAddress(
+        [alice.publicKey.toBuffer(), usdcMint.toBuffer()],
+        program.programId
+      );
 
-    await program.rpc.initUserVault(userVaultBump, 0, 0, {
+    await program.rpc.initUserVault(aliceUsdcVaultBump, 0, 0, {
       accounts: {
         globalState: globalState,
         userAccount: alice.publicKey,
         mint: usdcMint,
-        userVault: userVault,
+        userVault: aliceUsdcVault,
         systemProgram: anchor.web3.SystemProgram.programId,
       },
       signers: [alice],
     });
   });
 
-  xit("Deposit tokens", async () => {
+  it("Deposit tokens", async () => {
     await program.rpc.deposit(0, amount, {
       accounts: {
         globalState: globalState,
-        userVault: userVault,
+        userVault: aliceUsdcVault,
         tokenStoreAuthority: tokenStoreAuthority,
         mint: usdcMint,
-        getTokenFrom: userUsdc,
+        getTokenFrom: aliceUsdc,
         getTokenFromAuthority: alice.publicKey,
         tokenStorePda: usdcStore,
         systemProgram: anchor.web3.SystemProgram.programId,
         tokenProgram: TOKEN_PROGRAM_ID,
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
       },
+      signers: [alice],
     });
 
-    userUsdcData = await getTokenAccount(provider, userUsdc);
+    userUsdcData = await getTokenAccount(provider, aliceUsdc);
     assert.ok(userUsdcData.amount.eq(new anchor.BN(0)));
 
     programUsdcData = await getTokenAccount(provider, usdcStore);
