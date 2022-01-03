@@ -17,8 +17,8 @@ pub mod super_liquidity {
     declare_id!("GD7B9rYsWeuLyYMTDa9z5C7osPg5gMDZZZqpF5NEmGXD");
 
     ///deposit
-    pub fn deposit(ctx: Context<Deposit>, bump: u8, amount: u64) -> ProgramResult {
-        ctx.accounts.process(bump, amount)
+    pub fn deposit(ctx: Context<Deposit>, amount: u64) -> ProgramResult {
+        ctx.accounts.process(amount)
     }
 
     ///withdraw

@@ -5,10 +5,6 @@ use anchor_spl::token::{TokenAccount, Transfer};
 //-----------------------------------------------------
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
-    /*
-    #[account(mut)]
-    pub state: AccountInfo<'info>,
-    */
     #[account(mut)]
     pub user_vault: Account<'info, UserCoinVault>,
     #[account(mut)]
@@ -48,11 +44,11 @@ impl<'info> Withdraw<'info> {
         }
         */
 
-        if self.token_store_pda.amount < amount {
+        if self.user_vault.amount < amount {
             msg!(
                 "Requested to withdraw {} but you have only {}",
                 amount,
-                self.token_store_pda.amount
+                self.user_vault.amount
             );
             return Err(ProgramError::InsufficientFunds);
         }

@@ -104,7 +104,7 @@ describe("deposit", () => {
   });
 
   it("Deposit tokens", async () => {
-    await program.rpc.deposit(0, amount, {
+    await program.rpc.deposit(amount, {
       accounts: {
         globalState: globalState,
         userVault: aliceUsdcVault,
@@ -126,4 +126,21 @@ describe("deposit", () => {
     programUsdcData = await getTokenAccount(provider, usdcStore);
     assert.ok(programUsdcData.amount.eq(amount));
   });
+
+  /*
+  it("Withdraw tokens", async () => {
+    await program.rpc.withdraw(amount, {
+      accounts: {
+        userVault: aliceUsdcVault,
+        defiTokenMint: usdcMint,
+        sendTokenTo: aliceUsdc,
+        tokenStorePda: usdcStore,
+        userAccount: alice.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      },
+      signers: [alice],
+    });
+  });
+  */
 });
