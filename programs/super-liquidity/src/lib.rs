@@ -22,8 +22,8 @@ pub mod super_liquidity {
     }
 
     ///withdraw
-    pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> ProgramResult {
-        ctx.accounts.process(amount)
+    pub fn withdraw(ctx: Context<Withdraw>, bump: u8, amount: u64) -> ProgramResult {
+        ctx.accounts.process(bump, amount)
     }
 
     // -------------

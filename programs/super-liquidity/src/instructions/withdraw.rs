@@ -9,20 +9,22 @@ pub struct Withdraw<'info> {
     pub user_vault: Account<'info, UserCoinVault>,
     #[account(mut)]
     pub defi_token_mint: AccountInfo<'info>,
-    #[account(mut)]
     /// user account to receive tokens
+    #[account(mut)]
     pub send_token_to: Account<'info, TokenAccount>, 
     #[account(mut)]
+    pub token_store_authority: AccountInfo<'info>,
     /// store to withdraw tokens from
+    #[account(mut)]
     pub token_store_pda: Account<'info, TokenAccount>, 
-    #[account(signer)]
     /// burn_defi_token_from owner or delegate_authority
+    #[account(signer)]
     pub user_account: AccountInfo<'info>, 
     pub system_program: AccountInfo<'info>,
     pub token_program: AccountInfo<'info>,
 }
 impl<'info> Withdraw<'info> {
-    pub fn process(&mut self, amount: u64) -> ProgramResult {
+    pub fn process(&mut self, bump: u8, amount: u64) -> ProgramResult {
 
         // check mint
         if self.token_store_pda.mint != self.send_token_to.mint {
@@ -53,14 +55,18 @@ impl<'info> Withdraw<'info> {
             return Err(ProgramError::InsufficientFunds);
         }
 
+        let seeds: &[&[u8]] = &[b"store_auth", &[bump]];
+        let signer = &[&seeds[..]];
+
         anchor_spl::token::transfer(
-            CpiContext::new(
+            CpiContext::new_with_signer(
                 self.token_program.clone(),
                 Transfer {
                     from: self.token_store_pda.to_account_info(),
                     to: self.send_token_to.to_account_info(),
-                    authority: self.user_account.clone(),
+                    authority: self.token_store_authority.to_account_info(),
                 },
+                signer
             ),
             amount,
         )?;
