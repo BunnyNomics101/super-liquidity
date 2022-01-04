@@ -59,6 +59,17 @@ impl<'info> Deposit<'info> {
     
         //TODO check token_store_pda == find_program_address(user_vault.mint,"TSTORE").0
 
+        let (pda, _bump_seed) = Pubkey::find_program_address(&[self.get_token_from_authority.to_account_info().key.as_ref(), self.mint.to_account_info().key.as_ref()], &crate::ID);
+
+        if *self.user_vault.to_account_info().key != pda {
+            msg!(
+                "Invalid user_vault {}. Expected {}",
+                self.user_vault.to_account_info().key,
+                pda,
+            );
+            return Err(ProgramError::InvalidAccountData)
+        }
+
         anchor_spl::token::transfer(
             CpiContext::new(
                 self.token_program.clone(),

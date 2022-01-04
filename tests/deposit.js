@@ -90,14 +90,6 @@ describe("deposit", () => {
         [alice.publicKey.toBuffer(), usdcMint.toBuffer()],
         program.programId
       );
-    /*
-      try{
-        let aliceUsdcVaultData = await program.account.userCoinVault.fetch(aliceUsdcVault);
-        console.log(aliceUsdcVaultData.mint)
-      }catch(e){
-        console.error(e);
-      }
-      */
 
     await program.rpc.initUserVault(aliceUsdcVaultBump, 0, 0, {
       accounts: {
@@ -109,14 +101,7 @@ describe("deposit", () => {
       },
       signers: [alice],
     });
-    /*
-    try{
-      let aliceUsdcVaultData = await program.account.userCoinVault.fetch(aliceUsdcVault);
-      console.log(aliceUsdcVaultData.mint)
-    }catch(e){
-      console.error(e);
-    }
-    */
+    
   });
 
   it("Deposit tokens", async () => {

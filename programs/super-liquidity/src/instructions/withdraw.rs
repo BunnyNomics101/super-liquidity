@@ -35,17 +35,7 @@ impl<'info> Withdraw<'info> {
             );
             return Err(ProgramError::InvalidAccountData)
         }
-
-        /*
-        // if delegated, check delegated amount
-        if *self.user_account.key != self.token_store_pda.owner {
-            msg!(
-                "invalid token_store_pda owner/auth",
-                );
-            return Err(DelphorError::NotTheOwner.into());
-        }
-        */
-
+        
         if self.user_vault.amount < amount {
             msg!(
                 "Requested to withdraw {} but you have only {}",
