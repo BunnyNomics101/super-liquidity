@@ -19,6 +19,7 @@ describe("deposit", () => {
   const provider = program.provider;
   const adminAccount = provider.wallet.publicKey;
   const alice = anchor.web3.Keypair.generate();
+  const attacker = anchor.web3.Keypair.generate();
 
   let usdcMint,
     aliceUsdc,
@@ -41,6 +42,14 @@ describe("deposit", () => {
     assert.ok(balance == anchor.web3.LAMPORTS_PER_SOL);
   });
 
+  it("Airdrop lamports to attacker", async function () {
+    let balance = await getBalance(attacker.publicKey);
+    assert.ok(balance == 0);
+    await airdropLamports(attacker.publicKey);
+    balance = await getBalance(attacker.publicKey);
+    assert.ok(balance == anchor.web3.LAMPORTS_PER_SOL);
+  });
+
   it("Create and mint test tokens", async () => {
     // Create USDC mint
     usdcMint = await createMint(provider, adminAccount);
@@ -54,6 +63,19 @@ describe("deposit", () => {
     assert.ok(
       aliceUsdc.toBase58() ==
         (await getAssociatedTokenAccount(usdcMint, alice.publicKey)).toBase58()
+    );
+
+    attackerUsdc = await createAssociatedTokenAccount(
+      provider,
+      usdcMint,
+      attacker.publicKey
+    );
+
+    assert.ok(
+      attackerUsdc.toBase58() ==
+        (
+          await getAssociatedTokenAccount(usdcMint, attacker.publicKey)
+        ).toBase58()
     );
 
     amount = new anchor.BN(5 * 10 ** 6);
@@ -124,13 +146,12 @@ describe("deposit", () => {
   it("Deposit tokens", async () => {
     await program.rpc.deposit(amount, {
       accounts: {
-        globalState: globalState,
         userVault: aliceUsdcVault,
         tokenStoreAuthority: tokenStoreAuthority,
         mint: usdcMint,
-        getTokenFrom: aliceUsdc, //
+        getTokenFrom: aliceUsdc,
         getTokenFromAuthority: alice.publicKey,
-        tokenStorePda: usdcStore, //
+        tokenStorePda: usdcStore,
         systemProgram: anchor.web3.SystemProgram.programId,
         tokenProgram: TOKEN_PROGRAM_ID,
       },
@@ -144,11 +165,43 @@ describe("deposit", () => {
     assert.ok(programUsdcAccount.amount.eq(amount));
   });
 
+  it("Attacker can't withdraw tokens from alice vault", async () => {
+    try {
+      await program.rpc.withdraw(tokenStoreAuthorityBump, amount, {
+        accounts: {
+          userVault: aliceUsdcVault,
+          mint: usdcMint,
+          sendTokenTo: attackerUsdc,
+          tokenStoreAuthority: tokenStoreAuthority,
+          tokenStorePda: usdcStore,
+          userAccount: attacker.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        },
+        signers: [attacker],
+      });
+
+      attackerUsdcAccount = await getTokenAccount(provider, attackerUsdc);
+      assert.ok(attackerUsdcAccount.amount.eq(amount));
+
+      programUsdcAccount = await getTokenAccount(provider, usdcStore);
+      assert.ok(programUsdcAccount.amount.eq(new anchor.BN(0)));
+
+      console.log("Attack success");
+    } catch {}
+
+    attackerUsdcAccount = await getTokenAccount(provider, attackerUsdc);
+    assert.ok(attackerUsdcAccount.amount.eq(new anchor.BN(0)));
+
+    programUsdcAccount = await getTokenAccount(provider, usdcStore);
+    assert.ok(programUsdcAccount.amount.eq(amount));
+  });
+
   it("Withdraw tokens", async () => {
     await program.rpc.withdraw(tokenStoreAuthorityBump, amount, {
       accounts: {
         userVault: aliceUsdcVault,
-        defiTokenMint: usdcMint,
+        mint: usdcMint,
         sendTokenTo: aliceUsdc,
         tokenStoreAuthority: tokenStoreAuthority,
         tokenStorePda: usdcStore,

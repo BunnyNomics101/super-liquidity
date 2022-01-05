@@ -8,14 +8,14 @@ pub struct Withdraw<'info> {
     #[account(mut)]
     pub user_vault: Account<'info, UserCoinVault>,
     #[account(mut)]
-    pub defi_token_mint: AccountInfo<'info>,
+    pub mint: AccountInfo<'info>,
     /// user account to receive tokens
     #[account(mut)]
     pub send_token_to: Account<'info, TokenAccount>, 
     #[account(mut)]
     pub token_store_authority: AccountInfo<'info>,
     /// store to withdraw tokens from
-    #[account(mut)]
+    #[account(mut, associated_token::mint = mint, associated_token::authority = token_store_authority)]
     pub token_store_pda: Account<'info, TokenAccount>, 
     /// burn_defi_token_from owner or delegate_authority
     #[account(signer)]
@@ -35,7 +35,18 @@ impl<'info> Withdraw<'info> {
             );
             return Err(ProgramError::InvalidAccountData)
         }
-        
+
+        let (pda, _bump_seed) = Pubkey::find_program_address(&[self.user_account.to_account_info().key.as_ref(), self.mint.to_account_info().key.as_ref()], &crate::ID);
+
+        if *self.user_vault.to_account_info().key != pda {
+            msg!(
+                "Invalid user_vault {}. Expected {}",
+                self.user_vault.to_account_info().key,
+                pda,
+            );
+            return Err(ProgramError::InvalidAccountData)
+        }
+
         if self.user_vault.amount < amount {
             msg!(
                 "Requested to withdraw {} but you have only {}",
