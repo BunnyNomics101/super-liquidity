@@ -3,11 +3,11 @@ const assert = require("assert");
 
 const {
   TOKEN_PROGRAM_ID,
-  getTokenAccount,
-  createMint,
-  createTokenAccount,
-  mintToAccount,
   createAssociatedTokenAccount,
+  getTokenAccount,
+  getAssociatedTokenAccount,
+  createMint,
+  mintToAccount,
   getBalance,
   airdropLamports,
 } = require("./utils");
@@ -20,14 +20,6 @@ describe("deposit", () => {
   const adminAccount = provider.wallet.publicKey;
   const alice = anchor.web3.Keypair.generate();
 
-  it("Airdrop lamports to alice", async function () {
-    let balance = await getBalance(alice.publicKey);
-    assert.ok(balance == 0);
-    await airdropLamports(alice.publicKey);
-    balance = await getBalance(alice.publicKey);
-    assert.ok(balance == anchor.web3.LAMPORTS_PER_SOL);
-  });
-
   let usdcMint,
     aliceUsdc,
     usdcStore,
@@ -36,27 +28,40 @@ describe("deposit", () => {
     aliceUsdcVault,
     aliceUsdcVaultBump,
     globalState,
-    globalStateBump;
-  let amount;
+    globalStateBump,
+    aliceUsdcAccount,
+    programUsdcAccount,
+    amount;
 
-  it("Create test tokens", async () => {
+  it("Airdrop lamports to alice", async function () {
+    let balance = await getBalance(alice.publicKey);
+    assert.ok(balance == 0);
+    await airdropLamports(alice.publicKey);
+    balance = await getBalance(alice.publicKey);
+    assert.ok(balance == anchor.web3.LAMPORTS_PER_SOL);
+  });
+
+  it("Create and mint test tokens", async () => {
     // Create USDC mint
     usdcMint = await createMint(provider, adminAccount);
 
-    aliceUsdc = await createTokenAccount(provider, usdcMint, alice.publicKey);
+    aliceUsdc = await createAssociatedTokenAccount(
+      provider,
+      usdcMint,
+      alice.publicKey
+    );
+
+    assert.ok(
+      aliceUsdc.toBase58() ==
+        (await getAssociatedTokenAccount(usdcMint, alice.publicKey)).toBase58()
+    );
 
     amount = new anchor.BN(5 * 10 ** 6);
     // Create user and program token accounts
     await mintToAccount(provider, usdcMint, aliceUsdc, amount, adminAccount);
 
-    let userUsdcData = await getTokenAccount(provider, aliceUsdc);
-    assert.ok(userUsdcData.amount.eq(amount));
-
-    [tokenStoreAuthority, tokenStoreAuthorityBump] =
-      await anchor.web3.PublicKey.findProgramAddress(
-        [Buffer.from("store_auth")],
-        program.programId
-      );
+    let aliceUsdcAccount = await getTokenAccount(provider, aliceUsdc);
+    assert.ok(aliceUsdcAccount.amount.eq(amount));
   });
 
   it("Initialize global state", async () => {
@@ -76,10 +81,23 @@ describe("deposit", () => {
   });
 
   it("Initialize token store", async () => {
+    [tokenStoreAuthority, tokenStoreAuthorityBump] =
+      await anchor.web3.PublicKey.findProgramAddress(
+        [Buffer.from("store_auth")],
+        program.programId
+      );
+
     usdcStore = await createAssociatedTokenAccount(
       provider,
       usdcMint,
       tokenStoreAuthority
+    );
+
+    assert.ok(
+      usdcStore.toBase58() ==
+        (
+          await getAssociatedTokenAccount(usdcMint, tokenStoreAuthority)
+        ).toBase58()
     );
   });
 
@@ -101,7 +119,6 @@ describe("deposit", () => {
       },
       signers: [alice],
     });
-    
   });
 
   it("Deposit tokens", async () => {
@@ -120,11 +137,11 @@ describe("deposit", () => {
       signers: [alice],
     });
 
-    userUsdcData = await getTokenAccount(provider, aliceUsdc);
-    assert.ok(userUsdcData.amount.eq(new anchor.BN(0)));
+    aliceUsdcAccount = await getTokenAccount(provider, aliceUsdc);
+    assert.ok(aliceUsdcAccount.amount.eq(new anchor.BN(0)));
 
-    programUsdcData = await getTokenAccount(provider, usdcStore);
-    assert.ok(programUsdcData.amount.eq(amount));
+    programUsdcAccount = await getTokenAccount(provider, usdcStore);
+    assert.ok(programUsdcAccount.amount.eq(amount));
   });
 
   it("Withdraw tokens", async () => {
@@ -141,11 +158,11 @@ describe("deposit", () => {
       },
       signers: [alice],
     });
-    
-    userUsdcData = await getTokenAccount(provider, aliceUsdc);
-    assert.ok(userUsdcData.amount.eq(amount));
 
-    programUsdcData = await getTokenAccount(provider, usdcStore);
-    assert.ok(programUsdcData.amount.eq(new anchor.BN(0)));
+    aliceUsdcAccount = await getTokenAccount(provider, aliceUsdc);
+    assert.ok(aliceUsdcAccount.amount.eq(amount));
+
+    programUsdcAccount = await getTokenAccount(provider, usdcStore);
+    assert.ok(programUsdcAccount.amount.eq(new anchor.BN(0)));
   });
 });
