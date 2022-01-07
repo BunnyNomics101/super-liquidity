@@ -5,7 +5,7 @@ anchor_version = "0.19.0"
 super_liquidity = "GD7B9rYsWeuLyYMTDa9z5C7osPg5gMDZZZqpF5NEmGXD"
 
 [programs.devnet]
-super_liquidity = "GD7B9rYsWeuLyYMTDa9z5C7osPg5gMDZZZqpF5NEmGXD"
+super_liquidity = "7Fr6vqkUddiBTC9fkgV8E4mRo9AWJo9ajntGjjPTuTva"
 
 [registry]
 url = "https://anchor.projectserum.com"
