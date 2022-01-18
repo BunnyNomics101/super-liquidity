@@ -163,6 +163,11 @@ describe("deposit", () => {
 
     programUsdcAccount = await getTokenAccount(provider, usdcStore);
     assert.ok(programUsdcAccount.amount.eq(amount));
+
+    const aliceUsdcVaultData = await program.account.userCoinVault.fetch(
+      aliceUsdcVault
+    );
+    assert.ok(aliceUsdcVaultData.amount.eq(amount));
   });
 
   it("Attacker can't withdraw tokens from alice vault", async () => {
@@ -217,5 +222,10 @@ describe("deposit", () => {
 
     programUsdcAccount = await getTokenAccount(provider, usdcStore);
     assert.ok(programUsdcAccount.amount.eq(new anchor.BN(0)));
+
+    const aliceUsdcVaultData = await program.account.userCoinVault.fetch(
+      aliceUsdcVault
+    );
+    assert.ok(aliceUsdcVaultData.amount.eq(new anchor.BN(0)));
   });
 });

@@ -72,6 +72,8 @@ impl<'info> Withdraw<'info> {
             amount,
         )?;
 
+        self.user_vault.amount -= amount;
+
         Ok(())
     }
 }
