@@ -49,7 +49,10 @@ pub mod super_liquidity {
         ctx: Context<UpdateUserVault>,
         buy_fee_bp: u32,
         sell_fee_bp: u32,
+        min: u64,
+        max: u64,
     ) -> ProgramResult {
-        ctx.accounts.process(buy_fee_bp, sell_fee_bp)
+        ctx.accounts.process(buy_fee_bp, sell_fee_bp, min, max)
     }
+    
 }

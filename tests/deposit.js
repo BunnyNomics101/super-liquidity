@@ -228,4 +228,28 @@ describe("deposit", () => {
     );
     assert.ok(aliceUsdcVaultData.amount.eq(new anchor.BN(0)));
   });
+
+  it("User changes fees, min and max", async () => {
+    let sellFee = 1;
+    let buyFee = 3;
+    let min = new anchor.BN(5);
+    let max = new anchor.BN(7);
+    await program.rpc.updateUserVault(sellFee, buyFee, min, max, {
+      accounts: {
+        userAccount: alice.publicKey,
+        userVault: aliceUsdcVault,
+      },
+      signers: [alice],
+    });
+
+    const aliceUsdcVaultData = await program.account.userCoinVault.fetch(
+      aliceUsdcVault
+    );
+    
+    assert.ok(aliceUsdcVaultData.buyFee == buyFee);
+    assert.ok(aliceUsdcVaultData.sellFee == sellFee);
+    assert.ok(aliceUsdcVaultData.min.eq(min));
+    assert.ok(aliceUsdcVaultData.max.eq(max));
+    
+  });
 });
