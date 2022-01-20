@@ -2,7 +2,7 @@ const anchor = require("@project-serum/anchor");
 const BN = require("@project-serum/anchor").BN;
 const assert = require("assert");
 
-describe("oracle", () => {
+describe("mock-oracle", () => {
   const provider = anchor.Provider.env();
 
   // Configure the client to use the local cluster.
@@ -12,7 +12,7 @@ describe("oracle", () => {
 
   let tempCoin = {
     price: new BN(165800),
-    symbol: "DIA",
+    symbol: "MockSOL",
   };
 
   let listener = null;
@@ -121,7 +121,7 @@ describe("oracle", () => {
     assert.ok(coinInfo.price.eq(tempCoin.price));
   });
 
-  it("delete coin", async () => {
+  it("Delete coin", async () => {
     // compute a PDA based on program.programId + symbol
     let [coinPDA, bump] = await anchor.web3.PublicKey.findProgramAddress(
       [tempCoin.symbol],

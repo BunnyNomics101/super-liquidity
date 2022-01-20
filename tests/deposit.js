@@ -12,7 +12,7 @@ const {
   airdropLamports,
 } = require("./utils");
 
-xdescribe("deposit", () => {
+describe("deposit", () => {
   anchor.setProvider(anchor.Provider.env());
 
   const program = anchor.workspace.SuperLiquidity;
@@ -21,17 +21,17 @@ xdescribe("deposit", () => {
   const alice = anchor.web3.Keypair.generate();
   const attacker = anchor.web3.Keypair.generate();
 
-  let usdcMint,
-    aliceUsdc,
-    usdcStore,
+  let mockSOLMint,
+    alicemockSOL,
+    mockSOLStore,
     tokenStoreAuthorityBump,
     tokenStoreAuthority,
-    aliceUsdcVault,
-    aliceUsdcVaultBump,
+    aliceMockSOLVault,
+    aliceMockSOLVaultBump,
     globalState,
     globalStateBump,
-    aliceUsdcAccount,
-    programUsdcAccount,
+    aliceMockSOLAccount,
+    programMockSOLAccount,
     amount;
 
   it("Airdrop lamports to alice", async function () {
@@ -51,39 +51,39 @@ xdescribe("deposit", () => {
   });
 
   it("Create and mint test tokens", async () => {
-    // Create USDC mint
-    usdcMint = await createMint(provider, adminAccount);
+    // Create MockSOL Mint
+    mockSOLMint = await createMint(provider, adminAccount);
 
-    aliceUsdc = await createAssociatedTokenAccount(
+    alicemockSOL = await createAssociatedTokenAccount(
       provider,
-      usdcMint,
+      mockSOLMint,
       alice.publicKey
     );
 
     assert.ok(
-      aliceUsdc.toBase58() ==
-        (await getAssociatedTokenAccount(usdcMint, alice.publicKey)).toBase58()
+      alicemockSOL.toBase58() ==
+        (await getAssociatedTokenAccount(mockSOLMint, alice.publicKey)).toBase58()
     );
 
-    attackerUsdc = await createAssociatedTokenAccount(
+    attackerMockSOL = await createAssociatedTokenAccount(
       provider,
-      usdcMint,
+      mockSOLMint,
       attacker.publicKey
     );
 
     assert.ok(
-      attackerUsdc.toBase58() ==
+      attackerMockSOL.toBase58() ==
         (
-          await getAssociatedTokenAccount(usdcMint, attacker.publicKey)
+          await getAssociatedTokenAccount(mockSOLMint, attacker.publicKey)
         ).toBase58()
     );
 
     amount = new anchor.BN(5 * 10 ** 6);
     // Create user and program token accounts
-    await mintToAccount(provider, usdcMint, aliceUsdc, amount, adminAccount);
+    await mintToAccount(provider, mockSOLMint, alicemockSOL, amount, adminAccount);
 
-    let aliceUsdcAccount = await getTokenAccount(provider, aliceUsdc);
-    assert.ok(aliceUsdcAccount.amount.eq(amount));
+    let aliceMockSOLAccount = await getTokenAccount(provider, alicemockSOL);
+    assert.ok(aliceMockSOLAccount.amount.eq(amount));
   });
 
   it("Initialize global state", async () => {
@@ -109,34 +109,34 @@ xdescribe("deposit", () => {
         program.programId
       );
 
-    usdcStore = await createAssociatedTokenAccount(
+    mockSOLStore = await createAssociatedTokenAccount(
       provider,
-      usdcMint,
+      mockSOLMint,
       tokenStoreAuthority
     );
 
     assert.ok(
-      usdcStore.toBase58() ==
+      mockSOLStore.toBase58() ==
         (
-          await getAssociatedTokenAccount(usdcMint, tokenStoreAuthority)
+          await getAssociatedTokenAccount(mockSOLMint, tokenStoreAuthority)
         ).toBase58()
     );
   });
 
   it("Initialize vault", async () => {
     // Associated account PDA - store user data
-    [aliceUsdcVault, aliceUsdcVaultBump] =
+    [aliceMockSOLVault, aliceMockSOLVaultBump] =
       await anchor.web3.PublicKey.findProgramAddress(
-        [alice.publicKey.toBuffer(), usdcMint.toBuffer()],
+        [alice.publicKey.toBuffer(), mockSOLMint.toBuffer()],
         program.programId
       );
 
-    await program.rpc.initUserVault(aliceUsdcVaultBump, 0, 0, {
+    await program.rpc.initUserVault(aliceMockSOLVaultBump, 0, 0, {
       accounts: {
         globalState: globalState,
         userAccount: alice.publicKey,
-        mint: usdcMint,
-        userVault: aliceUsdcVault,
+        mint: mockSOLMint,
+        userVault: aliceMockSOLVault,
         systemProgram: anchor.web3.SystemProgram.programId,
       },
       signers: [alice],
@@ -146,39 +146,39 @@ xdescribe("deposit", () => {
   it("Deposit tokens", async () => {
     await program.rpc.deposit(amount, {
       accounts: {
-        userVault: aliceUsdcVault,
+        userVault: aliceMockSOLVault,
         tokenStoreAuthority: tokenStoreAuthority,
-        mint: usdcMint,
-        getTokenFrom: aliceUsdc,
+        mint: mockSOLMint,
+        getTokenFrom: alicemockSOL,
         getTokenFromAuthority: alice.publicKey,
-        tokenStorePda: usdcStore,
+        tokenStorePda: mockSOLStore,
         systemProgram: anchor.web3.SystemProgram.programId,
         tokenProgram: TOKEN_PROGRAM_ID,
       },
       signers: [alice],
     });
 
-    aliceUsdcAccount = await getTokenAccount(provider, aliceUsdc);
-    assert.ok(aliceUsdcAccount.amount.eq(new anchor.BN(0)));
+    aliceMockSOLAccount = await getTokenAccount(provider, alicemockSOL);
+    assert.ok(aliceMockSOLAccount.amount.eq(new anchor.BN(0)));
 
-    programUsdcAccount = await getTokenAccount(provider, usdcStore);
-    assert.ok(programUsdcAccount.amount.eq(amount));
+    programMockSOLAccount = await getTokenAccount(provider, mockSOLStore);
+    assert.ok(programMockSOLAccount.amount.eq(amount));
 
-    const aliceUsdcVaultData = await program.account.userCoinVault.fetch(
-      aliceUsdcVault
+    const aliceMockSOLVaultData = await program.account.userCoinVault.fetch(
+      aliceMockSOLVault
     );
-    assert.ok(aliceUsdcVaultData.amount.eq(amount));
+    assert.ok(aliceMockSOLVaultData.amount.eq(amount));
   });
 
   it("Attacker can't withdraw tokens from alice vault", async () => {
     try {
       await program.rpc.withdraw(tokenStoreAuthorityBump, amount, {
         accounts: {
-          userVault: aliceUsdcVault,
-          mint: usdcMint,
-          sendTokenTo: attackerUsdc,
+          userVault: aliceMockSOLVault,
+          mint: mockSOLMint,
+          sendTokenTo: attackerMockSOL,
           tokenStoreAuthority: tokenStoreAuthority,
-          tokenStorePda: usdcStore,
+          tokenStorePda: mockSOLStore,
           userAccount: attacker.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
           tokenProgram: TOKEN_PROGRAM_ID,
@@ -186,30 +186,30 @@ xdescribe("deposit", () => {
         signers: [attacker],
       });
 
-      attackerUsdcAccount = await getTokenAccount(provider, attackerUsdc);
-      assert.ok(attackerUsdcAccount.amount.eq(amount));
+      attackerMockSOLAccount = await getTokenAccount(provider, attackerMockSOL);
+      assert.ok(attackerMockSOLAccount.amount.eq(amount));
 
-      programUsdcAccount = await getTokenAccount(provider, usdcStore);
-      assert.ok(programUsdcAccount.amount.eq(new anchor.BN(0)));
+      programMockSOLAccount = await getTokenAccount(provider, mockSOLStore);
+      assert.ok(programMockSOLAccount.amount.eq(new anchor.BN(0)));
 
       console.log("Attack success");
     } catch {}
 
-    attackerUsdcAccount = await getTokenAccount(provider, attackerUsdc);
-    assert.ok(attackerUsdcAccount.amount.eq(new anchor.BN(0)));
+    attackerMockSOLAccount = await getTokenAccount(provider, attackerMockSOL);
+    assert.ok(attackerMockSOLAccount.amount.eq(new anchor.BN(0)));
 
-    programUsdcAccount = await getTokenAccount(provider, usdcStore);
-    assert.ok(programUsdcAccount.amount.eq(amount));
+    programMockSOLAccount = await getTokenAccount(provider, mockSOLStore);
+    assert.ok(programMockSOLAccount.amount.eq(amount));
   });
 
   it("Withdraw tokens", async () => {
     await program.rpc.withdraw(tokenStoreAuthorityBump, amount, {
       accounts: {
-        userVault: aliceUsdcVault,
-        mint: usdcMint,
-        sendTokenTo: aliceUsdc,
+        userVault: aliceMockSOLVault,
+        mint: mockSOLMint,
+        sendTokenTo: alicemockSOL,
         tokenStoreAuthority: tokenStoreAuthority,
-        tokenStorePda: usdcStore,
+        tokenStorePda: mockSOLStore,
         userAccount: alice.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
         tokenProgram: TOKEN_PROGRAM_ID,
@@ -217,16 +217,16 @@ xdescribe("deposit", () => {
       signers: [alice],
     });
 
-    aliceUsdcAccount = await getTokenAccount(provider, aliceUsdc);
-    assert.ok(aliceUsdcAccount.amount.eq(amount));
+    aliceMockSOLAccount = await getTokenAccount(provider, alicemockSOL);
+    assert.ok(aliceMockSOLAccount.amount.eq(amount));
 
-    programUsdcAccount = await getTokenAccount(provider, usdcStore);
-    assert.ok(programUsdcAccount.amount.eq(new anchor.BN(0)));
+    programMockSOLAccount = await getTokenAccount(provider, mockSOLStore);
+    assert.ok(programMockSOLAccount.amount.eq(new anchor.BN(0)));
 
-    const aliceUsdcVaultData = await program.account.userCoinVault.fetch(
-      aliceUsdcVault
+    const aliceMockSOLVaultData = await program.account.userCoinVault.fetch(
+      aliceMockSOLVault
     );
-    assert.ok(aliceUsdcVaultData.amount.eq(new anchor.BN(0)));
+    assert.ok(aliceMockSOLVaultData.amount.eq(new anchor.BN(0)));
   });
 
   it("User changes fees, min and max", async () => {
@@ -237,19 +237,19 @@ xdescribe("deposit", () => {
     await program.rpc.updateUserVault(sellFee, buyFee, min, max, {
       accounts: {
         userAccount: alice.publicKey,
-        userVault: aliceUsdcVault,
+        userVault: aliceMockSOLVault,
       },
       signers: [alice],
     });
 
-    const aliceUsdcVaultData = await program.account.userCoinVault.fetch(
-      aliceUsdcVault
+    const aliceMockSOLVaultData = await program.account.userCoinVault.fetch(
+      aliceMockSOLVault
     );
     
-    assert.ok(aliceUsdcVaultData.buyFee == buyFee);
-    assert.ok(aliceUsdcVaultData.sellFee == sellFee);
-    assert.ok(aliceUsdcVaultData.min.eq(min));
-    assert.ok(aliceUsdcVaultData.max.eq(max));
+    assert.ok(aliceMockSOLVaultData.buyFee == buyFee);
+    assert.ok(aliceMockSOLVaultData.sellFee == sellFee);
+    assert.ok(aliceMockSOLVaultData.min.eq(min));
+    assert.ok(aliceMockSOLVaultData.max.eq(max));
     
   });
 });
