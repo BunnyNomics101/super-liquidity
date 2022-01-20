@@ -472,6 +472,7 @@ name = "delphor-oracle"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
+ "mock-oracle",
 ]
 
 [[package]]
