@@ -12,7 +12,7 @@ const {
   airdropLamports,
 } = require("./utils");
 
-describe("deposit", () => {
+xdescribe("deposit", () => {
   anchor.setProvider(anchor.Provider.env());
 
   const program = anchor.workspace.SuperLiquidity;
