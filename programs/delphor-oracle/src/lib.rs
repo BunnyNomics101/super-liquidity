@@ -10,21 +10,20 @@ pub mod delphor_oracle {
         let coin_oracle1 = &mut ctx.accounts.coin_oracle1;
         let coin_oracle2 = &mut ctx.accounts.coin_oracle2;
         let coin_oracle3 = &mut ctx.accounts.coin_oracle3;
+        let coin_price = &mut ctx.accounts.coin_price;
 
         // Exclude furthest price and average the other two
-        /*
-        let ab: bool = coin_oracle1.price > coin_oracle2.price;
-        let bc: bool = coin_oracle2.price > coin_oracle3.price;
-        let ca: bool = coin_oracle3.price > coin_oracle1.price;
+        let ab: u64 = coin_oracle1.price - coin_oracle2.price;
+        let bc: u64 = coin_oracle2.price - coin_oracle3.price;
+        let ca: u64 = coin_oracle3.price - coin_oracle1.price;
 
-        if ca == ab {
-            coin_price.price = 
-        } else if ab == bc {
-
+        if ab < bc && ab < ca {
+            coin_price.price = (coin_oracle1.price + coin_oracle2.price) / 2;
+        } else if bc < ab && bc < ca {
+            coin_price.price = (coin_oracle2.price + coin_oracle3.price) / 2;
         } else{
-
+            coin_price.price = (coin_oracle3.price + coin_oracle1.price) / 2;
         }
-        */
         
         Ok(())
     }
