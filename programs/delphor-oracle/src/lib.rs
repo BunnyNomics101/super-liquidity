@@ -45,7 +45,7 @@ pub struct UpdateCoinPrice<'info> {
     coin_oracle2: Account<'info, CoinInfo>,
     #[account(owner = mock_oracle::ID)]
     coin_oracle3: Account<'info, CoinInfo>,
-    #[account(init,payer=payer,seeds=[symbol.as_bytes().as_ref()],bump=pda_bump, space=8+8+32+ 4+MAX_SYMBOL_LEN)]
+    #[account(init_if_needed,payer=payer,seeds=[symbol.as_bytes().as_ref()],bump=pda_bump, space=8+8+32+ 4+MAX_SYMBOL_LEN)]
     coin_price: Account<'info, CoinData>,
     payer: Signer<'info>,
     system_program: Program<'info, System>,
