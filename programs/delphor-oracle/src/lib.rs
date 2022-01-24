@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use mock_oracle::{CoinInfo};
 
-declare_id!("CSLRinGydCdX4KZs1ngeRQHfdfh1g63g8wwCGUZ4r5j8");
+declare_id!("DJkR4f9MY9NBYsJS1m2aXmhM97B1nW8fMVCcSAtsBdg8");
 
 #[program]
 pub mod delphor_oracle {
