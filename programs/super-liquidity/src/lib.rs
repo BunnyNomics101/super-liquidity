@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 // use anchor_lang::solana_program::pubkey::Pubkey;
 
-use instructions::{admin::*, deposit::*, withdraw::*};
+use instructions::{admin::*, deposit::*, withdraw::*, swap::*};
 
 ///error
 pub mod error;
@@ -24,6 +24,10 @@ pub mod super_liquidity {
     ///withdraw
     pub fn withdraw(ctx: Context<Withdraw>, bump: u8, amount: u64) -> ProgramResult {
         ctx.accounts.process(bump, amount)
+    }
+
+    pub fn swap(ctx: Context<Swap>, swap_amount: u64, min_amount: u64) -> ProgramResult {
+        ctx.accounts.process(swap_amount, min_amount)
     }
 
     // -------------

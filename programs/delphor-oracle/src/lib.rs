@@ -58,4 +58,5 @@ pub struct CoinData {
     pub last_update_timestamp: u64,
     pub authority: Pubkey,
     pub symbol: String,
+    pub decimals: u32,
 }

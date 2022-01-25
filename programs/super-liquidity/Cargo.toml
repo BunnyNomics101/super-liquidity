@@ -19,6 +19,7 @@ anchor-debug = []
 anchor-lang = "0.19.0"
 anchor-spl = "0.19.0"
 solana-program = "1.8.11"
+delphor-oracle = { path = "../delphor-oracle", features = ["cpi"] }
 
 # kept here even if it generates a warning
 # in case this project is moved and/or compiled on its own
