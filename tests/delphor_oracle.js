@@ -7,6 +7,10 @@ function checkData(mockSOL, coinData) {
   assert.ok(coinData.price.eq(mockSOL.price));
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 describe("delphor-oracle", () => {
   const provider = anchor.Provider.env();
 
@@ -22,7 +26,7 @@ describe("delphor-oracle", () => {
     symbol: "MockSOL",
   };
 
-  it("Create coin and update price", async () => {
+  it("MockOracle create coin", async () => {
     let [oracleMockSOLPDA, bump] =
       await anchor.web3.PublicKey.findProgramAddress(
         [mockSOL.symbol],
@@ -43,13 +47,26 @@ describe("delphor-oracle", () => {
       }
     );
 
-    let [delphorMockSOLPDA, bump2] =
+    const oracleMockSOLData = await mockOracleProgram.account.coinInfo.fetch(
+      oracleMockSOLPDA
+    );
+
+    checkData(mockSOL, oracleMockSOLData);
+  });
+
+  it("DelphorOracle init and update price", async () => {
+    let [oracleMockSOLPDA] = await anchor.web3.PublicKey.findProgramAddress(
+      [mockSOL.symbol],
+      mockOracleProgram.programId
+    );
+
+    let [delphorMockSOLPDA, bump] =
       await anchor.web3.PublicKey.findProgramAddress(
         [mockSOL.symbol],
         delphorOracleProgram.programId
       );
 
-    await delphorOracleProgram.rpc.updatePrice(mockSOL.symbol, bump2, {
+    await delphorOracleProgram.rpc.updatePrice(mockSOL.symbol, bump, {
       accounts: {
         coinOracle1: oracleMockSOLPDA,
         coinOracle2: oracleMockSOLPDA,
@@ -60,14 +77,13 @@ describe("delphor-oracle", () => {
       },
     });
 
-    const delphorMockSOLData = await delphorOracleProgram.account.coinData.fetch(
-      delphorMockSOLPDA
-    );
+    const delphorMockSOLData =
+      await delphorOracleProgram.account.coinData.fetch(delphorMockSOLPDA);
 
     checkData(mockSOL, delphorMockSOLData);
   });
-/*
-  xit("Update coinInfo oracle", async () => {
+
+  it("MockOracle update coinInfo", async () => {
     mockSOL.price = new BN(258);
 
     // compute a PDA based on mockOracleProgram.programId + symbol
@@ -91,6 +107,47 @@ describe("delphor-oracle", () => {
     checkData(mockSOL, coinInfo);
   });
 
+  it("DelphorOralce update price", async () => {
+    let [oracleMockSOLPDA] = await anchor.web3.PublicKey.findProgramAddress(
+      [mockSOL.symbol],
+      mockOracleProgram.programId
+    );
+
+    let [delphorMockSOLPDA, bump] =
+      await anchor.web3.PublicKey.findProgramAddress(
+        [mockSOL.symbol],
+        delphorOracleProgram.programId
+      );
+
+    /*
+    Solana doesn't allow sending two identical tx's within the same block, 
+    so we wait a second. Otherwise revert with:
+    "Error: failed to send transaction: Transaction simulation failed: 
+    This transaction has already been processed"
+    */
+    await sleep(1000);
+
+    await delphorOracleProgram.rpc.updatePrice(mockSOL.symbol, bump, {
+      accounts: {
+        coinOracle1: oracleMockSOLPDA,
+        coinOracle2: oracleMockSOLPDA,
+        coinOracle3: oracleMockSOLPDA,
+        coinPrice: delphorMockSOLPDA,
+        payer: adminAccount,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      },
+    });
+
+    const delphorMockSOLData =
+      await delphorOracleProgram.account.coinData.fetch(delphorMockSOLPDA);
+
+    checkData(mockSOL, delphorMockSOLData);
+  });
+
+  // TODO: Reject update price from non authority 
+  // Or add checks to secure the accounts that are passed to the oracle
+  
+  /*
   xit("Reject update coinInfo oracle from non authority", async () => {
     const aRandomKey = anchor.web3.Keypair.generate();
 
@@ -123,38 +180,6 @@ describe("delphor-oracle", () => {
     assert.ok(coinInfo.lastUpdateTimestamp.eq(lastUpdateTimestamp));
     assert.ok(coinInfo.symbol == mockSOL.symbol);
     assert.ok(coinInfo.price.eq(mockSOL.price));
-  });
-
-  xit("Delete coin", async () => {
-    // compute a PDA based on mockOracleProgram.programId + symbol
-    let [oracleMockSOLPDA, bump] =
-      await anchor.web3.PublicKey.findProgramAddress(
-        [mockSOL.symbol],
-        mockOracleProgram.programId
-      );
-
-    const tx = await mockOracleProgram.rpc
-      .deleteCoin({
-        accounts: {
-          coin: oracleMockSOLPDA,
-          authority: provider.wallet.publicKey,
-          payer: provider.wallet.publicKey,
-        },
-      })
-      .catch((err) => {
-        console.error(err);
-      });
-
-    try {
-      coinInfo = await mockOracleProgram.account.coinInfo.fetch(
-        oracleMockSOLPDA
-      );
-      assert.ok(false);
-    } catch (e) {
-      assert.ok(
-        e == "Error: Account does not exist " + oracleMockSOLPDA.toBase58()
-      );
-    }
   });
   */
 });
