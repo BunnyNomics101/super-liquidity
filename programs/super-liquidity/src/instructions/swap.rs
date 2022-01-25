@@ -1,4 +1,3 @@
-use crate::error::*;
 use crate::states::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
@@ -12,12 +11,14 @@ use delphor_oracle::CoinData;
 pub struct Swap<'info> {
     // Account with price from oracle
     #[account(owner = delphor_oracle::ID)]
-    pub get_coin_data: Account<'info, CoinData>,
+    pub get_coin_data: Box<Account<'info, CoinData>>,
     #[account(owner = delphor_oracle::ID)]
-    pub send_coin_data: Account<'info, CoinData>,
+    pub send_coin_data: Box<Account<'info, CoinData>>,
     // User PDA according to the swaped token
     #[account(mut)]
-    pub user_vault: Account<'info, UserCoinVault>,
+    pub user_vault_from: Box<Account<'info, UserCoinVault>>,
+    #[account(mut)]
+    pub user_vault_to: Box<Account<'info, UserCoinVault>>,
     pub token_store_authority: AccountInfo<'info>,
     // token user sends
     pub mint_send: Account<'info, Mint>,
@@ -25,19 +26,19 @@ pub struct Swap<'info> {
     pub mint_receive: Account<'info, Mint>,
     // Account where user have tokens
     #[account(mut)]
-    pub get_token_from: Account<'info, TokenAccount>,
+    pub get_token_from: Box<Account<'info, TokenAccount>>,
     // owner or delegate_authority
     #[account(signer)]
     pub get_token_from_authority: AccountInfo<'info>,
     // User account to send tokens
     #[account(mut)]
-    pub send_token_to: Account<'info, TokenAccount>,
+    pub send_token_to: Box<Account<'info, TokenAccount>>,
     // PDA to withdraw tokens
     #[account(mut, associated_token::mint = mint_send, associated_token::authority = token_store_authority)]
-    pub token_store_pda_from: Account<'info, TokenAccount>,
+    pub token_store_pda_from: Box<Account<'info, TokenAccount>>,
     // PDA to deposit tokens
     #[account(mut, associated_token::mint = mint_receive, associated_token::authority = token_store_authority)]
-    pub token_store_pda_to: Account<'info, TokenAccount>,
+    pub token_store_pda_to: Box<Account<'info, TokenAccount>>,
     pub system_program: AccountInfo<'info>,
     pub token_program: AccountInfo<'info>,
 }
@@ -47,12 +48,13 @@ impl<'info> Swap<'info> {
         let get_coin_decimals = self.get_coin_data.decimals;
         let send_coin_price = self.send_coin_data.price;
         let send_coin_decimals = self.send_coin_data.decimals;
-        let user_vault = &mut self.user_vault;
+        let user_vault_from = &mut self.user_vault_from;
+        let user_vault_to = &mut self.user_vault_to;
         let amount_to_send: u64;
 
         let token_price: u64 = (get_coin_price * u64::pow(10, send_coin_decimals)
             / send_coin_price)
-            * (10000 - user_vault.sell_fee as u64)
+            * (10000 - user_vault_from.sell_fee as u64)
             / 10000;
 
         // Calculate final amount with oracle price and fees
@@ -62,7 +64,7 @@ impl<'info> Swap<'info> {
             return Err(ErrorCode::InsufficientAmount.into());
         }
 
-        if user_vault.amount < amount_to_send {
+        if user_vault_from.amount < amount_to_send {
             return Err(ErrorCode::VaultInsufficientAmount.into());
         }
 
@@ -78,8 +80,6 @@ impl<'info> Swap<'info> {
             swap_amount,
         )?;
 
-        // TODO: Sumar swap_amount a amount del vault que recibe
-
         anchor_spl::token::transfer(
             CpiContext::new(
                 self.token_program.clone(),
@@ -92,7 +92,8 @@ impl<'info> Swap<'info> {
             amount_to_send,
         )?;
 
-        user_vault.amount -= amount_to_send;
+        user_vault_to.amount += swap_amount;
+        user_vault_from.amount -= amount_to_send;
 
         Ok(())
     }
