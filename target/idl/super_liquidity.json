@@ -1,0 +1,436 @@
+{
+  "version": "0.1.0",
+  "name": "super_liquidity",
+  "instructions": [
+    {
+      "name": "deposit",
+      "accounts": [
+        {
+          "name": "userVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenStoreAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "getTokenFrom",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "getTokenFromAuthority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "tokenStorePda",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "withdraw",
+      "accounts": [
+        {
+          "name": "userVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "sendTokenTo",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenStoreAuthority",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenStorePda",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userAccount",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "bump",
+          "type": "u8"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "swap",
+      "accounts": [
+        {
+          "name": "getCoinData",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "sendCoinData",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "userVaultFrom",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userVaultTo",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenStoreAuthority",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mintSend",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "mintReceive",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "getTokenFrom",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "getTokenFromAuthority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "sendTokenTo",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenStorePdaFrom",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenStorePdaTo",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "swapAmount",
+          "type": "u64"
+        },
+        {
+          "name": "minAmount",
+          "type": "u64"
+        },
+        {
+          "name": "bump",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "initialize",
+      "accounts": [
+        {
+          "name": "adminAccount",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "globalState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "bump",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "initUserVault",
+      "accounts": [
+        {
+          "name": "globalState",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "userAccount",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "userVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "bump",
+          "type": "u8"
+        },
+        {
+          "name": "minFee",
+          "type": "u32"
+        },
+        {
+          "name": "maxFee",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "initTokenStore",
+      "accounts": [
+        {
+          "name": "globalState",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "adminAccount",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenStoreAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenStore",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "bump",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "updateUserVault",
+      "accounts": [
+        {
+          "name": "userAccount",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "userVault",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "buyFeeBp",
+          "type": "u32"
+        },
+        {
+          "name": "sellFeeBp",
+          "type": "u32"
+        },
+        {
+          "name": "min",
+          "type": "u64"
+        },
+        {
+          "name": "max",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "GlobalState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "adminAccount",
+            "type": "publicKey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UserCoinVault",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "publicKey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "min",
+            "type": "u64"
+          },
+          {
+            "name": "max",
+            "type": "u64"
+          },
+          {
+            "name": "buyFee",
+            "type": "u32"
+          },
+          {
+            "name": "sellFee",
+            "type": "u32"
+          },
+          {
+            "name": "pause",
+            "type": "bool"
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "ErrorCode",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "InsufficientAmount"
+          },
+          {
+            "name": "VaultInsufficientAmount"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "AccessDenied",
+      "msg": "Access denied"
+    },
+    {
+      "code": 6001,
+      "name": "NotTheOwner",
+      "msg": "Not the owner"
+    }
+  ],
+  "metadata": {
+    "address": "2XwMaJUsBUmiRAVXQ3ExzWgvojtDwHyh33nq3rWykJhp"
+  }
+}
