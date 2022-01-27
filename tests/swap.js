@@ -66,7 +66,7 @@ describe("swap", () => {
     bump;
 
   function Lamport(value) {
-    return new BN(value * 10 ** 6);
+    return new BN(value * 10 ** 9);
   }
 
   let mintMockSOLAmountToAlice = Lamport(10);
@@ -80,13 +80,13 @@ describe("swap", () => {
   let mockSOL = {
     price: Lamport(150),
     symbol: "MockSOL",
-    decimals: 6,
+    decimals: 9,
   };
 
   let mockUSDC = {
     price: Lamport(1),
     symbol: "MockUSDC",
-    decimals: 6,
+    decimals: 9,
   };
 
   it("Airdrop lamports to alice", async function () {
@@ -462,8 +462,8 @@ describe("swap", () => {
   it("Alice changes mockSOL fees, min and max", async () => {
     let sellFee = 100;
     let buyFee = 300;
-    let min = new anchor.BN(1 * 10 ** 6);
-    let max = new anchor.BN(10 * 10 ** 6);
+    let min = new anchor.BN(1 * 10 ** 9);
+    let max = new anchor.BN(10 * 10 ** 9);
     await superLiquidityProgram.rpc.updateUserVault(sellFee, buyFee, min, max, {
       accounts: {
         userAccount: alice.publicKey,
@@ -486,8 +486,8 @@ describe("swap", () => {
   it("Alice changes mockUSDC fees, min and max", async () => {
     let sellFee = 100;
     let buyFee = 300;
-    let min = new anchor.BN(1 * 10 ** 6);
-    let max = new anchor.BN(10 * 10 ** 6);
+    let min = new anchor.BN(1 * 10 ** 9);
+    let max = new anchor.BN(10 * 10 ** 9);
     await superLiquidityProgram.rpc.updateUserVault(sellFee, buyFee, min, max, {
       accounts: {
         userAccount: alice.publicKey,
@@ -510,8 +510,8 @@ describe("swap", () => {
   it("Bob changes mockSOL fees, min and max", async () => {
     let sellFee = 1;
     let buyFee = 3;
-    let min = new anchor.BN(1 * 10 ** 6);
-    let max = new anchor.BN(10 * 10 ** 6);
+    let min = new anchor.BN(1 * 10 ** 9);
+    let max = new anchor.BN(10 * 10 ** 9);
     await superLiquidityProgram.rpc.updateUserVault(sellFee, buyFee, min, max, {
       accounts: {
         userAccount: bob.publicKey,
@@ -532,8 +532,8 @@ describe("swap", () => {
   it("Bob changes mockUSDC fees, min and max", async () => {
     let sellFee = 1;
     let buyFee = 3;
-    let min = new anchor.BN(1 * 10 ** 6);
-    let max = new anchor.BN(10 * 10 ** 6);
+    let min = new anchor.BN(1 * 10 ** 9);
+    let max = new anchor.BN(10 * 10 ** 9);
     await superLiquidityProgram.rpc.updateUserVault(sellFee, buyFee, min, max, {
       accounts: {
         userAccount: bob.publicKey,

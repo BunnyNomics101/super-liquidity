@@ -52,14 +52,14 @@ impl<'info> Swap<'info> {
         let user_vault_from = &mut self.user_vault_from;
         let user_vault_to = &mut self.user_vault_to;
 
-        let token_price: u64 = (get_coin_price * u64::pow(10, send_coin_decimals as u32)
-            / send_coin_price)
-            * (10000 - user_vault_from.sell_fee as u64)
+        let token_price: u128 = (get_coin_price as u128 * u128::pow(10, send_coin_decimals as u32)
+            / send_coin_price as u128)
+            * (10000 - user_vault_from.sell_fee as u128)
             / 10000;
 
         // Calculate final amount with oracle price and fees
         let amount_to_send: u64 =
-            (swap_amount * token_price) / u64::pow(10, get_coin_decimals as u32);
+            ((swap_amount as u128 * token_price) / u128::pow(10, get_coin_decimals as u32)) as u64;
 
         if amount_to_send < min_amount {
             return Err(ErrorCode::InsufficientAmount.into());
@@ -99,6 +99,7 @@ impl<'info> Swap<'info> {
 
         user_vault_to.amount += swap_amount;
         user_vault_from.amount -= amount_to_send;
+        
         Ok(())
     }
 }

@@ -31,7 +31,7 @@ pub mod delphor_oracle {
         }
 
         coin_price.symbol = symbol;
-        coin_price.decimals = 6;
+        coin_price.decimals = 9;
         
         Ok(())
     }

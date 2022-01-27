@@ -11,8 +11,8 @@ describe("mock-oracle", () => {
   const program = anchor.workspace.MockOracle;
 
   let tempCoin = {
-    price: new BN(165800),
-    symbol: "MockSOL",
+    price: new BN(1000000),
+    symbol: "MockUSDT",
   };
 
   let listener = null;
