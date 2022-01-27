@@ -19,6 +19,7 @@ pub struct Swap<'info> {
     pub user_vault_from: Box<Account<'info, UserCoinVault>>,
     #[account(mut)]
     pub user_vault_to: Box<Account<'info, UserCoinVault>>,
+    #[account(mut)]
     pub token_store_authority: AccountInfo<'info>,
     // token user sends
     pub mint_send: Account<'info, Mint>,
@@ -34,31 +35,31 @@ pub struct Swap<'info> {
     #[account(mut)]
     pub send_token_to: Box<Account<'info, TokenAccount>>,
     // PDA to withdraw tokens
-    #[account(mut, associated_token::mint = mint_send, associated_token::authority = token_store_authority)]
+    #[account(mut, associated_token::mint = mint_receive, associated_token::authority = token_store_authority)]
     pub token_store_pda_from: Box<Account<'info, TokenAccount>>,
     // PDA to deposit tokens
-    #[account(mut, associated_token::mint = mint_receive, associated_token::authority = token_store_authority)]
+    #[account(mut, associated_token::mint = mint_send, associated_token::authority = token_store_authority)]
     pub token_store_pda_to: Box<Account<'info, TokenAccount>>,
     pub system_program: AccountInfo<'info>,
     pub token_program: AccountInfo<'info>,
 }
 impl<'info> Swap<'info> {
-    pub fn process(&mut self, swap_amount: u64, min_amount: u64) -> ProgramResult {
+    pub fn process(&mut self, swap_amount: u64, min_amount: u64, bump: u8) -> ProgramResult {
         let get_coin_price = self.get_coin_data.price;
         let get_coin_decimals = self.get_coin_data.decimals;
         let send_coin_price = self.send_coin_data.price;
         let send_coin_decimals = self.send_coin_data.decimals;
         let user_vault_from = &mut self.user_vault_from;
         let user_vault_to = &mut self.user_vault_to;
-        let amount_to_send: u64;
 
-        let token_price: u64 = (get_coin_price * u64::pow(10, send_coin_decimals)
+        let token_price: u64 = (get_coin_price * u64::pow(10, send_coin_decimals as u32)
             / send_coin_price)
             * (10000 - user_vault_from.sell_fee as u64)
             / 10000;
 
         // Calculate final amount with oracle price and fees
-        amount_to_send = swap_amount.pow(get_coin_decimals) / token_price;
+        let amount_to_send: u64 =
+            (swap_amount * token_price) / u64::pow(10, get_coin_decimals as u32);
 
         if amount_to_send < min_amount {
             return Err(ErrorCode::InsufficientAmount.into());
@@ -80,21 +81,24 @@ impl<'info> Swap<'info> {
             swap_amount,
         )?;
 
+        let seeds: &[&[u8]] = &[b"store_auth", &[bump]];
+        let signer = &[&seeds[..]];
+
         anchor_spl::token::transfer(
-            CpiContext::new(
+            CpiContext::new_with_signer(
                 self.token_program.clone(),
                 Transfer {
                     from: self.token_store_pda_from.to_account_info(),
                     to: self.send_token_to.to_account_info(),
-                    authority: self.token_store_authority.clone(),
+                    authority: self.token_store_authority.to_account_info(),
                 },
+                signer
             ),
             amount_to_send,
         )?;
 
         user_vault_to.amount += swap_amount;
         user_vault_from.amount -= amount_to_send;
-
         Ok(())
     }
 }

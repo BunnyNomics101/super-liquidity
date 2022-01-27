@@ -24,6 +24,7 @@ describe("delphor-oracle", () => {
   let mockSOL = {
     price: new BN(165800),
     symbol: "MockSOL",
+    decimals: 6
   };
 
   it("MockOracle create coin", async () => {

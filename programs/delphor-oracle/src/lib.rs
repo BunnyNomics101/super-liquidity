@@ -31,6 +31,7 @@ pub mod delphor_oracle {
         }
 
         coin_price.symbol = symbol;
+        coin_price.decimals = 6;
         
         Ok(())
     }
@@ -58,5 +59,5 @@ pub struct CoinData {
     pub last_update_timestamp: u64,
     pub authority: Pubkey,
     pub symbol: String,
-    pub decimals: u32,
+    pub decimals: u8,
 }
