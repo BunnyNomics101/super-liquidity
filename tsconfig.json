@@ -1,0 +1,13 @@
+
+{
+    "compilerOptions": {
+        "module": "CommonJs",
+        "target": "esnext",
+        "outDir": "dist",
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "skipLibCheck": true
+    },
+    "include": ["./feeder/*"],
+    "exclude": ["node_modules"]
+}

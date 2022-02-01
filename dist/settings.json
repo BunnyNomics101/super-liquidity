@@ -1,0 +1,5 @@
+{
+    "symbols": ["BTC", "ADA", "ETH", "DIA", "SOL", "USDC"],
+    "intervalUpdate": 5,
+    "minPriceVariation": 0.00001
+}

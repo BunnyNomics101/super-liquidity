@@ -5,6 +5,7 @@ target/*
 **/*.rs.bk
 test-ledger
 node_modules
-dist
+dist/feeder.js
 temp
 keys
+.secret
