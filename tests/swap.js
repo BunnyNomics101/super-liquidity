@@ -725,19 +725,24 @@ describe("swap", () => {
       );
 
     let finalAmount = new BN(
-      bobSwapAmountSOLForUSDC *
-        (((mockSOL.price / mockUSDC.price) *
-          (10000 - aliceMockUSDCVaultData.sellFee)) /
-          10000)
+      (bobSwapAmountSOLForUSDC *
+        Math.trunc(
+          ((mockSOL.price * (10000 - aliceMockSOLVaultData.buyFee)) /
+            10000 /
+            ((mockUSDC.price * (10000 + aliceMockUSDCVaultData.sellFee)) /
+              10000)) *
+            10 ** 9
+        )) /
+        10 ** 9
     );
+
+    bobMockUSDCAccount = await getTokenAccount(provider, bobmockUSDC);
+    assert.ok(bobMockUSDCAccount.amount.eq(finalAmount));
 
     assert.ok(
       aliceMockUSDCVaultData.amount.eq(
         depositAmountAliceMockUSDC.sub(finalAmount)
       )
     );
-
-    bobMockUSDCAccount = await getTokenAccount(provider, bobmockUSDC);
-    assert.ok(bobMockUSDCAccount.amount.eq(finalAmount));
   });
 });

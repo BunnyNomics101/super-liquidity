@@ -413,6 +413,12 @@
           },
           {
             "name": "VaultInsufficientAmount"
+          },
+          {
+            "name": "ExceedsMaxAmount"
+          },
+          {
+            "name": "ExceedsMinAmount"
           }
         ]
       }

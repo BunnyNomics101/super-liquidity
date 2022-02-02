@@ -52,11 +52,11 @@ impl<'info> Swap<'info> {
         let user_vault_from = &mut self.user_vault_from;
         let user_vault_to = &mut self.user_vault_to;
 
-        let token_price: u128 = (get_coin_price as u128 * u128::pow(10, send_coin_decimals as u32)
-            / send_coin_price as u128)
-            * (10000 - user_vault_from.sell_fee as u128)
-            / 10000;
-
+        let token_price: u128 = (get_coin_price as u128 * (10000 - user_vault_to.buy_fee as u128)
+            / 10000)
+            * u128::pow(10, send_coin_decimals as u32)
+            / (send_coin_price as u128 * (10000 + user_vault_from.sell_fee as u128) / 10000);
+            
         // Calculate final amount with oracle price and fees
         let amount_to_send: u64 =
             ((swap_amount as u128 * token_price) / u128::pow(10, get_coin_decimals as u32)) as u64;
@@ -67,6 +67,14 @@ impl<'info> Swap<'info> {
 
         if user_vault_from.amount < amount_to_send {
             return Err(ErrorCode::VaultInsufficientAmount.into());
+        }
+
+        if user_vault_to.amount + swap_amount > user_vault_to.max {
+            return Err(ErrorCode::ExceedsMaxAmount.into());
+        }
+
+        if user_vault_from.amount - amount_to_send < user_vault_from.min {
+            return Err(ErrorCode::ExceedsMinAmount.into());
         }
 
         anchor_spl::token::transfer(
@@ -92,14 +100,13 @@ impl<'info> Swap<'info> {
                     to: self.send_token_to.to_account_info(),
                     authority: self.token_store_authority.to_account_info(),
                 },
-                signer
+                signer,
             ),
             amount_to_send,
         )?;
 
         user_vault_to.amount += swap_amount;
         user_vault_from.amount -= amount_to_send;
-        
         Ok(())
     }
 }
@@ -113,4 +120,8 @@ pub enum ErrorCode {
     InsufficientAmount,
     #[msg("Vault insufficient balance.")]
     VaultInsufficientAmount,
+    #[msg("Operation exceeds max balance to user_vault_to")]
+    ExceedsMaxAmount,
+    #[msg("Operation exceeds min balance to user_vault_from")]
+    ExceedsMinAmount,
 }
