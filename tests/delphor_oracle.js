@@ -2,6 +2,8 @@ const anchor = require("@project-serum/anchor");
 const BN = require("@project-serum/anchor").BN;
 const assert = require("assert");
 
+const { createMint } = require("./utils");
+
 function checkData(mockSOL, coinData) {
   assert.ok(coinData.symbol == mockSOL.symbol);
   assert.ok(coinData.price.eq(mockSOL.price));
@@ -24,11 +26,21 @@ describe("delphor-oracle", () => {
   let mockSOL = {
     price: new BN(165800),
     symbol: "MockSOL",
-    decimals: 9
+    decimals: 9,
   };
 
+  let mockSOLMint,
+    oracleMockSOLPDA,
+    oracleMockSOLPDAbump,
+    delphorMockSOLPDA,
+    delphorMockSOLPDAbump;
+
+  it("Create MockSOL", async () => {
+    mockSOLMint = await createMint(provider, adminAccount);
+  });
+
   it("MockOracle create coin", async () => {
-    let [oracleMockSOLPDA, bump] =
+    [oracleMockSOLPDA, oracleMockSOLPDAbump] =
       await anchor.web3.PublicKey.findProgramAddress(
         [mockSOL.symbol],
         mockOracleProgram.programId
@@ -37,12 +49,12 @@ describe("delphor-oracle", () => {
     await mockOracleProgram.rpc.createCoin(
       mockSOL.price,
       mockSOL.symbol,
-      bump,
+      oracleMockSOLPDAbump,
       {
         accounts: {
           coin: oracleMockSOLPDA,
-          authority: provider.wallet.publicKey,
-          payer: provider.wallet.publicKey,
+          authority: adminAccount,
+          payer: adminAccount,
           systemProgram: anchor.web3.SystemProgram.programId,
         },
       }
@@ -55,28 +67,50 @@ describe("delphor-oracle", () => {
     checkData(mockSOL, oracleMockSOLData);
   });
 
-  it("DelphorOracle init and update price", async () => {
-    let [oracleMockSOLPDA] = await anchor.web3.PublicKey.findProgramAddress(
-      [mockSOL.symbol],
-      mockOracleProgram.programId
-    );
-
-    let [delphorMockSOLPDA, bump] =
+  it("DelphorOracle init coin", async () => {
+    [delphorMockSOLPDA, delphorMockSOLPDAbump] =
       await anchor.web3.PublicKey.findProgramAddress(
-        [mockSOL.symbol],
+        [mockSOLMint.toBuffer()],
         delphorOracleProgram.programId
       );
 
-    await delphorOracleProgram.rpc.updatePrice(mockSOL.symbol, bump, {
-      accounts: {
-        coinOracle1: oracleMockSOLPDA,
-        coinOracle2: oracleMockSOLPDA,
-        coinOracle3: oracleMockSOLPDA,
-        coinPrice: delphorMockSOLPDA,
-        payer: adminAccount,
-        systemProgram: anchor.web3.SystemProgram.programId,
-      },
-    });
+    await delphorOracleProgram.rpc.initCoin(
+      delphorMockSOLPDAbump,
+      mockSOL.decimals,
+      mockSOL.symbol,
+      {
+        accounts: {
+          coinData: delphorMockSOLPDA,
+          mint: mockSOLMint,
+          authority: adminAccount,
+          payer: adminAccount,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        },
+      }
+    );
+
+    const delphorMockSOLData =
+      await delphorOracleProgram.account.coinData.fetch(delphorMockSOLPDA);
+
+    assert.ok(delphorMockSOLData.symbol == mockSOL.symbol);
+    assert.ok(delphorMockSOLData.mint.toBase58() == mockSOLMint.toBase58());
+    assert.ok(delphorMockSOLData.authority.toBase58() == adminAccount.toBase58());
+    assert.ok(delphorMockSOLData.decimals == mockSOL.decimals);
+  });
+
+  it("DelphorOracle update price", async () => {
+    await delphorOracleProgram.rpc.updateCoinPrice(
+      {
+        accounts: {
+          coinOracle1: oracleMockSOLPDA,
+          coinOracle2: oracleMockSOLPDA,
+          coinOracle3: oracleMockSOLPDA,
+          coinData: delphorMockSOLPDA,
+          payer: adminAccount,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        },
+      }
+    );
 
     const delphorMockSOLData =
       await delphorOracleProgram.account.coinData.fetch(delphorMockSOLPDA);
@@ -86,13 +120,6 @@ describe("delphor-oracle", () => {
 
   it("MockOracle update coinInfo", async () => {
     mockSOL.price = new BN(258);
-
-    // compute a PDA based on mockOracleProgram.programId + symbol
-    let [oracleMockSOLPDA, bump] =
-      await anchor.web3.PublicKey.findProgramAddress(
-        [mockSOL.symbol],
-        mockOracleProgram.programId
-      );
 
     await mockOracleProgram.rpc.updateCoin(mockSOL.price, {
       accounts: {
@@ -109,17 +136,6 @@ describe("delphor-oracle", () => {
   });
 
   it("DelphorOralce update price", async () => {
-    let [oracleMockSOLPDA] = await anchor.web3.PublicKey.findProgramAddress(
-      [mockSOL.symbol],
-      mockOracleProgram.programId
-    );
-
-    let [delphorMockSOLPDA, bump] =
-      await anchor.web3.PublicKey.findProgramAddress(
-        [mockSOL.symbol],
-        delphorOracleProgram.programId
-      );
-
     /*
     Solana doesn't allow sending two identical tx's within the same block, 
     so we wait a second. Otherwise revert with:
@@ -128,16 +144,18 @@ describe("delphor-oracle", () => {
     */
     await sleep(1000);
 
-    await delphorOracleProgram.rpc.updatePrice(mockSOL.symbol, bump, {
-      accounts: {
-        coinOracle1: oracleMockSOLPDA,
-        coinOracle2: oracleMockSOLPDA,
-        coinOracle3: oracleMockSOLPDA,
-        coinPrice: delphorMockSOLPDA,
-        payer: adminAccount,
-        systemProgram: anchor.web3.SystemProgram.programId,
-      },
-    });
+    await delphorOracleProgram.rpc.updateCoinPrice(
+      {
+        accounts: {
+          coinOracle1: oracleMockSOLPDA,
+          coinOracle2: oracleMockSOLPDA,
+          coinOracle3: oracleMockSOLPDA,
+          coinData: delphorMockSOLPDA,
+          payer: adminAccount,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        },
+      }
+    );
 
     const delphorMockSOLData =
       await delphorOracleProgram.account.coinData.fetch(delphorMockSOLPDA);
@@ -145,15 +163,15 @@ describe("delphor-oracle", () => {
     checkData(mockSOL, delphorMockSOLData);
   });
 
-  // TODO: Reject update price from non authority 
+  // TODO: Reject update price from non authority
   // Or add checks to secure the accounts that are passed to the oracle
-  
+
   /*
   xit("Reject update coinInfo oracle from non authority", async () => {
     const aRandomKey = anchor.web3.Keypair.generate();
 
     // compute a PDA based on mockOracleProgram.programId + symbol
-    let [oracleMockSOLPDA, bump] =
+    let [oracleMockSOLPDA, oracleMockSOLPDAbump] =
       await anchor.web3.PublicKey.findProgramAddress(
         [mockSOL.symbol],
         mockOracleProgram.programId

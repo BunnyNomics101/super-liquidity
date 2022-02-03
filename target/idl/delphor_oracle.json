@@ -3,7 +3,7 @@
   "name": "delphor_oracle",
   "instructions": [
     {
-      "name": "updatePrice",
+      "name": "updateCoinPrice",
       "accounts": [
         {
           "name": "coinOracle1",
@@ -21,8 +21,39 @@
           "isSigner": false
         },
         {
-          "name": "coinPrice",
+          "name": "coinData",
           "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initCoin",
+      "accounts": [
+        {
+          "name": "coinData",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -38,12 +69,16 @@
       ],
       "args": [
         {
-          "name": "symbol",
-          "type": "string"
+          "name": "bump",
+          "type": "u8"
         },
         {
-          "name": "pdaBump",
+          "name": "decimals",
           "type": "u8"
+        },
+        {
+          "name": "symbol",
+          "type": "string"
         }
       ]
     }
@@ -55,16 +90,20 @@
         "kind": "struct",
         "fields": [
           {
+            "name": "mint",
+            "type": "publicKey"
+          },
+          {
+            "name": "authority",
+            "type": "publicKey"
+          },
+          {
             "name": "price",
             "type": "u64"
           },
           {
             "name": "lastUpdateTimestamp",
             "type": "u64"
-          },
-          {
-            "name": "authority",
-            "type": "publicKey"
           },
           {
             "name": "symbol",

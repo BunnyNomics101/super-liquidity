@@ -63,7 +63,10 @@ describe("swap", () => {
     programMockUSDCAccount,
     delphorMockUSDCPDA,
     delphorMockSOLPDA,
-    bump;
+    oracleMockSOLPDA,
+    oracleMockSOLPDAbump,
+    oracleMockUSDCPDA,
+    oracleMockUSDCPDAbump;
 
   function Lamport(value) {
     return new BN(value * 10 ** 9);
@@ -106,7 +109,7 @@ describe("swap", () => {
   });
 
   it("MockOracle create MockSOL coin", async () => {
-    let [oracleMockSOLPDA, bump] =
+    [oracleMockSOLPDA, oracleMockSOLPDAbump] =
       await anchor.web3.PublicKey.findProgramAddress(
         [mockSOL.symbol],
         mockOracleProgram.programId
@@ -115,7 +118,7 @@ describe("swap", () => {
     await mockOracleProgram.rpc.createCoin(
       mockSOL.price,
       mockSOL.symbol,
-      bump,
+      oracleMockSOLPDAbump,
       {
         accounts: {
           coin: oracleMockSOLPDA,
@@ -134,7 +137,7 @@ describe("swap", () => {
   });
 
   it("MockOracle create MockUSDC coin", async () => {
-    let [oracleMockUSDCPDA, bump] =
+    [oracleMockUSDCPDA, oracleMockUSDCPDAbump] =
       await anchor.web3.PublicKey.findProgramAddress(
         [mockUSDC.symbol],
         mockOracleProgram.programId
@@ -143,7 +146,7 @@ describe("swap", () => {
     await mockOracleProgram.rpc.createCoin(
       mockUSDC.price,
       mockUSDC.symbol,
-      bump,
+      oracleMockUSDCPDAbump,
       {
         accounts: {
           coin: oracleMockUSDCPDA,
@@ -159,62 +162,6 @@ describe("swap", () => {
     );
 
     checkData(mockUSDC, oracleMockUSDCData);
-  });
-
-  it("DelphorOracle init and update price mockSOL", async () => {
-    let [oracleMockSOLPDA] = await anchor.web3.PublicKey.findProgramAddress(
-      [mockSOL.symbol],
-      mockOracleProgram.programId
-    );
-
-    [delphorMockSOLPDA, bump] = await anchor.web3.PublicKey.findProgramAddress(
-      [mockSOL.symbol],
-      delphorOracleProgram.programId
-    );
-
-    await delphorOracleProgram.rpc.updatePrice(mockSOL.symbol, bump, {
-      accounts: {
-        coinOracle1: oracleMockSOLPDA,
-        coinOracle2: oracleMockSOLPDA,
-        coinOracle3: oracleMockSOLPDA,
-        coinPrice: delphorMockSOLPDA,
-        payer: adminAccount,
-        systemProgram: anchor.web3.SystemProgram.programId,
-      },
-    });
-
-    const delphorMockSOLData =
-      await delphorOracleProgram.account.coinData.fetch(delphorMockSOLPDA);
-
-    checkData(mockSOL, delphorMockSOLData);
-  });
-
-  it("DelphorOracle init and update price mockUSDC", async () => {
-    let [oracleMockUSDCPDA] = await anchor.web3.PublicKey.findProgramAddress(
-      [mockUSDC.symbol],
-      mockOracleProgram.programId
-    );
-
-    [delphorMockUSDCPDA, bump] = await anchor.web3.PublicKey.findProgramAddress(
-      [mockUSDC.symbol],
-      delphorOracleProgram.programId
-    );
-
-    await delphorOracleProgram.rpc.updatePrice(mockUSDC.symbol, bump, {
-      accounts: {
-        coinOracle1: oracleMockUSDCPDA,
-        coinOracle2: oracleMockUSDCPDA,
-        coinOracle3: oracleMockUSDCPDA,
-        coinPrice: delphorMockUSDCPDA,
-        payer: adminAccount,
-        systemProgram: anchor.web3.SystemProgram.programId,
-      },
-    });
-
-    const delphorMockUSDCData =
-      await delphorOracleProgram.account.coinData.fetch(delphorMockUSDCPDA);
-
-    checkData(mockUSDC, delphorMockUSDCData);
   });
 
   it("Create MockSOL and mint test tokens", async () => {
@@ -314,6 +261,108 @@ describe("swap", () => {
 
     bobMockUSDCAccount = await getTokenAccount(provider, bobmockUSDC);
     assert.ok(bobMockUSDCAccount.amount == 0);
+  });
+
+  it("DelphorOracle init coin", async () => {
+    [delphorMockSOLPDA, delphorMockSOLPDAbump] =
+      await anchor.web3.PublicKey.findProgramAddress(
+        [mockSOLMint.toBuffer()],
+        delphorOracleProgram.programId
+      );
+
+    await delphorOracleProgram.rpc.initCoin(
+      delphorMockSOLPDAbump,
+      mockSOL.decimals,
+      mockSOL.symbol,
+      {
+        accounts: {
+          coinData: delphorMockSOLPDA,
+          mint: mockSOLMint,
+          authority: adminAccount,
+          payer: adminAccount,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        },
+      }
+    );
+
+    const delphorMockSOLData =
+      await delphorOracleProgram.account.coinData.fetch(delphorMockSOLPDA);
+
+    assert.ok(delphorMockSOLData.symbol == mockSOL.symbol);
+    assert.ok(delphorMockSOLData.mint.toBase58() == mockSOLMint.toBase58());
+    assert.ok(
+      delphorMockSOLData.authority.toBase58() == adminAccount.toBase58()
+    );
+    assert.ok(delphorMockSOLData.decimals == mockSOL.decimals);
+  });
+
+  it("DelphorOracle update price", async () => {
+    await delphorOracleProgram.rpc.updateCoinPrice({
+      accounts: {
+        coinOracle1: oracleMockSOLPDA,
+        coinOracle2: oracleMockSOLPDA,
+        coinOracle3: oracleMockSOLPDA,
+        coinData: delphorMockSOLPDA,
+        payer: adminAccount,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      },
+    });
+
+    const delphorMockSOLData =
+      await delphorOracleProgram.account.coinData.fetch(delphorMockSOLPDA);
+
+    checkData(mockSOL, delphorMockSOLData);
+  });
+
+  it("DelphorOracle init mockUSDC coin", async () => {
+    [delphorMockUSDCPDA, delphorMockUSDCPDAbump] =
+      await anchor.web3.PublicKey.findProgramAddress(
+        [mockUSDCMint.toBuffer()],
+        delphorOracleProgram.programId
+      );
+
+    await delphorOracleProgram.rpc.initCoin(
+      delphorMockUSDCPDAbump,
+      mockUSDC.decimals,
+      mockUSDC.symbol,
+      {
+        accounts: {
+          coinData: delphorMockUSDCPDA,
+          mint: mockUSDCMint,
+          authority: adminAccount,
+          payer: adminAccount,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        },
+      }
+    );
+
+    const delphorMockUSDCData =
+      await delphorOracleProgram.account.coinData.fetch(delphorMockUSDCPDA);
+
+    assert.ok(delphorMockUSDCData.symbol == mockUSDC.symbol);
+    assert.ok(delphorMockUSDCData.mint.toBase58() == mockUSDCMint.toBase58());
+    assert.ok(
+      delphorMockUSDCData.authority.toBase58() == adminAccount.toBase58()
+    );
+    assert.ok(delphorMockUSDCData.decimals == mockUSDC.decimals);
+  });
+
+  it("DelphorOracle update mockUSDC price", async () => {
+    await delphorOracleProgram.rpc.updateCoinPrice({
+      accounts: {
+        coinOracle1: oracleMockUSDCPDA,
+        coinOracle2: oracleMockUSDCPDA,
+        coinOracle3: oracleMockUSDCPDA,
+        coinData: delphorMockUSDCPDA,
+        payer: adminAccount,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      },
+    });
+
+    const delphorMockUSDCData =
+      await delphorOracleProgram.account.coinData.fetch(delphorMockUSDCPDA);
+
+    checkData(mockUSDC, delphorMockUSDCData);
   });
 
   it("Initialize global state", async () => {

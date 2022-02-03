@@ -9,3 +9,5 @@ dist/feeder.js
 temp
 keys
 .secret
+temp/
+expanded.sh
