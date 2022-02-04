@@ -10,9 +10,9 @@ use delphor_oracle::CoinData;
 #[instruction(bump: u8)]
 pub struct Swap<'info> {
     // Account with price from oracle
-    #[account(owner = delphor_oracle::ID)]
+    #[account(owner = delphor_oracle::ID, constraint = get_coin_data.mint == mint_send.to_account_info().key())]
     pub get_coin_data: Box<Account<'info, CoinData>>,
-    #[account(owner = delphor_oracle::ID)]
+    #[account(owner = delphor_oracle::ID, constraint = send_coin_data.mint == mint_receive.to_account_info().key())]
     pub send_coin_data: Box<Account<'info, CoinData>>,
     // User PDA according to the swaped token
     #[account(mut)]
