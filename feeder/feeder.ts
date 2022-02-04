@@ -1,28 +1,94 @@
-import * as fs from 'fs';
-import * as anchor from '@project-serum/anchor';
+import * as fs from "fs";
+import * as anchor from "@project-serum/anchor";
 import { BN } from "@project-serum/anchor";
-import * as cron from 'node-cron';
+import * as cron from "node-cron";
 import fetch from "node-fetch";
 
 process.env.ANCHOR_PROVIDER_URL = "https://api.devnet.solana.com";
 //process.env.ANCHOR_PROVIDER_URL = "http://127.0.0.1:8899";
-process.env.ANCHOR_WALLET = "../.secret"
+process.env.ANCHOR_WALLET = "../.secret";
 const provider = anchor.Provider.env();
 
 anchor.setProvider(provider);
 
-const idl = JSON.parse(fs.readFileSync('../target/idl/mock_oracle.json', 'utf8'));
+const mockOracleIdl = JSON.parse(
+  fs.readFileSync("../target/idl/mock_oracle.json", "utf8")
+);
+const mockOracleAddress = mockOracleIdl.metadata
+  ? mockOracleIdl.metadata.address
+  : "6BQhRV18kqJMLSXVuU3cxiX3KcpeLMZFQLura3QdrDUa";
+const mockOracleId = new anchor.web3.PublicKey(mockOracleAddress);
+const mockOracleProgram = new anchor.Program(mockOracleIdl, mockOracleId);
 
-const programAddress = idl.metadata ? idl.metadata.address : 
-  '6BQhRV18kqJMLSXVuU3cxiX3KcpeLMZFQLura3QdrDUa';
+const delphorOracleIdl = JSON.parse(
+  fs.readFileSync("../target/idl/delphor_oracle.json", "utf8")
+);
+const delphorOracleAddress = delphorOracleIdl.metadata
+  ? delphorOracleIdl.metadata.address
+  : "DJkR4f9MY9NBYsJS1m2aXmhM97B1nW8fMVCcSAtsBdg8";
+const delphorOracleId = new anchor.web3.PublicKey(delphorOracleAddress);
+const delphorOracleProgram = new anchor.Program(
+  delphorOracleIdl,
+  delphorOracleId
+);
 
-const programId = new anchor.web3.PublicKey(programAddress)
+async function delphorInitCoin(
+  mintToken,
+  symbol,
+  decimals,
+  delphorOraclePDA,
+  delphorOraclePDAbump
+) {
+  const tx = await delphorOracleProgram.rpc.initCoin(
+    delphorOraclePDAbump,
+    decimals,
+    symbol,
+    {
+      accounts: {
+        coinData: delphorOraclePDA,
+        mint: mintToken,
+        authority: provider.wallet.publicKey,
+        payer: provider.wallet.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      },
+    }
+  );
+  console.log("Delphor coin initialized: ", tx);
+}
 
-const program = new anchor.Program(idl, programId);
+async function delphorUpdatePrice(delphorOraclePDA, oraclePDA) {
+  const tx = await delphorOracleProgram.rpc.updateCoinPrice({
+    accounts: {
+      coinOracle1: oraclePDA,
+      coinOracle2: oraclePDA,
+      coinOracle3: oraclePDA,
+      coinData: delphorOraclePDA,
+      payer: provider.wallet.publicKey,
+      systemProgram: anchor.web3.SystemProgram.programId,
+    },
+  });
+  console.log("Delphor price updated: ", tx);
+}
 
-async function createCoin(coinInfo, coinPDA, bump){
-  const tx = await program.rpc.createCoin(
-    coinInfo.price, coinInfo.symbol, bump, {
+async function createCoin(coinInfo, coinPDA, bump) {
+  const tx = await mockOracleProgram.rpc.createCoin(
+    coinInfo.price,
+    coinInfo.coinGeckoTokenId,
+    bump,
+    {
+      accounts: {
+        authority: provider.wallet.publicKey,
+        coin: coinPDA,
+        payer: provider.wallet.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      },
+    }
+  );
+  console.log("Created:", tx);
+}
+
+async function updateCoin(coinInfo, coinPDA, bump) {
+  const tx = await mockOracleProgram.rpc.updateCoin(coinInfo.price, {
     accounts: {
       authority: provider.wallet.publicKey,
       coin: coinPDA,
@@ -30,67 +96,89 @@ async function createCoin(coinInfo, coinPDA, bump){
       systemProgram: anchor.web3.SystemProgram.programId,
     },
   });
-  console.log("Created:", tx)
-}
-
-async function updateCoin(coinInfo, coinPDA, bump){
-  const tx = await program.rpc.updateCoin(
-    coinInfo.price, {
-    accounts: {
-        authority: provider.wallet.publicKey,
-        coin: coinPDA,
-        payer: provider.wallet.publicKey,
-        systemProgram: anchor.web3.SystemProgram.programId,
-    }
-  });
-  console.log("Update", coinInfo.symbol, ":", tx)
+  console.log("Update", coinInfo.coinGeckoTokenId, ":", tx);
 }
 
 // Configure the local cluster.
 async function main() {
   let updatingPrices = false;
-  const SETTINGS = require("./settings.json")
+  const SETTINGS = require("./settings.json");
   const SYMBOLS_ALLOWED = SETTINGS.symbols;
+  const DEVNET_TOKENS = SETTINGS.devnetContracts;
   const INTERVAL_UPDATE = SETTINGS.intervalUpdate;
   const MIN_PRICE_VARIATION = SETTINGS.minPriceVariation;
 
-  let task = cron.schedule('*/' + INTERVAL_UPDATE + ' * * * * *', async() => 
-  {
-    if(updatingPrices){
-      return
+  let task = cron.schedule("*/" + INTERVAL_UPDATE + " * * * * *", async () => {
+    if (updatingPrices) {
+      return;
     }
     updatingPrices = true;
 
-    for(let x = 0; x < SYMBOLS_ALLOWED.length; x++){
-      let symbol = SYMBOLS_ALLOWED[x];
-      let priceJson = {}
+    for (let x = 0; x < SYMBOLS_ALLOWED.length; x++) {
+      let coinGeckoTokenId = SYMBOLS_ALLOWED[x];
+      let priceJson = {};
       try {
-        let priceResponse = await fetch("https://api.diadata.org/v1/quotation/" + symbol)
-        priceJson = await priceResponse.json(); 
-        if(priceJson["Price"]){
-          let newCoinPrice = Math.trunc(priceJson["Price"].toFixed(5) * 100000);
+        let priceResponse = await fetch(
+          "https://api.coingecko.com/api/v3/simple/price?ids=" +
+            coinGeckoTokenId +
+            "&vs_currencies=usd"
+        );
+        priceJson = await priceResponse.json();
+        if (priceJson[coinGeckoTokenId]["usd"]) {
+          let newCoinPrice = Math.trunc(
+            priceJson[coinGeckoTokenId]["usd"].toFixed(5) * 1000000000
+          );
           let coinInfo: {
-            symbol: string;
+            coinGeckoTokenId: string;
             price: BN;
           } = {
-            symbol: symbol,
-            price: new BN(newCoinPrice)
-          }
+            coinGeckoTokenId: coinGeckoTokenId,
+            price: new BN(newCoinPrice),
+          };
 
-          let [coinPDA, bump] = await anchor.web3.PublicKey.findProgramAddress([Buffer.from(symbol)], program.programId)
-          try{
-            let contractCoinInfo = await program.account.coinInfo.fetch(coinPDA.toBase58());
+          let [coinPDA, bump] = await anchor.web3.PublicKey.findProgramAddress(
+            [Buffer.from(coinGeckoTokenId)],
+            mockOracleId
+          );
+          let tokenMint = DEVNET_TOKENS[x];
+          try {
+            let contractCoinInfo =
+              await mockOracleProgram.account.coinInfo.fetch(
+                coinPDA.toBase58()
+              );
             let storedPrice = Number(contractCoinInfo["price"]);
-            let dif = Math.abs(storedPrice - newCoinPrice)
-            if( dif / storedPrice * 100 >= MIN_PRICE_VARIATION){
+            let dif = Math.abs(storedPrice - newCoinPrice);
+            if ((dif / storedPrice) * 100 >= MIN_PRICE_VARIATION) {
               await updateCoin(coinInfo, coinPDA, bump);
+              let mintToken = new anchor.web3.PublicKey(tokenMint);
+              let [delphorOraclePDA, delphorOraclePDAbump] =
+                await anchor.web3.PublicKey.findProgramAddress(
+                  [mintToken.toBuffer()],
+                  delphorOracleProgram.programId
+                );
+              try {
+                let contractCoinInfo =
+                  await delphorOracleProgram.account.coinData.fetch(
+                    delphorOraclePDA.toBase58()
+                  );
+                await delphorUpdatePrice(delphorOraclePDA, coinPDA);
+              } catch (err) {
+                await delphorInitCoin(
+                  mintToken,
+                  coinGeckoTokenId,
+                  9,
+                  delphorOraclePDA,
+                  delphorOraclePDAbump
+                );
+                await delphorUpdatePrice(delphorOraclePDA, coinPDA);
+              }
             }
-          }catch(err){
+          } catch (err) {
             await createCoin(coinInfo, coinPDA, bump);
           }
-        }      
-      }catch(err){
-        console.error(symbol, err)
+        }
+      } catch (err) {
+        console.error(coinGeckoTokenId, err);
       }
     }
 
@@ -100,4 +188,4 @@ async function main() {
   task.start();
 }
 
-main()
+main();

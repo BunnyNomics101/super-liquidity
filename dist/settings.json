@@ -1,5 +1,32 @@
 {
-    "symbols": ["BTC", "ADA", "ETH", "DIA", "SOL", "USDC"],
-    "intervalUpdate": 5,
-    "minPriceVariation": 0.00001
+  "symbols": [
+    "msol",
+    "usd-coin",
+    "tether",
+    "bitcoin",
+    "ethereum",
+    "orca",
+    "star-atlas",
+    "genesysgo-shadow",
+    "serum",
+    "raydium",
+    "saber",
+    "marinade"
+  ],
+  "devnetContracts": [
+    "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So",
+    "9jmqFtPacNXA5v8fs3CbPo3zMcFvNw8qA69tPyVKG8bY",
+    "A4Hw6igTmXgsNRhBpF57ZG2rT8hRb8FdimNCZkWDhj9B",
+    "E1V6Z4P7EsRxq8XPYnxjvgzNxjZmcRdXeCwukH3zin9P",
+    "6sKghM3AsGbe6xieLfvv4oU6efdLMnY5DYsULKyHKC12",
+    "GiT9cpah71cbyXkTJAK2irryKvK95pm6EBLNHmJoqzPy",
+    "F9XzLUE9C79wSdoebMbrtexxC9Fkm2X1wZ7q43ozw9ur",
+    "43obuzPzsQof7T5sGGtj7AK7M3X16vrarUwpAhbhTo6T",
+    "5Sp5kcSA6TTUvKZL3TyLjG2LYebJ5635qT2VHFAW2Lxs",
+    "7yzfvd2CUwBinJi5Q2rAGRPkkcw8ZtNUFphdGVsrLANt",
+    "xSoogZ2Sa9LZ7365ZV4JG8P4njjwpbKH3wxC7B8eUaL",
+    "5tn1xGx6KdqjjCaFMA9YP3Hf9sfps83Quo6HYjkKScKA"
+  ],
+  "intervalUpdate": 5,
+  "minPriceVariation": 0.00001
 }
