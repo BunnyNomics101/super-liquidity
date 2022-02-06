@@ -10,7 +10,6 @@ pub struct Withdraw<'info> {
         vault_user.key().as_ref(), mint.key().as_ref()
     ], bump = user_vault.bump)]
     pub user_vault: Account<'info, UserCoinVault>,
-    #[account(mut)]
     pub mint: AccountInfo<'info>,
     /// user account to receive tokens
     #[account(mut)]

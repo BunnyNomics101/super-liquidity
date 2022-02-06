@@ -28,7 +28,7 @@ pub struct Swap<'info> {
     // token user wants
     pub mint_receive: Account<'info, Mint>,
     // Account where user have tokens
-    #[account(mut)]
+    #[account(mut, associated_token::mint = mint_send, associated_token::authority = get_token_from_authority)]
     pub get_token_from: Box<Account<'info, TokenAccount>>,
     // owner or delegate_authority
     #[account(signer)]
