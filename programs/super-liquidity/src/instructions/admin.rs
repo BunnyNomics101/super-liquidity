@@ -66,6 +66,7 @@ impl<'info> InitUserVault<'info> {
     #[allow(unused_variables)]
     pub fn process(&mut self, bump: u8, buy_fee: u32, sell_fee: u32) -> ProgramResult {
         *self.user_vault = UserCoinVault{
+            bump,
             buy_fee,
             sell_fee,
             pause: false,
@@ -156,8 +157,10 @@ pub struct UpdateUserVault<'info> {
     
     #[account(signer)]
     pub user_account: AccountInfo<'info>,
-
-    #[account(mut)]
+    pub mint: Account<'info, Mint>,
+    #[account(mut, seeds = [
+        user_account.key().as_ref(), mint.key().as_ref()
+    ], bump = user_vault.bump)]
     pub user_vault: Account<'info, UserCoinVault>,
 }
 impl<'info> UpdateUserVault<'info> {

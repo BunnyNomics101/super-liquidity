@@ -146,6 +146,7 @@ describe("deposit", () => {
   it("Deposit tokens", async () => {
     await program.rpc.deposit(amount, {
       accounts: {
+        userAccount: alice.publicKey,
         userVault: aliceMockSOLVault,
         tokenStoreAuthority: tokenStoreAuthority,
         mint: mockSOLMint,
@@ -174,6 +175,7 @@ describe("deposit", () => {
     try {
       await program.rpc.withdraw(tokenStoreAuthorityBump, amount, {
         accounts: {
+          vaultUser: alice.publicKey,
           userVault: aliceMockSOLVault,
           mint: mockSOLMint,
           sendTokenTo: attackerMockSOL,
@@ -205,6 +207,7 @@ describe("deposit", () => {
   it("Withdraw tokens", async () => {
     await program.rpc.withdraw(tokenStoreAuthorityBump, amount, {
       accounts: {
+        vaultUser: alice.publicKey,
         userVault: aliceMockSOLVault,
         mint: mockSOLMint,
         sendTokenTo: alicemockSOL,
@@ -238,6 +241,7 @@ describe("deposit", () => {
       accounts: {
         userAccount: alice.publicKey,
         userVault: aliceMockSOLVault,
+        mint: mockSOLMint,
       },
       signers: [alice],
     });

@@ -7,10 +7,12 @@ use crate::error::*;
 //-----------------------------------------------------
 // Deposit Instruction
 #[derive(Accounts)]
-#[instruction(bump: u8)]
 pub struct Deposit<'info> {
+    pub user_account: AccountInfo<'info>,
     // User PDA according to the deposited token
-    #[account(mut)]
+    #[account(mut, seeds = [
+        user_account.key().as_ref(), mint.key().as_ref()
+    ], bump = user_vault.bump)]
     pub user_vault: Account<'info, UserCoinVault>, 
     pub token_store_authority: AccountInfo<'info>,
     // for what token

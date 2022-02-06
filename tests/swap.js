@@ -517,6 +517,7 @@ describe("swap", () => {
       accounts: {
         userAccount: alice.publicKey,
         userVault: aliceMockSOLVault,
+        mint: mockSOLMint,
       },
       signers: [alice],
     });
@@ -541,6 +542,7 @@ describe("swap", () => {
       accounts: {
         userAccount: alice.publicKey,
         userVault: aliceMockUSDCVault,
+        mint: mockUSDCMint,
       },
       signers: [alice],
     });
@@ -565,6 +567,7 @@ describe("swap", () => {
       accounts: {
         userAccount: bob.publicKey,
         userVault: bobMockSOLVault,
+        mint: mockSOLMint,
       },
       signers: [bob],
     });
@@ -587,6 +590,7 @@ describe("swap", () => {
       accounts: {
         userAccount: bob.publicKey,
         userVault: bobMockUSDCVault,
+        mint: mockUSDCMint,
       },
       signers: [bob],
     });
@@ -603,6 +607,7 @@ describe("swap", () => {
   it("Alice deposit mockSOL", async () => {
     await superLiquidityProgram.rpc.deposit(depositAmountAliceMockSOL, {
       accounts: {
+        userAccount: alice.publicKey,
         userVault: aliceMockSOLVault,
         tokenStoreAuthority: tokenStoreAuthority,
         mint: mockSOLMint,
@@ -635,6 +640,7 @@ describe("swap", () => {
   it("Alice deposit mockUSDC", async () => {
     await superLiquidityProgram.rpc.deposit(depositAmountAliceMockUSDC, {
       accounts: {
+        userAccount: alice.publicKey,
         userVault: aliceMockUSDCVault,
         tokenStoreAuthority: tokenStoreAuthority,
         mint: mockUSDCMint,
@@ -727,6 +733,7 @@ describe("swap", () => {
         accounts: {
           getCoinData: delphorMockSOLPDA,
           sendCoinData: delphorMockUSDCPDA,
+          vaultUser: alice.publicKey,
           userVaultFrom: aliceMockUSDCVault,
           userVaultTo: aliceMockSOLVault,
           tokenStoreAuthority: tokenStoreAuthority,

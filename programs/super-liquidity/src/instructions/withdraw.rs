@@ -5,7 +5,10 @@ use anchor_spl::token::{TokenAccount, Transfer};
 //-----------------------------------------------------
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
-    #[account(mut)]
+    pub vault_user: AccountInfo<'info>,
+    #[account(mut, seeds = [
+        vault_user.key().as_ref(), mint.key().as_ref()
+    ], bump = user_vault.bump)]
     pub user_vault: Account<'info, UserCoinVault>,
     #[account(mut)]
     pub mint: AccountInfo<'info>,

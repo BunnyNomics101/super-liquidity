@@ -12,6 +12,7 @@ pub struct GlobalState {
 //-----------------------------------------------------
 #[account]
 pub struct UserCoinVault {
+    pub bump: u8,
     pub mint: Pubkey,
     pub amount: u64,
     pub min: u64,

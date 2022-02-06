@@ -6,6 +6,11 @@
       "name": "deposit",
       "accounts": [
         {
+          "name": "userAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "userVault",
           "isMut": true,
           "isSigner": false
@@ -56,6 +61,11 @@
     {
       "name": "withdraw",
       "accounts": [
+        {
+          "name": "vaultUser",
+          "isMut": false,
+          "isSigner": false
+        },
         {
           "name": "userVault",
           "isMut": true,
@@ -118,6 +128,11 @@
         },
         {
           "name": "sendCoinData",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultUser",
           "isMut": false,
           "isSigner": false
         },
@@ -327,6 +342,11 @@
           "isSigner": true
         },
         {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "userVault",
           "isMut": true,
           "isSigner": false
@@ -370,6 +390,10 @@
       "type": {
         "kind": "struct",
         "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
           {
             "name": "mint",
             "type": "publicKey"
