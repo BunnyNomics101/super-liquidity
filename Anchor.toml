@@ -2,12 +2,12 @@ anchor_version = "0.19.0"
 
 #TODO: user .secret file to address
 [programs.localnet]
-super_liquidity = "2XwMaJUsBUmiRAVXQ3ExzWgvojtDwHyh33nq3rWykJhp"
+super_liquidity = "EepceZ1Nf4yYGhTpRucWK1euRQFxu4xA2aMN6CGqCUGH"
 delphor_oracle = "DJkR4f9MY9NBYsJS1m2aXmhM97B1nW8fMVCcSAtsBdg8"
 mock_oracle = "6BQhRV18kqJMLSXVuU3cxiX3KcpeLMZFQLura3QdrDUa"
 
 [programs.devnet]
-super_liquidity = "2XwMaJUsBUmiRAVXQ3ExzWgvojtDwHyh33nq3rWykJhp"
+super_liquidity = "EepceZ1Nf4yYGhTpRucWK1euRQFxu4xA2aMN6CGqCUGH"
 delphor_oracle = "DJkR4f9MY9NBYsJS1m2aXmhM97B1nW8fMVCcSAtsBdg8"
 mock_oracle = "6BQhRV18kqJMLSXVuU3cxiX3KcpeLMZFQLura3QdrDUa"
 

@@ -6,7 +6,12 @@
       "name": "updateCoinPrice",
       "accounts": [
         {
-          "name": "coinOracle1",
+          "name": "pythPriceAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "pythProductAccount",
           "isMut": false,
           "isSigner": false
         },
@@ -115,6 +120,13 @@
           }
         ]
       }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "PythPriceAccountError",
+      "msg": "Pyth accounts don't match."
     }
   ],
   "metadata": {

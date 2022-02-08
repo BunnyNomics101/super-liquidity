@@ -13,7 +13,7 @@
     "saber",
     "marinade"
   ],
-  "devnetContracts": [
+  "mockOracleDevnetPriceAccounts": [
     "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So",
     "9jmqFtPacNXA5v8fs3CbPo3zMcFvNw8qA69tPyVKG8bY",
     "A4Hw6igTmXgsNRhBpF57ZG2rT8hRb8FdimNCZkWDhj9B",
@@ -27,6 +27,34 @@
     "xSoogZ2Sa9LZ7365ZV4JG8P4njjwpbKH3wxC7B8eUaL",
     "5tn1xGx6KdqjjCaFMA9YP3Hf9sfps83Quo6HYjkKScKA"
   ],
-  "intervalUpdate": 5,
+  "pythDevnetPriceAccounts": [
+    "9a6RNx3tCu1TSs6TBSfV2XRXEPEZXQ6WB7jRojZRvyeZ",
+    "5SSkXsEKQepHHAewytPVwdej4epN1nxgLVM84L4KXgy7",
+    "38xoQ4oeJCBrcVvca2cGk7iV1dAfrmTR1kmhSCJQ8Jto",
+    "HovQMDrbAgAYPCmHVSrezcSmkMtXSSUsLDFANExrZh2J",
+    "EdVCmQ9FSPcVe5YySXDPCRmc8aDQLKJ9xvYBMZPie1Vw",
+    "A1WttWF7X3Rg6ZRpB2YQUFHCRh1kiXV8sKKLV3S9neJV",
+    "11111111111111111111111111111111",
+    "11111111111111111111111111111111",
+    "992moaMQKs32GKZ9dxi8keyM2bUmbrwBZpK4p2K6X5Vs",
+    "EhgAdTrgxi4ZoVZLQx1n93vULucPpiFi2BQtz9RJr1y6",
+    "4WSN3XDSTfBX9A1YXGg8HJ7n2GtWMDNbtz1ab6aGGXfG",
+    "11111111111111111111111111111111"
+  ],
+  "pythDevnetProductAccounts": [
+    "os3is9HtWPHW4EXpGAkdr2prdWVs2pS8qKtf2ZYJdBw",
+    "6NpdXrQEpmDZ3jZKmM2rhdmkd3H6QAk23j2x8bkXcHKA",
+    "C5wDxND9E61RZ1wZhaSTWkoA8udumaHnoQY6BBsiaVpn",
+    "3m1y5h2uv7EQL3KaJZehvAJa4yDNvgc5yAdL9KPMKwvk",
+    "2ciUuGZiee5macAMeQ7bHGTJtwcYTgnt6jdmQnnKZrfu",
+    "A8Q4MoqpiEp4zU36XoVB3c9q6XkeqM5uaM9LQv4p9vQy",
+    "11111111111111111111111111111111",
+    "11111111111111111111111111111111",
+    "6MEwdxe4g1NeAF9u6KDG14anJpFsVEa2cvr5H6iriFZ8",
+    "3BtxtRxitVDcsd7pPUWUnFm9KvmNDy9usS4gE6pUFhpH",
+    "APY6HpicQTabn46sZPt2pAqunFpkws9ySdujj5BHcZAK",
+    "11111111111111111111111111111111"
+  ],
+  "intervalUpdate": 30,
   "minPriceVariation": 0.00001
 }

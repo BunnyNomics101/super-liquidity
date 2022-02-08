@@ -73,7 +73,7 @@
         },
         {
           "name": "mint",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -461,6 +461,6 @@
     }
   ],
   "metadata": {
-    "address": "2XwMaJUsBUmiRAVXQ3ExzWgvojtDwHyh33nq3rWykJhp"
+    "address": "EepceZ1Nf4yYGhTpRucWK1euRQFxu4xA2aMN6CGqCUGH"
   }
 }

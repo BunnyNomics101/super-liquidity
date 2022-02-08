@@ -56,10 +56,11 @@ async function delphorInitCoin(
   console.log("Delphor coin initialized: ", tx);
 }
 
-async function delphorUpdatePrice(delphorOraclePDA, oraclePDA) {
+async function delphorUpdatePrice(delphorOraclePDA, oraclePDA, pythPriceAccount, pythProductAccount) {
   const tx = await delphorOracleProgram.rpc.updateCoinPrice({
     accounts: {
-      coinOracle1: oraclePDA,
+      pythProductAccount: pythProductAccount,
+      pythPriceAccount: pythPriceAccount,
       coinOracle2: oraclePDA,
       coinOracle3: oraclePDA,
       coinData: delphorOraclePDA,
@@ -104,7 +105,9 @@ async function main() {
   let updatingPrices = false;
   const SETTINGS = require("./settings.json");
   const SYMBOLS_ALLOWED = SETTINGS.symbols;
-  const DEVNET_TOKENS = SETTINGS.devnetContracts;
+  const MOCK_ORACLE_DEVNET_ACCOUNTS = SETTINGS.mockOracleDevnetPriceAccounts;
+  const PYTH_DEVNET_PRICE_ACCOUNTS = SETTINGS.pythDevnetPriceAccounts;
+  const PYTH_DEVNET_PRODUCT_ACCOUNTS = SETTINGS.pythDevnetProductAccounts;
   const INTERVAL_UPDATE = SETTINGS.intervalUpdate;
   const MIN_PRICE_VARIATION = SETTINGS.minPriceVariation;
 
@@ -140,7 +143,9 @@ async function main() {
             [Buffer.from(coinGeckoTokenId)],
             mockOracleId
           );
-          let tokenMint = DEVNET_TOKENS[x];
+          let tokenMint = MOCK_ORACLE_DEVNET_ACCOUNTS[x];
+          let pythPriceAccount = PYTH_DEVNET_PRICE_ACCOUNTS[x];
+          let pythProductAccount = PYTH_DEVNET_PRODUCT_ACCOUNTS[x];
           try {
             let contractCoinInfo =
               await mockOracleProgram.account.coinInfo.fetch(
@@ -161,7 +166,12 @@ async function main() {
                   await delphorOracleProgram.account.coinData.fetch(
                     delphorOraclePDA.toBase58()
                   );
-                await delphorUpdatePrice(delphorOraclePDA, coinPDA);
+                await delphorUpdatePrice(
+                  delphorOraclePDA,
+                  coinPDA,
+                  new anchor.web3.PublicKey(pythPriceAccount),
+                  new anchor.web3.PublicKey(pythProductAccount)
+                );
               } catch (err) {
                 await delphorInitCoin(
                   mintToken,
@@ -170,7 +180,12 @@ async function main() {
                   delphorOraclePDA,
                   delphorOraclePDAbump
                 );
-                await delphorUpdatePrice(delphorOraclePDA, coinPDA);
+                await delphorUpdatePrice(
+                  delphorOraclePDA,
+                  coinPDA,
+                  new anchor.web3.PublicKey(pythPriceAccount),
+                  new anchor.web3.PublicKey(pythProductAccount)
+                );
               }
             }
           } catch (err) {

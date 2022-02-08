@@ -92,6 +92,14 @@ describe("swap", () => {
     decimals: 9,
   };
 
+  let pythProductAccount = new anchor.web3.PublicKey(
+    "11111111111111111111111111111111"
+  );
+
+  let pythPriceAccount = new anchor.web3.PublicKey(
+    "11111111111111111111111111111111"
+  );
+
   it("Airdrop lamports to alice", async function () {
     let balance = await getBalance(alice.publicKey);
     assert.ok(balance == 0);
@@ -299,7 +307,8 @@ describe("swap", () => {
   it("DelphorOracle update price", async () => {
     await delphorOracleProgram.rpc.updateCoinPrice({
       accounts: {
-        coinOracle1: oracleMockSOLPDA,
+        pythProductAccount: pythProductAccount,
+        pythPriceAccount: pythPriceAccount,
         coinOracle2: oracleMockSOLPDA,
         coinOracle3: oracleMockSOLPDA,
         coinData: delphorMockSOLPDA,
@@ -350,7 +359,8 @@ describe("swap", () => {
   it("DelphorOracle update mockUSDC price", async () => {
     await delphorOracleProgram.rpc.updateCoinPrice({
       accounts: {
-        coinOracle1: oracleMockUSDCPDA,
+        pythProductAccount: pythProductAccount,
+        pythPriceAccount: pythPriceAccount,
         coinOracle2: oracleMockUSDCPDA,
         coinOracle3: oracleMockUSDCPDA,
         coinData: delphorMockUSDCPDA,
