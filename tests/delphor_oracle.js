@@ -35,24 +35,31 @@ describe("delphor-oracle", () => {
     delphorMockSOLPDA,
     delphorMockSOLPDAbump;
 
-    let pythProductAccount = new anchor.web3.PublicKey(
-      "11111111111111111111111111111111"
-    );
-  
-    let pythPriceAccount = new anchor.web3.PublicKey(
-      "11111111111111111111111111111111"
+  let pythProductAccount = new anchor.web3.PublicKey(
+    "11111111111111111111111111111111"
+  );
+
+  let pythPriceAccount = new anchor.web3.PublicKey(
+    "11111111111111111111111111111111"
+  );
+
+  let switchboardOptimizedFeedAccount = new anchor.web3.PublicKey(
+    "11111111111111111111111111111111"
+  );
+
+  if (process.env.ANCHOR_PROVIDER_URL == "https://api.devnet.solana.com") {
+    pythProductAccount = new anchor.web3.PublicKey(
+      "os3is9HtWPHW4EXpGAkdr2prdWVs2pS8qKtf2ZYJdBw"
     );
 
-    if(process.env.ANCHOR_PROVIDER_URL == "https://api.devnet.solana.com"){
-      pythProductAccount = new anchor.web3.PublicKey(
-        "os3is9HtWPHW4EXpGAkdr2prdWVs2pS8qKtf2ZYJdBw"
-      );
-    
-      pythPriceAccount = new anchor.web3.PublicKey(
-        "9a6RNx3tCu1TSs6TBSfV2XRXEPEZXQ6WB7jRojZRvyeZ"
-      );
-    }
-  
+    pythPriceAccount = new anchor.web3.PublicKey(
+      "9a6RNx3tCu1TSs6TBSfV2XRXEPEZXQ6WB7jRojZRvyeZ"
+    );
+
+    switchboardOptimizedFeedAccount = new anchor.web3.PublicKey(
+      "GvvC8SKcr9yrVMsFToU3E29TWtBFHcasPddaLYQqaYFw"
+    );
+  }
 
   it("Create MockSOL", async () => {
     mockSOLMint = await createMint(provider, adminAccount);
@@ -107,6 +114,7 @@ describe("delphor-oracle", () => {
       mockSOL.symbol,
       {
         accounts: {
+          switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
           pythProductAccount: pythProductAccount,
           coinData: delphorMockSOLPDA,
           mint: mockSOLMint,
@@ -131,8 +139,8 @@ describe("delphor-oracle", () => {
   it("DelphorOracle update price", async () => {
     await delphorOracleProgram.rpc.updateCoinPrice({
       accounts: {
+        switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
         pythPriceAccount: pythPriceAccount,
-        coinOracle2: oracleMockSOLPDA,
         coinOracle3: oracleMockSOLPDA,
         coinData: delphorMockSOLPDA,
         payer: adminAccount,
@@ -147,7 +155,7 @@ describe("delphor-oracle", () => {
 
     // checkData(mockSOL, delphorMockSOLData);
   });
-  return
+  return;
   it("MockOracle update coinInfo", async () => {
     mockSOL.price = new BN(258);
 
@@ -166,9 +174,9 @@ describe("delphor-oracle", () => {
   });
 
   it("DelphorOralce update price", async () => {
-    // Solana doesn't allow sending two identical tx's within the same block, 
+    // Solana doesn't allow sending two identical tx's within the same block,
     // so we wait a second. Otherwise revert with:
-    // "Error: failed to send transaction: Transaction simulation failed: 
+    // "Error: failed to send transaction: Transaction simulation failed:
     // This transaction has already been processed"
     await sleep(1000);
 

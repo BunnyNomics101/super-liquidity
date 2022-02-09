@@ -38,7 +38,8 @@ async function delphorInitCoin(
   decimals,
   delphorOraclePDA,
   delphorOraclePDAbump,
-  pythProductAccount
+  pythProductAccount,
+  switchboardOptimizedFeedAccount
 ) {
   const tx = await delphorOracleProgram.rpc.initCoin(
     delphorOraclePDAbump,
@@ -46,6 +47,7 @@ async function delphorInitCoin(
     symbol,
     {
       accounts: {
+        switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
         pythProductAccount: pythProductAccount,
         coinData: delphorOraclePDA,
         mint: mintToken,
@@ -58,9 +60,15 @@ async function delphorInitCoin(
   console.log("Delphor coin initialized: ", tx);
 }
 
-async function delphorUpdatePrice(delphorOraclePDA, oraclePDA, pythPriceAccount) {
+async function delphorUpdatePrice(
+  delphorOraclePDA,
+  oraclePDA,
+  pythPriceAccount,
+  switchboardOptimizedFeedAccount
+) {
   const tx = await delphorOracleProgram.rpc.updateCoinPrice({
     accounts: {
+      switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
       pythPriceAccount: pythPriceAccount,
       coinOracle2: oraclePDA,
       coinOracle3: oraclePDA,
@@ -109,6 +117,8 @@ async function main() {
   const MOCK_ORACLE_DEVNET_ACCOUNTS = SETTINGS.mockOracleDevnetPriceAccounts;
   const PYTH_DEVNET_PRICE_ACCOUNTS = SETTINGS.pythDevnetPriceAccounts;
   const PYTH_DEVNET_PRODUCT_ACCOUNTS = SETTINGS.pythDevnetProductAccounts;
+  const SWITCHBOARD_DEVNET_OPTIMIZED_FEED_ACCOUNTS =
+    SETTINGS.switchboardDevnetOptimizedFeedAccounts;
   const INTERVAL_UPDATE = SETTINGS.intervalUpdate;
   const MIN_PRICE_VARIATION = SETTINGS.minPriceVariation;
 
@@ -147,6 +157,7 @@ async function main() {
           let tokenMint = MOCK_ORACLE_DEVNET_ACCOUNTS[x];
           let pythPriceAccount = PYTH_DEVNET_PRICE_ACCOUNTS[x];
           let pythProductAccount = PYTH_DEVNET_PRODUCT_ACCOUNTS[x];
+          let switchboardOptimizedFeedAccount = SWITCHBOARD_DEVNET_OPTIMIZED_FEED_ACCOUNTS[x];
           try {
             let contractCoinInfo =
               await mockOracleProgram.account.coinInfo.fetch(
@@ -170,7 +181,8 @@ async function main() {
                 await delphorUpdatePrice(
                   delphorOraclePDA,
                   coinPDA,
-                  new anchor.web3.PublicKey(pythPriceAccount),
+                  pythPriceAccount,
+                  switchboardOptimizedFeedAccount
                 );
               } catch (err) {
                 await delphorInitCoin(
@@ -179,12 +191,14 @@ async function main() {
                   9,
                   delphorOraclePDA,
                   delphorOraclePDAbump,
-                  pythProductAccount
+                  pythProductAccount,
+                  switchboardOptimizedFeedAccount
                 );
                 await delphorUpdatePrice(
                   delphorOraclePDA,
                   coinPDA,
-                  new anchor.web3.PublicKey(pythPriceAccount),
+                  pythPriceAccount,
+                  switchboardOptimizedFeedAccount
                 );
               }
             }

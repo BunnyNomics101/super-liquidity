@@ -6,12 +6,12 @@
       "name": "updateCoinPrice",
       "accounts": [
         {
-          "name": "pythPriceAccount",
+          "name": "switchboardOptimizedFeedAccount",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "coinOracle2",
+          "name": "pythPriceAccount",
           "isMut": false,
           "isSigner": false
         },
@@ -53,6 +53,11 @@
         },
         {
           "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "switchboardOptimizedFeedAccount",
           "isMut": false,
           "isSigner": false
         },
@@ -121,6 +126,10 @@
           {
             "name": "pythPriceAccount",
             "type": "publicKey"
+          },
+          {
+            "name": "switchboardOptimizedFeedAccount",
+            "type": "publicKey"
           }
         ]
       }
@@ -136,9 +145,11 @@
       "code": 6001,
       "name": "PythProductAccountError",
       "msg": "Pyth product account don't contains expected symbol."
+    },
+    {
+      "code": 6002,
+      "name": "SwitchboardAccountError",
+      "msg": "Switchboard accounts don't match."
     }
-  ],
-  "metadata": {
-    "address": "DJkR4f9MY9NBYsJS1m2aXmhM97B1nW8fMVCcSAtsBdg8"
-  }
+  ]
 }

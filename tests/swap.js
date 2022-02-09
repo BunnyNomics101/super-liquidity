@@ -100,15 +100,25 @@ describe("swap", () => {
     "11111111111111111111111111111111"
   );
 
-  if(process.env.ANCHOR_PROVIDER_URL == "https://api.devnet.solana.com"){
+  let switchboardOptimizedFeedAccount = new anchor.web3.PublicKey(
+    "11111111111111111111111111111111"
+  );
+
+  /*
+  if (process.env.ANCHOR_PROVIDER_URL == "https://api.devnet.solana.com") {
     pythProductAccount = new anchor.web3.PublicKey(
       "os3is9HtWPHW4EXpGAkdr2prdWVs2pS8qKtf2ZYJdBw"
     );
-  
+
     pythPriceAccount = new anchor.web3.PublicKey(
       "9a6RNx3tCu1TSs6TBSfV2XRXEPEZXQ6WB7jRojZRvyeZ"
     );
+
+    switchboardOptimizedFeedAccount = new anchor.web3.PublicKey(
+      "GvvC8SKcr9yrVMsFToU3E29TWtBFHcasPddaLYQqaYFw"
+    );
   }
+  */
 
 
   it("Airdrop lamports to alice", async function () {
@@ -295,6 +305,7 @@ describe("swap", () => {
       mockSOL.symbol,
       {
         accounts: {
+          switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
           pythProductAccount: pythProductAccount,
           coinData: delphorMockSOLPDA,
           mint: mockSOLMint,
@@ -319,8 +330,8 @@ describe("swap", () => {
   it("DelphorOracle update price", async () => {
     await delphorOracleProgram.rpc.updateCoinPrice({
       accounts: {
-        pythPriceAccount: pythPriceAccount,
-        coinOracle2: oracleMockSOLPDA,
+          switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
+          pythPriceAccount: pythPriceAccount,
         coinOracle3: oracleMockSOLPDA,
         coinData: delphorMockSOLPDA,
         payer: adminAccount,
@@ -347,6 +358,7 @@ describe("swap", () => {
       mockUSDC.symbol,
       {
         accounts: {
+          switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
           pythProductAccount: pythProductAccount,
           coinData: delphorMockUSDCPDA,
           mint: mockUSDCMint,
@@ -371,8 +383,8 @@ describe("swap", () => {
   it("DelphorOracle update mockUSDC price", async () => {
     await delphorOracleProgram.rpc.updateCoinPrice({
       accounts: {
-        pythPriceAccount: pythPriceAccount,
-        coinOracle2: oracleMockUSDCPDA,
+          switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
+          pythPriceAccount: pythPriceAccount,
         coinOracle3: oracleMockUSDCPDA,
         coinData: delphorMockUSDCPDA,
         payer: adminAccount,

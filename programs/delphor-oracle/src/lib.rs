@@ -3,6 +3,7 @@ use anchor_spl::token::Mint;
 use mock_oracle::CoinInfo;
 use pyth_client::{load_price, load_product, Price, PriceConf, PriceStatus, Product};
 use std::{cmp, str};
+use switchboard_program::{FastRoundResultAccountData, SwitchboardAccountType};
 
 declare_id!("DJkR4f9MY9NBYsJS1m2aXmhM97B1nW8fMVCcSAtsBdg8");
 const MAX_SYMBOL_LEN: usize = 36;
@@ -12,16 +13,59 @@ pub mod delphor_oracle {
     use super::*;
     pub fn update_coin_price(ctx: Context<UpdateCoinPrice>) -> ProgramResult {
         let coin_data = &mut ctx.accounts.coin_data;
-        let coin_oracle2 = &mut ctx.accounts.coin_oracle2;
         let coin_oracle3 = &mut ctx.accounts.coin_oracle3;
 
+        // Switchboard
+        let mut switchboard_price: u64 = coin_data.price;
+        if coin_data
+            .switchboard_optimized_feed_account
+            .key()
+            .to_string()
+            != "11111111111111111111111111111111"
+        {
+            if coin_data.switchboard_optimized_feed_account.key()
+                != ctx.accounts.switchboard_optimized_feed_account.key()
+            {
+                msg!(
+                    "Expected switchboard account: {:?}",
+                    coin_data.switchboard_optimized_feed_account.key()
+                );
+                msg!(
+                    "Received: {:?}",
+                    ctx.accounts.switchboard_optimized_feed_account.key()
+                );
+                return Err(ErrorCode::SwitchboardAccountError.into());
+            }
+            let switchboard_optimized_feed_account =
+                &ctx.accounts.switchboard_optimized_feed_account;
+            let mut out = 0.0;
+            let account_buf = switchboard_optimized_feed_account.try_borrow_data()?;
+            if account_buf.len() == 0 {
+                msg!("The provided account is empty.");
+                return Err(ProgramError::InvalidAccountData);
+            }
+            if account_buf[0]
+                == SwitchboardAccountType::TYPE_AGGREGATOR_RESULT_PARSE_OPTIMIZED as u8
+            {
+                let feed_data = FastRoundResultAccountData::deserialize(&account_buf).unwrap();
+                out = feed_data.result.result;
+                switchboard_price = (out * u64::pow(10, 9) as f64) as u64;
+            } else {
+                return Err(ProgramError::InvalidAccountData);
+            }
+        }
+        // ----------------- //
+
+        // Pyth
         // Send 11111111111111111111111111111111 as pyth_product_account
         // if pyth don't track the price of the token
         let mut pyth_price: u64 = coin_data.price;
-        if coin_data.pyth_price_account.key().to_string() != "11111111111111111111111111111111"
-        {
+        if coin_data.pyth_price_account.key().to_string() != "11111111111111111111111111111111" {
             if coin_data.pyth_price_account.key() != ctx.accounts.pyth_price_account.key() {
-                msg!("Expected price account: {:?}", coin_data.pyth_price_account.key());
+                msg!(
+                    "Expected price account: {:?}",
+                    coin_data.pyth_price_account.key()
+                );
                 msg!("Received: {:?}", ctx.accounts.pyth_price_account.key());
                 return Err(ErrorCode::PythPriceAccountError.into());
             }
@@ -46,9 +90,9 @@ pub mod delphor_oracle {
         }
         // ------------------- //
 
-        let low = cmp::min(pyth_price, cmp::min(coin_oracle2.price, coin_oracle3.price));
-        let max = cmp::max(pyth_price, cmp::max(coin_oracle2.price, coin_oracle3.price));
-        let mid = pyth_price + coin_oracle2.price + coin_oracle3.price - low - max;
+        let low = cmp::min(pyth_price, cmp::min(switchboard_price, coin_oracle3.price));
+        let max = cmp::max(pyth_price, cmp::max(switchboard_price, coin_oracle3.price));
+        let mid = pyth_price + switchboard_price + coin_oracle3.price - low - max;
         // Exclude furthest price and average the other two
         let ab: u64 = max - mid;
         let bc: u64 = mid - low;
@@ -77,6 +121,25 @@ pub mod delphor_oracle {
         let mint = &ctx.accounts.mint;
         let authority = &ctx.accounts.authority;
 
+        let switchboard_optimized_feed_account = &ctx.accounts.switchboard_optimized_feed_account;
+        if ctx
+            .accounts
+            .switchboard_optimized_feed_account
+            .key()
+            .to_string()
+            != "11111111111111111111111111111111"
+        {
+            let account_buf = switchboard_optimized_feed_account.try_borrow_data()?;
+            if account_buf.len() == 0 {
+                msg!("The provided switchboard account is empty.");
+                return Err(ProgramError::InvalidAccountData);
+            }
+            if account_buf[0]
+                != SwitchboardAccountType::TYPE_AGGREGATOR_RESULT_PARSE_OPTIMIZED as u8
+            {
+                return Err(ProgramError::InvalidAccountData);
+            }
+        }
         if ctx.accounts.pyth_product_account.key().to_string() != "11111111111111111111111111111111"
         {
             let pyth_product_account =
@@ -86,7 +149,6 @@ pub mod delphor_oracle {
                 Ok(v) => v,
                 Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
             };
-            
             msg!("{}", pyth_product_metadata);
             if !pyth_product_metadata.contains(&format!("{}/USD", &symbol)) {
                 msg!("Expected product accouunt with symbol: {}", symbol);
@@ -98,6 +160,11 @@ pub mod delphor_oracle {
             coin_data.pyth_price_account = ctx.accounts.pyth_product_account.key();
         }
 
+        coin_data.switchboard_optimized_feed_account = *ctx
+            .accounts
+            .switchboard_optimized_feed_account
+            .to_account_info()
+            .key;
         coin_data.symbol = symbol;
         coin_data.mint = *mint.to_account_info().key;
         coin_data.authority = *authority.key;
@@ -108,9 +175,8 @@ pub mod delphor_oracle {
 
 #[derive(Accounts)]
 pub struct UpdateCoinPrice<'info> {
+    switchboard_optimized_feed_account: AccountInfo<'info>,
     pyth_price_account: AccountInfo<'info>,
-    #[account(owner = mock_oracle::ID)]
-    coin_oracle2: Account<'info, CoinInfo>,
     #[account(owner = mock_oracle::ID)]
     coin_oracle3: Account<'info, CoinInfo>,
     #[account(mut)]
@@ -134,6 +200,7 @@ pub struct InitCoinPrice<'info> {
     coin_data: Account<'info, CoinData>,
     mint: Account<'info, Mint>,
     authority: AccountInfo<'info>,
+    switchboard_optimized_feed_account: AccountInfo<'info>,
     pyth_product_account: AccountInfo<'info>,
     payer: Signer<'info>,
     system_program: AccountInfo<'info>,
@@ -149,6 +216,7 @@ pub struct CoinData {
     pub symbol: String,
     pub decimals: u8,
     pub pyth_price_account: Pubkey,
+    pub switchboard_optimized_feed_account: Pubkey,
 }
 
 #[error]
@@ -157,4 +225,6 @@ pub enum ErrorCode {
     PythPriceAccountError,
     #[msg("Pyth product account don't contains expected symbol.")]
     PythProductAccountError,
+    #[msg("Switchboard accounts don't match.")]
+    SwitchboardAccountError,
 }

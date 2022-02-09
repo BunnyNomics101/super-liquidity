@@ -55,6 +55,20 @@
     "APY6HpicQTabn46sZPt2pAqunFpkws9ySdujj5BHcZAK",
     "11111111111111111111111111111111"
   ],
+  "switchboardDevnetOptimizedFeedAccounts": [
+    "GvvC8SKcr9yrVMsFToU3E29TWtBFHcasPddaLYQqaYFw",
+    "B5QWpE2msH4C2K4HLLtgrw6yYCX6CaoKVWtkdeQjbNxb",
+    "CGs3b88XgTvGT6Dh8DVmsF6Cozsy5kF95fujeicFjkcr",
+    "9csVZ3xrp1MtisJMUchkWQJbYtuwbzsDqf9gYpCdyQ5C",
+    "45qhBcmMt2mBpGiKtjDJFXNj5MNV2op4AsMHucYWVqsJ",
+    "BjfVCncSQP4Cou62YjwR2oVgHURhNW4SxeQEEzVLHbmP",
+    "6kNaUTKdN6QbxzZumKhWBUtxZbtgYZLaGQTvpjs3Liua",
+    "11111111111111111111111111111111",
+    "HhnA7ffw7By3qC3FS9jmg4fhRjfdnST9n4QXzUBuDrak",
+    "Hk4wQt8oXt6rMCaCHTuLPmYVXZ9BdtXj1N8ko6anktFp",
+    "8ogEmvxdAQP7tvepCMoPVSh8EnF6W9eVVDcL6EEATPND",
+    "11111111111111111111111111111111"
+  ],
   "intervalUpdate": 30,
   "minPriceVariation": 0.00001
 }
