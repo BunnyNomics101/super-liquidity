@@ -18,30 +18,10 @@ pub mod delphor_oracle {
         // Send 11111111111111111111111111111111 as pyth_product_account
         // if pyth don't track the price of the token
         let mut pyth_price: u64 = coin_data.price;
-        if ctx.accounts.pyth_product_account.key().to_string() != "11111111111111111111111111111111"
+        if coin_data.pyth_price_account.key().to_string() != "11111111111111111111111111111111"
         {
-            let pyth_product_account =
-                &ctx.accounts.pyth_product_account.try_borrow_data().unwrap();
-            let pyth_product_data: &Product = load_product(&pyth_product_account).unwrap();
-            let public_key = Pubkey::new(&pyth_product_data.px_acc.val);
-
-            // let a = match str::from_utf8(&pyth_product_data.attr) {
-            //     Ok(v) => v,
-            //     Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
-            // };
-
-            // let symbol = format!("{}/USD", &coin_data.symbol);
-            // if !a.contains(&symbol) {
-            //     msg!(
-            //         "Expected product accouunt with symbol: {:?}",
-            //         coin_data.symbol
-            //     );
-            //     msg!("Received: {:?}", a);
-            //     return Err(ErrorCode::PythPriceAccountError.into());
-            // }
-
-            if public_key != ctx.accounts.pyth_price_account.key() {
-                msg!("Expected price account: {:?}", public_key);
+            if coin_data.pyth_price_account.key() != ctx.accounts.pyth_price_account.key() {
+                msg!("Expected price account: {:?}", coin_data.pyth_price_account.key());
                 msg!("Received: {:?}", ctx.accounts.pyth_price_account.key());
                 return Err(ErrorCode::PythPriceAccountError.into());
             }
@@ -96,6 +76,28 @@ pub mod delphor_oracle {
         let coin_data = &mut ctx.accounts.coin_data;
         let mint = &ctx.accounts.mint;
         let authority = &ctx.accounts.authority;
+
+        if ctx.accounts.pyth_product_account.key().to_string() != "11111111111111111111111111111111"
+        {
+            let pyth_product_account =
+                &ctx.accounts.pyth_product_account.try_borrow_data().unwrap();
+            let pyth_product_data: &Product = load_product(&pyth_product_account).unwrap();
+            let pyth_product_metadata = match str::from_utf8(&pyth_product_data.attr) {
+                Ok(v) => v,
+                Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
+            };
+            
+            msg!("{}", pyth_product_metadata);
+            if !pyth_product_metadata.contains(&format!("{}/USD", &symbol)) {
+                msg!("Expected product accouunt with symbol: {}", symbol);
+                msg!("Received: {}", pyth_product_metadata);
+                return Err(ErrorCode::PythProductAccountError.into());
+            }
+            coin_data.pyth_price_account = Pubkey::new(&pyth_product_data.px_acc.val);
+        } else {
+            coin_data.pyth_price_account = ctx.accounts.pyth_product_account.key();
+        }
+
         coin_data.symbol = symbol;
         coin_data.mint = *mint.to_account_info().key;
         coin_data.authority = *authority.key;
@@ -107,7 +109,6 @@ pub mod delphor_oracle {
 #[derive(Accounts)]
 pub struct UpdateCoinPrice<'info> {
     pyth_price_account: AccountInfo<'info>,
-    pyth_product_account: AccountInfo<'info>,
     #[account(owner = mock_oracle::ID)]
     coin_oracle2: Account<'info, CoinInfo>,
     #[account(owner = mock_oracle::ID)]
@@ -122,7 +123,7 @@ pub struct UpdateCoinPrice<'info> {
 #[instruction(bump: u8)]
 pub struct InitCoinPrice<'info> {
     #[account(
-        init,
+        init_if_needed,
         payer = payer,
         space = 32+32+64+64+8+MAX_SYMBOL_LEN,
         seeds = [
@@ -133,6 +134,7 @@ pub struct InitCoinPrice<'info> {
     coin_data: Account<'info, CoinData>,
     mint: Account<'info, Mint>,
     authority: AccountInfo<'info>,
+    pyth_product_account: AccountInfo<'info>,
     payer: Signer<'info>,
     system_program: AccountInfo<'info>,
 }
@@ -146,10 +148,13 @@ pub struct CoinData {
     pub last_update_timestamp: u64,
     pub symbol: String,
     pub decimals: u8,
+    pub pyth_price_account: Pubkey,
 }
 
 #[error]
 pub enum ErrorCode {
     #[msg("Pyth accounts don't match.")]
     PythPriceAccountError,
+    #[msg("Pyth product account don't contains expected symbol.")]
+    PythProductAccountError,
 }

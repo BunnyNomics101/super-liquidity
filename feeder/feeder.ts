@@ -37,7 +37,8 @@ async function delphorInitCoin(
   symbol,
   decimals,
   delphorOraclePDA,
-  delphorOraclePDAbump
+  delphorOraclePDAbump,
+  pythProductAccount
 ) {
   const tx = await delphorOracleProgram.rpc.initCoin(
     delphorOraclePDAbump,
@@ -45,6 +46,7 @@ async function delphorInitCoin(
     symbol,
     {
       accounts: {
+        pythProductAccount: pythProductAccount,
         coinData: delphorOraclePDA,
         mint: mintToken,
         authority: provider.wallet.publicKey,
@@ -56,10 +58,9 @@ async function delphorInitCoin(
   console.log("Delphor coin initialized: ", tx);
 }
 
-async function delphorUpdatePrice(delphorOraclePDA, oraclePDA, pythPriceAccount, pythProductAccount) {
+async function delphorUpdatePrice(delphorOraclePDA, oraclePDA, pythPriceAccount) {
   const tx = await delphorOracleProgram.rpc.updateCoinPrice({
     accounts: {
-      pythProductAccount: pythProductAccount,
       pythPriceAccount: pythPriceAccount,
       coinOracle2: oraclePDA,
       coinOracle3: oraclePDA,
@@ -170,7 +171,6 @@ async function main() {
                   delphorOraclePDA,
                   coinPDA,
                   new anchor.web3.PublicKey(pythPriceAccount),
-                  new anchor.web3.PublicKey(pythProductAccount)
                 );
               } catch (err) {
                 await delphorInitCoin(
@@ -178,13 +178,13 @@ async function main() {
                   coinGeckoTokenId,
                   9,
                   delphorOraclePDA,
-                  delphorOraclePDAbump
+                  delphorOraclePDAbump,
+                  pythProductAccount
                 );
                 await delphorUpdatePrice(
                   delphorOraclePDA,
                   coinPDA,
                   new anchor.web3.PublicKey(pythPriceAccount),
-                  new anchor.web3.PublicKey(pythProductAccount)
                 );
               }
             }

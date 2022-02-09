@@ -11,11 +11,6 @@
           "isSigner": false
         },
         {
-          "name": "pythProductAccount",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "coinOracle2",
           "isMut": false,
           "isSigner": false
@@ -58,6 +53,11 @@
         },
         {
           "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "pythProductAccount",
           "isMut": false,
           "isSigner": false
         },
@@ -117,6 +117,10 @@
           {
             "name": "decimals",
             "type": "u8"
+          },
+          {
+            "name": "pythPriceAccount",
+            "type": "publicKey"
           }
         ]
       }
@@ -127,6 +131,11 @@
       "code": 6000,
       "name": "PythPriceAccountError",
       "msg": "Pyth accounts don't match."
+    },
+    {
+      "code": 6001,
+      "name": "PythProductAccountError",
+      "msg": "Pyth product account don't contains expected symbol."
     }
   ],
   "metadata": {

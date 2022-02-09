@@ -82,13 +82,13 @@ describe("swap", () => {
 
   let mockSOL = {
     price: Lamport(150),
-    symbol: "MockSOL",
+    symbol: "MSOL",
     decimals: 9,
   };
 
   let mockUSDC = {
     price: Lamport(1),
-    symbol: "MockUSDC",
+    symbol: "USDC",
     decimals: 9,
   };
 
@@ -99,6 +99,17 @@ describe("swap", () => {
   let pythPriceAccount = new anchor.web3.PublicKey(
     "11111111111111111111111111111111"
   );
+
+  if(process.env.ANCHOR_PROVIDER_URL == "https://api.devnet.solana.com"){
+    pythProductAccount = new anchor.web3.PublicKey(
+      "os3is9HtWPHW4EXpGAkdr2prdWVs2pS8qKtf2ZYJdBw"
+    );
+  
+    pythPriceAccount = new anchor.web3.PublicKey(
+      "9a6RNx3tCu1TSs6TBSfV2XRXEPEZXQ6WB7jRojZRvyeZ"
+    );
+  }
+
 
   it("Airdrop lamports to alice", async function () {
     let balance = await getBalance(alice.publicKey);
@@ -284,6 +295,7 @@ describe("swap", () => {
       mockSOL.symbol,
       {
         accounts: {
+          pythProductAccount: pythProductAccount,
           coinData: delphorMockSOLPDA,
           mint: mockSOLMint,
           authority: adminAccount,
@@ -307,7 +319,6 @@ describe("swap", () => {
   it("DelphorOracle update price", async () => {
     await delphorOracleProgram.rpc.updateCoinPrice({
       accounts: {
-        pythProductAccount: pythProductAccount,
         pythPriceAccount: pythPriceAccount,
         coinOracle2: oracleMockSOLPDA,
         coinOracle3: oracleMockSOLPDA,
@@ -336,6 +347,7 @@ describe("swap", () => {
       mockUSDC.symbol,
       {
         accounts: {
+          pythProductAccount: pythProductAccount,
           coinData: delphorMockUSDCPDA,
           mint: mockUSDCMint,
           authority: adminAccount,
@@ -359,7 +371,6 @@ describe("swap", () => {
   it("DelphorOracle update mockUSDC price", async () => {
     await delphorOracleProgram.rpc.updateCoinPrice({
       accounts: {
-        pythProductAccount: pythProductAccount,
         pythPriceAccount: pythPriceAccount,
         coinOracle2: oracleMockUSDCPDA,
         coinOracle3: oracleMockUSDCPDA,

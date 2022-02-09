@@ -24,8 +24,8 @@ describe("delphor-oracle", () => {
   const adminAccount = provider.wallet.publicKey;
 
   let mockSOL = {
-    price: new BN(165800),
-    symbol: "MockSOL",
+    price: new BN(150000),
+    symbol: "MSOL",
     decimals: 9,
   };
 
@@ -35,13 +35,24 @@ describe("delphor-oracle", () => {
     delphorMockSOLPDA,
     delphorMockSOLPDAbump;
 
-  let pythProductAccount = new anchor.web3.PublicKey(
-    "11111111111111111111111111111111"
-  );
+    let pythProductAccount = new anchor.web3.PublicKey(
+      "11111111111111111111111111111111"
+    );
+  
+    let pythPriceAccount = new anchor.web3.PublicKey(
+      "11111111111111111111111111111111"
+    );
 
-  let pythPriceAccount = new anchor.web3.PublicKey(
-    "11111111111111111111111111111111"
-  );
+    if(process.env.ANCHOR_PROVIDER_URL == "https://api.devnet.solana.com"){
+      pythProductAccount = new anchor.web3.PublicKey(
+        "os3is9HtWPHW4EXpGAkdr2prdWVs2pS8qKtf2ZYJdBw"
+      );
+    
+      pythPriceAccount = new anchor.web3.PublicKey(
+        "9a6RNx3tCu1TSs6TBSfV2XRXEPEZXQ6WB7jRojZRvyeZ"
+      );
+    }
+  
 
   it("Create MockSOL", async () => {
     mockSOLMint = await createMint(provider, adminAccount);
@@ -96,6 +107,7 @@ describe("delphor-oracle", () => {
       mockSOL.symbol,
       {
         accounts: {
+          pythProductAccount: pythProductAccount,
           coinData: delphorMockSOLPDA,
           mint: mockSOLMint,
           authority: adminAccount,
@@ -120,7 +132,6 @@ describe("delphor-oracle", () => {
     await delphorOracleProgram.rpc.updateCoinPrice({
       accounts: {
         pythPriceAccount: pythPriceAccount,
-        pythProductAccount: pythProductAccount,
         coinOracle2: oracleMockSOLPDA,
         coinOracle3: oracleMockSOLPDA,
         coinData: delphorMockSOLPDA,
