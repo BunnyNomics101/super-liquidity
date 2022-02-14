@@ -6,10 +6,13 @@
   "dependencies": {
     "@project-serum/common": "^0.0.1-beta.3",
     "common-js": "^0.3.8",
+    "decimal.js": "^10.3.1",
     "mocha": "^9.1.3",
-    "node-cron": "^3.0.0"
+    "node-cron": "^3.0.0",
+    "querystring": "^0.2.1"
   },
   "devDependencies": {
+    "@orca-so/sdk": "^1.2.22",
     "@project-serum/anchor": "^0.19.1-beta.1",
     "@project-serum/anchor-cli": "^0.19.0",
     "@solana/spl-token": "^0.1.8",

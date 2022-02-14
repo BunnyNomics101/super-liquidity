@@ -1,7 +1,7 @@
 // #region code
 use anchor_lang::prelude::*;
 
-declare_id!("6BQhRV18kqJMLSXVuU3cxiX3KcpeLMZFQLura3QdrDUa");
+declare_id!("EfufQbaDxhhq693vUSaeKU2aKvxpwk114Fw3qTkM87Ke");
 
 const MAX_SYMBOL_LEN: usize = 36;
 
@@ -13,9 +13,10 @@ pub mod mock_oracle {
     /// also sets initial price
     pub fn create_coin(
         ctx: Context<CreateCoin>,
-        price: u64,
-        symbol: String,
+        coin_gecko_price: u64,
+        orca_price: u64,
         _pda_bump: u8,
+        symbol: String,
     ) -> ProgramResult {
         assert!(
             symbol.len() < MAX_SYMBOL_LEN,
@@ -24,7 +25,8 @@ pub mod mock_oracle {
         );
         // set new account values
         let coin = &mut ctx.accounts.coin;
-        coin.price = price;
+        coin.coin_gecko_price = coin_gecko_price;
+        coin.orca_price = orca_price;
         coin.last_update_timestamp = Clock::get().unwrap().unix_timestamp as u64;
         coin.authority = *ctx.accounts.authority.key;
         coin.symbol = symbol;
@@ -32,23 +34,30 @@ pub mod mock_oracle {
         // emit event
         emit!(NewCoinInfo {
             symbol: coin.symbol.clone(),
-            price: coin.price,
+            coin_gecko_price: coin.coin_gecko_price,
+            orca_price: coin.orca_price,
             last_update_timestamp: coin.last_update_timestamp,
         });
 
         Ok(())
     }
 
-    pub fn update_coin(ctx: Context<UpdateCoin>, price: u64) -> ProgramResult {
+    pub fn update_coin(
+        ctx: Context<UpdateCoin>,
+        coin_gecko_price: u64,
+        orca_price: u64,
+    ) -> ProgramResult {
         let coin = &mut ctx.accounts.coin;
         if coin.authority != *ctx.accounts.authority.key {
             return Err(ErrorCode::Unauthorized.into());
         }
-        coin.price = price;
+        coin.coin_gecko_price = coin_gecko_price;
+        coin.orca_price = orca_price;
         coin.last_update_timestamp = Clock::get().unwrap().unix_timestamp as u64;
         emit!(NewCoinInfo {
             symbol: coin.symbol.clone(),
-            price: coin.price,
+            coin_gecko_price: coin.coin_gecko_price,
+            orca_price: coin.orca_price,
             last_update_timestamp: coin.last_update_timestamp,
         });
         Ok(())
@@ -80,9 +89,10 @@ pub mod mock_oracle {
 // -----------------------------------
 //
 #[derive(Accounts)]
-#[instruction(price:u64, symbol:String, pda_bump:u8)]
+#[instruction(coin_gecko_price: u64,
+    orca_price: u64, pda_bump:u8, symbol:String)]
 pub struct CreateCoin<'info> {
-    #[account(init,payer=payer,seeds=[symbol.as_bytes().as_ref()],bump=pda_bump, space=8+8+32+ 4+MAX_SYMBOL_LEN)]
+    #[account(init,payer=payer,seeds=[symbol.as_bytes().as_ref()],bump=pda_bump, space=32+64+64+64+64+MAX_SYMBOL_LEN+128)]
     coin: Account<'info, CoinInfo>,
     authority: AccountInfo<'info>,
     payer: Signer<'info>,
@@ -111,7 +121,8 @@ pub struct DeleteCoin<'info> {
 #[account]
 #[derive(Default)]
 pub struct CoinInfo {
-    pub price: u64,
+    pub orca_price: u64,
+    pub coin_gecko_price: u64,
     pub last_update_timestamp: u64,
     pub authority: Pubkey,
     pub symbol: String,
@@ -123,7 +134,8 @@ pub struct CoinInfo {
 #[event]
 pub struct NewCoinInfo {
     pub symbol: String,
-    pub price: u64,
+    pub coin_gecko_price: u64,
+    pub orca_price: u64,
     pub last_update_timestamp: u64,
 }
 // #endregion code

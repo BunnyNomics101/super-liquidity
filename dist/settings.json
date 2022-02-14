@@ -1,5 +1,5 @@
 {
-  "symbols": [
+  "coinGeckoIds": [
     "msol",
     "usd-coin",
     "tether",
@@ -12,6 +12,20 @@
     "raydium",
     "saber",
     "marinade"
+  ],
+  "symbols": [
+    "MSOL",
+    "USDC",
+    "USDT",
+    "BTC",
+    "ETH",
+    "ORCA",
+    "ATLAS",
+    "SHDW",
+    "SRM",
+    "RAY",
+    "SBR",
+    "MNDE"
   ],
   "mockOracleDevnetPriceAccounts": [
     "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So",
@@ -69,6 +83,33 @@
     "8ogEmvxdAQP7tvepCMoPVSh8EnF6W9eVVDcL6EEATPND",
     "11111111111111111111111111111111"
   ],
-  "intervalUpdate": 30,
-  "minPriceVariation": 0.00001
+  "serumMarketAccounts": [
+    "6oGsL2puUgySccKzn9XA9afqF217LfxP5ocq4B3LWsjy",
+    "77quYg4MGneUdjgXCunt9GgM1usmrxKY31twEy3WHwcS",
+    "77quYg4MGneUdjgXCunt9GgM1usmrxKY31twEy3WHwcS",
+    "A8YFbxQYFVqKZaoYJLLUVcQiWP7G2MeEgW5wsAQgMvFw",
+    "4tSvZvnbyzHXLMTiFonMyxZoHmFqau1XArcRCVHLZ5gX",
+    "11111111111111111111111111111111",
+    "Di66GTLsV64JgCCYGVcY21RZ173BHkjJVgPyezNN7P1K",
+    "11111111111111111111111111111111",
+    "ByRys5tuUWDgL73G8JBAEfkdFf8JWBzPBDHsBVQ5vbQA",
+    "teE55QrL4a4QSfydR9dnHF97jgCfptpuigbb53Lo95g",
+    "HXBi8YBwbh4TXF6PjVw81m8Z3Cc4WBofvauj5SBFdgUs",
+    "11111111111111111111111111111111"
+  ],
+  "orcaPoolAccounts": [
+    "8PSfyiTVwPb6Rr2iZ8F3kNpbg65BCfJM9v8LfB916r44",
+    "H2uzgruPvonVpCRhwwdukcpXK8TG17swFNzYFr2rtPxy",
+    "H2uzgruPvonVpCRhwwdukcpXK8TG17swFNzYFr2rtPxy",
+    "J3kvcay3N16FBdawgnqoJ9v9p6XCvyCLE2Z9F5RLvGkj",
+    "3e1W6Aqcbuk2DfHUwRiRcyzpyYRRjg6yhZZcyEARydUX",
+    "n8Mpu28RjeYD7oUX3LG1tPxzhRZh3YYLRSHcHRdS3Zx",
+    "FZ8x1LCRSPDeHBDoAc3Gc6Y7ETCynuHEr5q5YWV7uRCJ",
+    "DJqqvzSuPaWThfzwMjXx7H2ZmHDdwxza6NtFudtuXcpc",
+    "11111111111111111111111111111111",
+    "4cXw2MYj94TFBXLL73fEpMCr8DPrW68JvrV8mzWgktbD",
+    "CS7fA5n4c2D82dUoHrYzS3gAqgqaoVSfgsr18kitp2xo",
+    "12Uj74zgUUoBe4yeackwQ4qYtFMr9fk1xL6q5Nha6t2N"
+  ],
+  "intervalUpdate": 30
 }

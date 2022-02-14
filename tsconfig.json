@@ -6,7 +6,7 @@
         "outDir": "dist",
         "moduleResolution": "node",
         "esModuleInterop": true,
-        "skipLibCheck": true
+        "skipLibCheck": true,
     },
     "include": ["./feeder/*"],
     "exclude": ["node_modules"]

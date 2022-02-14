@@ -28,16 +28,20 @@
       ],
       "args": [
         {
-          "name": "price",
+          "name": "coinGeckoPrice",
           "type": "u64"
         },
         {
-          "name": "symbol",
-          "type": "string"
+          "name": "orcaPrice",
+          "type": "u64"
         },
         {
           "name": "pdaBump",
           "type": "u8"
+        },
+        {
+          "name": "symbol",
+          "type": "string"
         }
       ]
     },
@@ -57,7 +61,11 @@
       ],
       "args": [
         {
-          "name": "price",
+          "name": "coinGeckoPrice",
+          "type": "u64"
+        },
+        {
+          "name": "orcaPrice",
           "type": "u64"
         }
       ]
@@ -91,7 +99,11 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "price",
+            "name": "orcaPrice",
+            "type": "u64"
+          },
+          {
+            "name": "coinGeckoPrice",
             "type": "u64"
           },
           {
@@ -120,7 +132,12 @@
           "index": false
         },
         {
-          "name": "price",
+          "name": "coinGeckoPrice",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "orcaPrice",
           "type": "u64",
           "index": false
         },
@@ -138,5 +155,8 @@
       "name": "Unauthorized",
       "msg": "You are not authorized to perform this action."
     }
-  ]
+  ],
+  "metadata": {
+    "address": "EfufQbaDxhhq693vUSaeKU2aKvxpwk114Fw3qTkM87Ke"
+  }
 }
