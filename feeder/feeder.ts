@@ -4,12 +4,12 @@ import { BN, Program } from "@project-serum/anchor";
 import * as cron from "node-cron";
 import { Connection, PublicKey } from "@solana/web3.js";
 import fetch from "node-fetch";
-import { getOrca } from "@orca-so/sdk";
+import { getOrca, OrcaPoolConfig } from "@orca-so/sdk";
 import Decimal from "decimal.js";
 import {
   coinGeckoIds as COIN_GECKO_IDS,
   symbols as SYMBOLS,
-  mockOracleDevnetPriceAccounts as MOCK_ORACLE_DEVNET_ACCOUNTS,
+  mintDevnetAccounts as MINT_DEVNET_ACCOUNTS,
   pythDevnetPriceAccounts as PYTH_DEVNET_PRICE_ACCOUNTS,
   pythDevnetProductAccounts as PYTH_DEVNET_PRODUCT_ACCOUNTS,
   switchboardDevnetOptimizedFeedAccounts as SWITCHBOARD_DEVNET_OPTIMIZED_FEED_ACCOUNTS,
@@ -23,25 +23,25 @@ const provider = anchor.Provider.env();
 
 anchor.setProvider(provider);
 
-const mockOracleIdl = JSON.parse(
-  fs.readFileSync("../target/idl/mock_oracle.json", "utf8")
-);
-const mockOracleAddress = mockOracleIdl.metadata
-  ? mockOracleIdl.metadata.address
-  : "EfufQbaDxhhq693vUSaeKU2aKvxpwk114Fw3qTkM87Ke";
-const mockOracleId = new anchor.web3.PublicKey(mockOracleAddress);
-const mockOracleProgram = new anchor.Program(mockOracleIdl, mockOracleId);
+function getProgramData(
+  idlPath: string,
+  address: string
+): [PublicKey, Program] {
+  const idl = JSON.parse(fs.readFileSync(idlPath, "utf8"));
+  const programAddress = idl.metadata ? idl.metadata.address : address;
+  const programId = new PublicKey(programAddress);
+  const program = new Program(idl, programId);
+  return [programId, program];
+}
 
-const delphorOracleIdl = JSON.parse(
-  fs.readFileSync("../target/idl/delphor_oracle.json", "utf8")
+const [delphorOracleId, delphorOracleProgram] = getProgramData(
+  "../target/idl/delphor_oracle.json",
+  "DJkR4f9MY9NBYsJS1m2aXmhM97B1nW8fMVCcSAtsBdg8"
 );
-const delphorOracleAddress = delphorOracleIdl.metadata
-  ? delphorOracleIdl.metadata.address
-  : "DJkR4f9MY9NBYsJS1m2aXmhM97B1nW8fMVCcSAtsBdg8";
-const delphorOracleId = new anchor.web3.PublicKey(delphorOracleAddress);
-const delphorOracleProgram = new anchor.Program(
-  delphorOracleIdl,
-  delphorOracleId
+
+const [mockOracleId, mockOracleProgram] = getProgramData(
+  "../target/idl/mock_oracle.json",
+  "EfufQbaDxhhq693vUSaeKU2aKvxpwk114Fw3qTkM87Ke"
 );
 
 const connection = new Connection(
@@ -162,98 +162,118 @@ async function updateCoin(
   console.log("Update", symbol, ":", tx);
 }
 
+async function getOrcaPrice(orcaPoolAccount: OrcaPoolConfig): Promise<BN> {
+  if ((orcaPoolAccount as string) == "11111111111111111111111111111111") {
+    return new BN(0);
+  }
+  let orcaPool = orca.getPool(orcaPoolAccount);
+  let quote = await orcaPool.getQuote(orcaPool.getTokenA(), new Decimal(0.001));
+  let orcaMinAmount = quote.getMinOutputAmount().value.toNumber() * 10 ** 3;
+  let scale = quote.getMinOutputAmount().scale;
+  if (scale < DECIMALS) {
+    orcaMinAmount *= 10 ** (DECIMALS - scale);
+  } else if (scale > DECIMALS) {
+    orcaMinAmount /= 10 ** (scale - DECIMALS);
+  }
+  return new BN(orcaMinAmount);
+}
+
+async function getCoingeckoPrice(tokenId: string): Promise<BN> {
+  let priceResponse = await fetch(
+    "https://api.coingecko.com/api/v3/simple/price?ids=" +
+      tokenId +
+      "&vs_currencies=usd"
+  );
+  let priceJson: Object = await priceResponse.json();
+  let price = priceJson[tokenId]["usd"];
+  if (price) {
+    return new BN(Math.trunc(price.toFixed(5) * 10 ** DECIMALS));
+  }
+  return new BN(0);
+}
+
+async function getOraclePDAs(): Promise<[PublicKey[], number[]]> {
+  let symbolsLength = SYMBOLS.length;
+  let pdas = new Array<PublicKey>(symbolsLength);
+  let bumps = new Array<number>(symbolsLength);
+  for (let i = 0; i < symbolsLength; i++) {
+    [pdas[i], bumps[i]] = await PublicKey.findProgramAddress(
+      [Buffer.from(SYMBOLS[i])],
+      mockOracleId
+    );
+  }
+  return [pdas, bumps];
+}
+
+async function getDelphorPDAs(): Promise<[PublicKey[], number[]]> {
+  let mintAccountsLength = MINT_DEVNET_ACCOUNTS.length;
+  let pdas = new Array<PublicKey>(mintAccountsLength);
+  let bumps = new Array<number>(mintAccountsLength);
+  for (let i = 0; i < mintAccountsLength; i++) {
+    [pdas[i], bumps[i]] = await PublicKey.findProgramAddress(
+      [new PublicKey(MINT_DEVNET_ACCOUNTS[i]).toBuffer()],
+      delphorOracleId
+    );
+  }
+  return [pdas, bumps];
+}
+
 async function main() {
   let updatingPrices = false;
-
+  const [coinPDAs, bumps] = await getOraclePDAs();
+  const [delphorOraclePDAs, delphorOracleBumps] = await getDelphorPDAs();
   let task = cron.schedule("*/" + INTERVAL_UPDATE + " * * * * *", async () => {
-    if (updatingPrices) {
-      return;
-    }
+    if (updatingPrices) return;
     updatingPrices = true;
-
-    for (let x = 0; x < COIN_GECKO_IDS.length; x++) {
-      let coinGeckoTokenId = COIN_GECKO_IDS[x];
+    for (let x = 0; x < SYMBOLS.length; x++) {
       let symbol = SYMBOLS[x];
       try {
-        let priceResponse = await fetch(
-          "https://api.coingecko.com/api/v3/simple/price?ids=" +
-            coinGeckoTokenId +
-            "&vs_currencies=usd"
-        );
-        let priceJson: Object = await priceResponse.json();
-        if (priceJson[coinGeckoTokenId]["usd"]) {
-          let coinGeckoPrice = new BN(
-            Math.trunc(
-              priceJson[coinGeckoTokenId]["usd"].toFixed(5) * 1000000000
-            )
+        let coinGeckoPrice = await getCoingeckoPrice(COIN_GECKO_IDS[x]);
+        let orcaPrice = await getOrcaPrice(ORCA_POOL_ACCOUNTS[x]);
+        try {
+          await mockOracleProgram.account.coinInfo.fetch(
+            coinPDAs[x].toBase58()
           );
-          let [coinPDA, bump] = await anchor.web3.PublicKey.findProgramAddress(
-            [Buffer.from(symbol)],
-            mockOracleId
+          await updateCoin(coinGeckoPrice, symbol, orcaPrice, coinPDAs[x]);
+        } catch (err) {
+          await createCoin(
+            coinGeckoPrice,
+            orcaPrice,
+            coinPDAs[x],
+            symbol,
+            bumps[x]
           );
-          let pythPriceAccount = PYTH_DEVNET_PRICE_ACCOUNTS[x];
-          let orcaPool = orca.getPool(ORCA_POOL_ACCOUNTS[x]);
-          let quote = await orcaPool.getQuote(
-            orcaPool.getTokenA(),
-            new Decimal(0.001)
+        }
+        try {
+          await delphorOracleProgram.account.coinData.fetch(
+            delphorOraclePDAs[x].toBase58()
           );
-          let orcaMinAmount =
-            quote.getMinOutputAmount().value.toNumber() * 10 ** 3;
-          let scale = quote.getMinOutputAmount().scale;
-          if (scale < DECIMALS) {
-            orcaMinAmount *= 10 ** (DECIMALS - scale);
-          } else if (scale > DECIMALS) {
-            orcaMinAmount /= 10 ** (scale - DECIMALS);
-          }
-          let orcaPrice = new BN(orcaMinAmount);
-          let switchboardOptimizedFeedAccount =
-            SWITCHBOARD_DEVNET_OPTIMIZED_FEED_ACCOUNTS[x];
-          try {
-            await mockOracleProgram.account.coinInfo.fetch(coinPDA.toBase58());
-            await updateCoin(coinGeckoPrice, symbol, orcaPrice, coinPDA);
-          } catch (err) {
-            await createCoin(coinGeckoPrice, orcaPrice, coinPDA, symbol, bump);
-          }
-          let mintToken = new anchor.web3.PublicKey(
-            MOCK_ORACLE_DEVNET_ACCOUNTS[x]
+          await delphorUpdatePrice(
+            delphorOraclePDAs[x],
+            coinPDAs[x],
+            PYTH_DEVNET_PRICE_ACCOUNTS[x],
+            SWITCHBOARD_DEVNET_OPTIMIZED_FEED_ACCOUNTS[x]
           );
-          let [delphorOraclePDA, delphorOraclePDAbump] =
-            await anchor.web3.PublicKey.findProgramAddress(
-              [mintToken.toBuffer()],
-              delphorOracleProgram.programId
-            );
-          try {
-            await delphorOracleProgram.account.coinData.fetch(
-              delphorOraclePDA.toBase58()
-            );
-            await delphorUpdatePrice(
-              delphorOraclePDA,
-              coinPDA,
-              pythPriceAccount,
-              switchboardOptimizedFeedAccount
-            );
-          } catch (err) {
-            await delphorInitCoin(
-              mintToken,
-              symbol,
-              delphorOraclePDA,
-              delphorOraclePDAbump,
-              PYTH_DEVNET_PRODUCT_ACCOUNTS[x],
-              switchboardOptimizedFeedAccount
-            );
-            await delphorUpdatePrice(
-              delphorOraclePDA,
-              coinPDA,
-              pythPriceAccount,
-              switchboardOptimizedFeedAccount
-            );
-          }
+        } catch (err) {
+          await delphorInitCoin(
+            MINT_DEVNET_ACCOUNTS[x],
+            symbol,
+            delphorOraclePDAs[x],
+            delphorOracleBumps[x],
+            PYTH_DEVNET_PRODUCT_ACCOUNTS[x],
+            SWITCHBOARD_DEVNET_OPTIMIZED_FEED_ACCOUNTS[x]
+          );
+          await delphorUpdatePrice(
+            delphorOraclePDAs[x],
+            coinPDAs[x],
+            PYTH_DEVNET_PRICE_ACCOUNTS[x],
+            SWITCHBOARD_DEVNET_OPTIMIZED_FEED_ACCOUNTS[x]
+          );
         }
       } catch (err) {
-        console.error(coinGeckoTokenId, err);
+        console.error(symbol, err);
       }
     }
-
     updatingPrices = false;
   });
 
