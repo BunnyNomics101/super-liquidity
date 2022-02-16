@@ -159,7 +159,11 @@ describe("swap", () => {
       oracleMockSOLPDA
     );
 
-    checkData(mockSOL, oracleMockSOLData.symbol, oracleMockSOLData.coinGeckoPrice);
+    checkData(
+      mockSOL,
+      oracleMockSOLData.symbol,
+      oracleMockSOLData.coinGeckoPrice
+    );
   });
 
   it("MockOracle create MockUSDC coin", async () => {
@@ -188,7 +192,11 @@ describe("swap", () => {
       oracleMockUSDCPDA
     );
 
-    checkData(mockUSDC, oracleMockUSDCData.symbol, oracleMockUSDCData.coinGeckoPrice);
+    checkData(
+      mockUSDC,
+      oracleMockUSDCData.symbol,
+      oracleMockUSDCData.coinGeckoPrice
+    );
   });
 
   it("Create MockSOL and mint test tokens", async () => {
@@ -776,13 +784,5 @@ describe("swap", () => {
         depositAmountAliceMockUSDC.sub(finalAmount)
       )
     );
-  });
-
-  it("Get all vault", async () => {
-    let accounts = await superLiquidityProgram.account.userCoinVault.all();
-    console.log("🚀 ~ file: swap.js ~ line 840 ~ it ~ accounts", accounts);
-    console.log("🚀 ~ file: swap.js ~ line 784 ~ it ~ accounts", accounts[0].publicKey.toBase58())
-    console.log("🚀 ~ file: swap.js ~ line 784 ~ it ~ accounts", accounts[0].account.user.toBase58())
-    console.log("🚀 ~ file: swap.js ~ line 784 ~ it ~ accounts", accounts[0].account.mint.toBase58())
   });
 });
