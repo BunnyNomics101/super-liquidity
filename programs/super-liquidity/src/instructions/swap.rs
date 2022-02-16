@@ -11,14 +11,13 @@ pub struct Swap<'info> {
     // Accounts with price from oracle
     pub get_coin_data: Account<'info, CoinData>,
     pub send_coin_data: Account<'info, CoinData>,
-    // User PDA according to the swaped token
-    pub vault_user: AccountInfo<'info>,
+    // user_vault_from and user_vault_to must be from the same user
     #[account(mut, seeds = [
-        vault_user.key().as_ref(), mint_receive.key().as_ref()
+        user_vault_to.user.key().as_ref(), mint_receive.key().as_ref()
     ], bump = user_vault_from.bump)]
     pub user_vault_from: Box<Account<'info, UserCoinVault>>,
     #[account(mut, seeds = [
-        vault_user.key().as_ref(), mint_send.key().as_ref()
+        user_vault_from.user.key().as_ref(), mint_send.key().as_ref()
     ], bump = user_vault_to.bump)]
     pub user_vault_to: Box<Account<'info, UserCoinVault>>,
     #[account(mut)]

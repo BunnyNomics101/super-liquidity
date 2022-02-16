@@ -256,4 +256,12 @@ describe("deposit", () => {
     assert.ok(aliceMockSOLVaultData.max.eq(max));
     
   });
+
+  it("Get all the vaults", async () => {
+    let accounts = await program.account.userCoinVault.all();
+    console.log("🚀 ~ file: swap.js ~ line 840 ~ it ~ accounts", accounts);
+    console.log("🚀 ~ file: swap.js ~ line 784 ~ it ~ accounts", accounts[0].publicKey.toBase58())
+    console.log("🚀 ~ file: swap.js ~ line 784 ~ it ~ accounts", accounts[0].account.user.toBase58())
+    console.log("🚀 ~ file: swap.js ~ line 784 ~ it ~ accounts", accounts[0].account.mint.toBase58())
+  });
 });

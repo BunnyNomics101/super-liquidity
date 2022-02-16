@@ -151,8 +151,6 @@ describe("delphor-oracle", () => {
 
     const delphorMockSOLData =
       await delphorOracleProgram.account.coinData.fetch(delphorMockSOLPDA);
-    console.log(delphorMockSOLData.symbol);
-    console.log(delphorMockSOLData.price.toString());
 
     // checkData(mockSOL, delphorMockSOLData);
   });

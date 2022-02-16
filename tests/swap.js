@@ -79,13 +79,13 @@ describe("swap", () => {
 
   let mockSOL = {
     price: Lamport(150),
-    symbol: "MSOL",
+    symbol: "mSOL",
     decimals: 9,
   };
 
   let mockUSDC = {
     price: Lamport(1),
-    symbol: "USDC",
+    symbol: "usdc",
     decimals: 9,
   };
 
@@ -710,7 +710,6 @@ describe("swap", () => {
         accounts: {
           getCoinData: delphorMockSOLPDA,
           sendCoinData: delphorMockUSDCPDA,
-          vaultUser: alice.publicKey,
           userVaultFrom: aliceMockUSDCVault,
           userVaultTo: aliceMockSOLVault,
           tokenStoreAuthority: tokenStoreAuthority,
@@ -779,8 +778,11 @@ describe("swap", () => {
     );
   });
 
-  xit("Get all vault", async () => {
+  it("Get all vault", async () => {
     let accounts = await superLiquidityProgram.account.userCoinVault.all();
     console.log("🚀 ~ file: swap.js ~ line 840 ~ it ~ accounts", accounts);
+    console.log("🚀 ~ file: swap.js ~ line 784 ~ it ~ accounts", accounts[0].publicKey.toBase58())
+    console.log("🚀 ~ file: swap.js ~ line 784 ~ it ~ accounts", accounts[0].account.user.toBase58())
+    console.log("🚀 ~ file: swap.js ~ line 784 ~ it ~ accounts", accounts[0].account.mint.toBase58())
   });
 });
