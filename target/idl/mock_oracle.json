@@ -155,8 +155,5 @@
       "name": "Unauthorized",
       "msg": "You are not authorized to perform this action."
     }
-  ],
-  "metadata": {
-    "address": "EfufQbaDxhhq693vUSaeKU2aKvxpwk114Fw3qTkM87Ke"
-  }
+  ]
 }

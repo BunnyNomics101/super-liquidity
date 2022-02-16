@@ -151,8 +151,5 @@
       "name": "SwitchboardAccountError",
       "msg": "Switchboard accounts don't match."
     }
-  ],
-  "metadata": {
-    "address": "DJkR4f9MY9NBYsJS1m2aXmhM97B1nW8fMVCcSAtsBdg8"
-  }
+  ]
 }

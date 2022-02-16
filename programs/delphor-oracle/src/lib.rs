@@ -38,7 +38,7 @@ pub mod delphor_oracle {
             }
             let switchboard_optimized_feed_account =
                 &ctx.accounts.switchboard_optimized_feed_account;
-            let mut out = 0.0;
+            let out: f64;
             let account_buf = switchboard_optimized_feed_account.try_borrow_data()?;
             if account_buf.len() == 0 {
                 msg!("The provided account is empty.");
@@ -119,7 +119,7 @@ pub mod delphor_oracle {
     // String must be the last.
     pub fn init_coin(
         ctx: Context<InitCoinPrice>,
-        bump: u8,
+        _bump: u8,
         decimals: u8,
         symbol: String,
     ) -> ProgramResult {
@@ -193,7 +193,7 @@ pub struct UpdateCoinPrice<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(bump: u8)]
+#[instruction(_bump: u8)]
 pub struct InitCoinPrice<'info> {
     #[account(
         init_if_needed,
@@ -202,7 +202,7 @@ pub struct InitCoinPrice<'info> {
         seeds = [
             mint.key().as_ref()
         ],
-        bump = bump,
+        bump = _bump,
     )]
     coin_data: Account<'info, CoinData>,
     mint: Account<'info, Mint>,
