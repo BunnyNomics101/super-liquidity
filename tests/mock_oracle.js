@@ -20,10 +20,10 @@ describe("mock-oracle", () => {
   function checkData(slot, event, tempCoin, coinInfo) {
     assert.ok(slot > 0);
     assert.ok(event.symbol == tempCoin.symbol);
-    assert.ok(event.price.eq(tempCoin.price));
+    assert.ok(event.coinGeckoPrice.eq(tempCoin.price));
     assert.ok(event.lastUpdateTimestamp.eq(coinInfo.lastUpdateTimestamp));
     assert.ok(coinInfo.symbol == tempCoin.symbol);
-    assert.ok(coinInfo.price.eq(tempCoin.price));
+    assert.ok(coinInfo.coinGeckoPrice.eq(tempCoin.price));
   }
 
   it("Initialize coinInfo oracle", async () => {
@@ -38,8 +38,8 @@ describe("mock-oracle", () => {
         resolve([event, slot]);
       });
 
-      const tx = await program.rpc
-        .createCoin(tempCoin.price, tempCoin.symbol, bump, {
+      await program.rpc
+        .createCoin(tempCoin.price, tempCoin.price, bump, tempCoin.symbol, {
           accounts: {
             coin: coinPDA,
             authority: provider.wallet.publicKey,
@@ -72,8 +72,8 @@ describe("mock-oracle", () => {
         resolve([event, slot]);
       });
 
-      const tx = await program.rpc
-        .updateCoin(tempCoin.price, {
+      await program.rpc
+        .updateCoin(tempCoin.price, tempCoin.price, {
           accounts: {
             coin: coinPDA,
             authority: provider.wallet.publicKey,
@@ -103,7 +103,7 @@ describe("mock-oracle", () => {
     let lastUpdateTimestamp = coinInfo.lastUpdateTimestamp;
 
     program.rpc
-      .updateCoin(new BN(5368), {
+      .updateCoin(new BN(5368), new BN(5368), {
         accounts: {
           authority: aRandomKey.publicKey,
           coin: coinPDA,
@@ -118,7 +118,7 @@ describe("mock-oracle", () => {
 
     assert.ok(coinInfo.lastUpdateTimestamp.eq(lastUpdateTimestamp));
     assert.ok(coinInfo.symbol == tempCoin.symbol);
-    assert.ok(coinInfo.price.eq(tempCoin.price));
+    assert.ok(coinInfo.coinGeckoPrice.eq(tempCoin.price));
   });
 
   it("Delete coin", async () => {
@@ -128,7 +128,7 @@ describe("mock-oracle", () => {
       program.programId
     );
 
-    const tx = await program.rpc
+    await program.rpc
       .deleteCoin({
         accounts: {
           coin: coinPDA,

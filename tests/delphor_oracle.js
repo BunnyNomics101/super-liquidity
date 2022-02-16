@@ -6,7 +6,7 @@ const { createMint } = require("./utils");
 
 function checkData(mockSOL, coinData) {
   assert.ok(coinData.symbol == mockSOL.symbol);
-  assert.ok(coinData.price.eq(mockSOL.price));
+  assert.ok(coinData.coinGeckoPrice.eq(mockSOL.price));
 }
 
 function sleep(ms) {
@@ -82,8 +82,9 @@ describe("delphor-oracle", () => {
     } catch (err) {
       await mockOracleProgram.rpc.createCoin(
         mockSOL.price,
-        mockSOL.symbol,
+        mockSOL.price,
         oracleMockSOLPDAbump,
+        mockSOL.symbol,
         {
           accounts: {
             coin: oracleMockSOLPDA,
@@ -139,8 +140,8 @@ describe("delphor-oracle", () => {
   it("DelphorOracle update price", async () => {
     await delphorOracleProgram.rpc.updateCoinPrice({
       accounts: {
-        switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
-        pythPriceAccount: pythPriceAccount,
+        switchboardOptimizedFeedAccount,
+        pythPriceAccount,
         coinOracle3: oracleMockSOLPDA,
         coinData: delphorMockSOLPDA,
         payer: adminAccount,
