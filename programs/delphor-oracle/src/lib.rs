@@ -90,8 +90,14 @@ pub mod delphor_oracle {
         }
         // ------------------- //
 
-        let low = cmp::min(pyth_price, cmp::min(switchboard_price, coin_oracle3.coin_gecko_price));
-        let max = cmp::max(pyth_price, cmp::max(switchboard_price, coin_oracle3.coin_gecko_price));
+        let low = cmp::min(
+            pyth_price,
+            cmp::min(switchboard_price, coin_oracle3.coin_gecko_price),
+        );
+        let max = cmp::max(
+            pyth_price,
+            cmp::max(switchboard_price, coin_oracle3.coin_gecko_price),
+        );
         let mid = pyth_price + switchboard_price + coin_oracle3.coin_gecko_price - low - max;
         // Exclude furthest price and average the other two
         let ab: u64 = max - mid;
@@ -177,7 +183,8 @@ pub mod delphor_oracle {
 pub struct UpdateCoinPrice<'info> {
     switchboard_optimized_feed_account: AccountInfo<'info>,
     pyth_price_account: AccountInfo<'info>,
-    #[account(owner = mock_oracle::ID)]
+    // struct CoinInfo is imported from mock-oracle, so the owner MUST be mock-oracle
+    // no need for additional checks
     coin_oracle3: Account<'info, CoinInfo>,
     #[account(mut)]
     coin_data: Account<'info, CoinData>,
