@@ -16,7 +16,7 @@ pub mod delphor_oracle {
         let coin_oracle3 = &mut ctx.accounts.coin_oracle3;
 
         // Switchboard
-        let mut switchboard_price: u64 = coin_data.price;
+        let mut switchboard_price: u64 = coin_oracle3.coin_gecko_price;
         if coin_data
             .switchboard_optimized_feed_account
             .key()
@@ -59,7 +59,7 @@ pub mod delphor_oracle {
         // Pyth
         // Send 11111111111111111111111111111111 as pyth_product_account
         // if pyth don't track the price of the token
-        let mut pyth_price: u64 = coin_data.price;
+        let mut pyth_price: u64 = coin_oracle3.coin_gecko_price;
         if coin_data.pyth_price_account.key().to_string() != "11111111111111111111111111111111" {
             if coin_data.pyth_price_account.key() != ctx.accounts.pyth_price_account.key() {
                 msg!(
