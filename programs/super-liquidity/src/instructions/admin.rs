@@ -70,6 +70,7 @@ impl<'info> InitUserVault<'info> {
             buy_fee,
             sell_fee,
             pause: false,
+            user: self.user_account.key(),
             mint: self.mint.key(),
             amount: 0,
             min: 0,
