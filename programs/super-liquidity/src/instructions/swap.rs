@@ -2,7 +2,7 @@ use crate::states::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
 use anchor_spl::token::{TokenAccount, Transfer};
-use delphor_oracle::CoinData;
+use delphor_oracle_aggregator::CoinData;
 
 //-----------------------------------------------------
 // Swap Instruction
@@ -59,7 +59,7 @@ impl<'info> Swap<'info> {
 
         let (get_coin_pda, _bump_seed) = Pubkey::find_program_address(
             &[self.mint_send.to_account_info().key.as_ref()],
-            &delphor_oracle::ID,
+            &delphor_oracle_aggregator::ID,
         );
 
         if *self.get_coin_data.to_account_info().key != get_coin_pda {
@@ -73,7 +73,7 @@ impl<'info> Swap<'info> {
 
         let (send_coin_pda, _bump_seed) = Pubkey::find_program_address(
             &[self.mint_receive.to_account_info().key.as_ref()],
-            &delphor_oracle::ID,
+            &delphor_oracle_aggregator::ID,
         );
 
         if *self.send_coin_data.to_account_info().key != send_coin_pda {

@@ -34,13 +34,13 @@ function getProgramData(
   return [programId, program];
 }
 
-const [delphorOracleId, delphorOracleProgram] = getProgramData(
-  "../target/idl/delphor_oracle.json",
+const [delphorAggregatorId, delphorAggregatorProgram] = getProgramData(
+  "../target/idl/delphor_oracle_aggregator.json",
   "DJkR4f9MY9NBYsJS1m2aXmhM97B1nW8fMVCcSAtsBdg8"
 );
 
-const [mockOracleId, mockOracleProgram] = getProgramData(
-  "../target/idl/mock_oracle.json",
+const [delphorOracleId, delphorOracleProgram] = getProgramData(
+  "../target/idl/delphor_oracle.json",
   "EfufQbaDxhhq693vUSaeKU2aKvxpwk114Fw3qTkM87Ke"
 );
 
@@ -85,7 +85,7 @@ async function delphorInitCoin(
     systemProgram,
   };
   const tx = await programCall(
-    delphorOracleProgram,
+    delphorAggregatorProgram,
     "initCoin",
     params,
     accounts
@@ -109,7 +109,7 @@ async function delphorUpdatePrice(
     systemProgram,
   };
   const tx = await programCall(
-    delphorOracleProgram,
+    delphorAggregatorProgram,
     "updateCoinPrice",
     params,
     accounts
@@ -132,7 +132,7 @@ async function createCoin(
     systemProgram,
   };
   const tx = await programCall(
-    mockOracleProgram,
+    delphorOracleProgram,
     "createCoin",
     params,
     accounts
@@ -154,7 +154,7 @@ async function updateCoin(
     systemProgram,
   };
   const tx = await programCall(
-    mockOracleProgram,
+    delphorOracleProgram,
     "updateCoin",
     params,
     accounts
@@ -199,7 +199,7 @@ async function getOraclePDAs(): Promise<[PublicKey[], number[]]> {
   for (let i = 0; i < symbolsLength; i++) {
     [pdas[i], bumps[i]] = await PublicKey.findProgramAddress(
       [Buffer.from(SYMBOLS[i])],
-      mockOracleId
+      delphorOracleId
     );
   }
   return [pdas, bumps];
@@ -212,7 +212,7 @@ async function getDelphorPDAs(): Promise<[PublicKey[], number[]]> {
   for (let i = 0; i < mintAccountsLength; i++) {
     [pdas[i], bumps[i]] = await PublicKey.findProgramAddress(
       [new PublicKey(MINT_DEVNET_ACCOUNTS[i]).toBuffer()],
-      delphorOracleId
+      delphorAggregatorId
     );
   }
   return [pdas, bumps];
@@ -231,7 +231,7 @@ async function main() {
         let coinGeckoPrice = await getCoingeckoPrice(COIN_GECKO_IDS[x]);
         let orcaPrice = await getOrcaPrice(ORCA_POOL_ACCOUNTS[x]);
         try {
-          await mockOracleProgram.account.coinInfo.fetch(
+          await delphorOracleProgram.account.coinInfo.fetch(
             coinPDAs[x].toBase58()
           );
           await updateCoin(coinGeckoPrice, symbol, orcaPrice, coinPDAs[x]);
@@ -245,7 +245,7 @@ async function main() {
           );
         }
         try {
-          await delphorOracleProgram.account.coinData.fetch(
+          await delphorAggregatorProgram.account.coinData.fetch(
             delphorOraclePDAs[x].toBase58()
           );
           await delphorUpdatePrice(

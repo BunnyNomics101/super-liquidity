@@ -5,7 +5,7 @@ delphor-finance super-liquidity backend
 solana program deploy ./target/deploy/<PROGRAM>.so --program-id <PROGRAM-ID>
 
 ### To run the feeder:
-First you need a .secret file with the privatekey of the authorized wallet for the mock-oracle
+First you need a .secret file with the privatekey of the authorized wallet for the delphor-oracle
 ```
 tsc
 cd dist

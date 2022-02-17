@@ -1,0 +1,158 @@
+{
+  "version": "0.1.0",
+  "name": "delphor_oracle_aggregator",
+  "instructions": [
+    {
+      "name": "updateCoinPrice",
+      "accounts": [
+        {
+          "name": "switchboardOptimizedFeedAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "pythPriceAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "coinOracle3",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "coinData",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initCoin",
+      "accounts": [
+        {
+          "name": "coinData",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "switchboardOptimizedFeedAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "pythProductAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "bump",
+          "type": "u8"
+        },
+        {
+          "name": "decimals",
+          "type": "u8"
+        },
+        {
+          "name": "symbol",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "CoinData",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "publicKey"
+          },
+          {
+            "name": "authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          },
+          {
+            "name": "lastUpdateTimestamp",
+            "type": "u64"
+          },
+          {
+            "name": "symbol",
+            "type": "string"
+          },
+          {
+            "name": "decimals",
+            "type": "u8"
+          },
+          {
+            "name": "pythPriceAccount",
+            "type": "publicKey"
+          },
+          {
+            "name": "switchboardOptimizedFeedAccount",
+            "type": "publicKey"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "PythPriceAccountError",
+      "msg": "Pyth accounts don't match."
+    },
+    {
+      "code": 6001,
+      "name": "PythProductAccountError",
+      "msg": "Pyth product account don't contains expected symbol."
+    },
+    {
+      "code": 6002,
+      "name": "SwitchboardAccountError",
+      "msg": "Switchboard accounts don't match."
+    }
+  ],
+  "metadata": {
+    "address": "DJkR4f9MY9NBYsJS1m2aXmhM97B1nW8fMVCcSAtsBdg8"
+  }
+}

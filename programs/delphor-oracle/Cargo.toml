@@ -18,9 +18,3 @@ anchor-debug = []
 
 [dependencies]
 anchor-lang = "0.19.0"
-anchor-spl = "0.19.0"
-solana-program = "1.8.11"
-mock-oracle = { path = "../mock-oracle", features = ["cpi"] }
-pyth-client= {version = "0.3.0", features = ["no-entrypoint"] }
-switchboard-program = "=0.2.0"
-lexical = "=6.0.1"

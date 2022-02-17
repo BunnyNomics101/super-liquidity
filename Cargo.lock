@@ -472,9 +472,16 @@ name = "delphor-oracle"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
+]
+
+[[package]]
+name = "delphor-oracle-aggregator"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
  "anchor-spl",
+ "delphor-oracle",
  "lexical",
- "mock-oracle",
  "pyth-client",
  "solana-program",
  "switchboard-program",
@@ -806,13 +813,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4647a11b578fead29cdbb34d4adef8dd3dc35b876c9c6d5240d83f205abfe96e"
 dependencies = [
  "libc",
-]
-
-[[package]]
-name = "mock-oracle"
-version = "0.1.0"
-dependencies = [
- "anchor-lang",
 ]
 
 [[package]]
@@ -1301,7 +1301,7 @@ version = "0.1.0"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
- "delphor-oracle",
+ "delphor-oracle-aggregator",
  "solana-program",
 ]
 

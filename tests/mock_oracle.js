@@ -2,13 +2,13 @@ const anchor = require("@project-serum/anchor");
 const BN = require("@project-serum/anchor").BN;
 const assert = require("assert");
 
-describe("mock-oracle", () => {
+describe("delphor-oracle", () => {
   const provider = anchor.Provider.env();
 
   // Configure the client to use the local cluster.
   anchor.setProvider(provider);
 
-  const program = anchor.workspace.MockOracle;
+  const program = anchor.workspace.DelphorOracle;
 
   let tempCoin = {
     price: new BN(1000000),

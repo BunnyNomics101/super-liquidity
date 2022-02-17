@@ -26,8 +26,8 @@ describe("swap", () => {
   anchor.setProvider(provider);
 
   const superLiquidityProgram = anchor.workspace.SuperLiquidity;
-  const mockOracleProgram = anchor.workspace.MockOracle;
   const delphorOracleProgram = anchor.workspace.DelphorOracle;
+  const delphorOracleAggregatorProgram = anchor.workspace.DelphorOracleAggregator;
   const adminAccount = provider.wallet.publicKey;
   const alice = anchor.web3.Keypair.generate();
   const bob = anchor.web3.Keypair.generate();
@@ -60,10 +60,10 @@ describe("swap", () => {
     programMockUSDCAccount,
     delphorMockUSDCPDA,
     delphorMockSOLPDA,
-    oracleMockSOLPDA,
-    oracleMockSOLPDAbump,
-    oracleMockUSDCPDA,
-    oracleMockUSDCPDAbump;
+    delphorOracleMockSOLPDAbump,
+    delphorOracleMockSOLPDA,
+    delphorOracleMockUSDCPDA,
+    delphorOracleMockUSDCPDAbump;
 
   function Lamport(value) {
     return new BN(value * 10 ** 9);
@@ -133,21 +133,21 @@ describe("swap", () => {
     assert.ok(balance == anchor.web3.LAMPORTS_PER_SOL);
   });
 
-  it("MockOracle create MockSOL coin", async () => {
-    [oracleMockSOLPDA, oracleMockSOLPDAbump] =
+  it("DelphorOracle create MockSOL coin", async () => {
+    [delphorOracleMockSOLPDA, delphorOracleMockSOLPDAbump] =
       await anchor.web3.PublicKey.findProgramAddress(
         [mockSOL.symbol],
-        mockOracleProgram.programId
+        delphorOracleProgram.programId
       );
 
-    await mockOracleProgram.rpc.createCoin(
+    await delphorOracleProgram.rpc.createCoin(
       mockSOL.price,
       mockSOL.price,
-      oracleMockSOLPDAbump,
+      delphorOracleMockSOLPDAbump,
       mockSOL.symbol,
       {
         accounts: {
-          coin: oracleMockSOLPDA,
+          coin: delphorOracleMockSOLPDA,
           authority: provider.wallet.publicKey,
           payer: provider.wallet.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -155,32 +155,32 @@ describe("swap", () => {
       }
     );
 
-    const oracleMockSOLData = await mockOracleProgram.account.coinInfo.fetch(
-      oracleMockSOLPDA
+    const delphorOracleMockSOLData = await delphorOracleProgram.account.coinInfo.fetch(
+      delphorOracleMockSOLPDA
     );
 
     checkData(
       mockSOL,
-      oracleMockSOLData.symbol,
-      oracleMockSOLData.coinGeckoPrice
+      delphorOracleMockSOLData.symbol,
+      delphorOracleMockSOLData.coinGeckoPrice
     );
   });
 
-  it("MockOracle create MockUSDC coin", async () => {
-    [oracleMockUSDCPDA, oracleMockUSDCPDAbump] =
+  it("DelphorOracle create MockUSDC coin", async () => {
+    [delphorOracleMockUSDCPDA, delphorOracleMockUSDCPDAbump] =
       await anchor.web3.PublicKey.findProgramAddress(
         [mockUSDC.symbol],
-        mockOracleProgram.programId
+        delphorOracleProgram.programId
       );
 
-    await mockOracleProgram.rpc.createCoin(
+    await delphorOracleProgram.rpc.createCoin(
       mockUSDC.price,
       mockUSDC.price,
-      oracleMockUSDCPDAbump,
+      delphorOracleMockUSDCPDAbump,
       mockUSDC.symbol,
       {
         accounts: {
-          coin: oracleMockUSDCPDA,
+          coin: delphorOracleMockUSDCPDA,
           authority: provider.wallet.publicKey,
           payer: provider.wallet.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -188,14 +188,14 @@ describe("swap", () => {
       }
     );
 
-    const oracleMockUSDCData = await mockOracleProgram.account.coinInfo.fetch(
-      oracleMockUSDCPDA
+    const delphorOracleMockUSDCData = await delphorOracleProgram.account.coinInfo.fetch(
+      delphorOracleMockUSDCPDA
     );
 
     checkData(
       mockUSDC,
-      oracleMockUSDCData.symbol,
-      oracleMockUSDCData.coinGeckoPrice
+      delphorOracleMockUSDCData.symbol,
+      delphorOracleMockUSDCData.coinGeckoPrice
     );
   });
 
@@ -302,10 +302,10 @@ describe("swap", () => {
     [delphorMockSOLPDA, delphorMockSOLPDAbump] =
       await anchor.web3.PublicKey.findProgramAddress(
         [mockSOLMint.toBuffer()],
-        delphorOracleProgram.programId
+        delphorOracleAggregatorProgram.programId
       );
 
-    await delphorOracleProgram.rpc.initCoin(
+    await delphorOracleAggregatorProgram.rpc.initCoin(
       delphorMockSOLPDAbump,
       mockSOL.decimals,
       mockSOL.symbol,
@@ -323,7 +323,7 @@ describe("swap", () => {
     );
 
     const delphorMockSOLData =
-      await delphorOracleProgram.account.coinData.fetch(delphorMockSOLPDA);
+      await delphorOracleAggregatorProgram.account.coinData.fetch(delphorMockSOLPDA);
 
     assert.ok(delphorMockSOLData.symbol == mockSOL.symbol);
     assert.ok(delphorMockSOLData.mint.toBase58() == mockSOLMint.toBase58());
@@ -334,11 +334,11 @@ describe("swap", () => {
   });
 
   it("DelphorOracle update price", async () => {
-    await delphorOracleProgram.rpc.updateCoinPrice({
+    await delphorOracleAggregatorProgram.rpc.updateCoinPrice({
       accounts: {
         switchboardOptimizedFeedAccount,
         pythPriceAccount,
-        coinOracle3: oracleMockSOLPDA,
+        coinOracle3: delphorOracleMockSOLPDA,
         coinData: delphorMockSOLPDA,
         payer: adminAccount,
         systemProgram: anchor.web3.SystemProgram.programId,
@@ -346,7 +346,7 @@ describe("swap", () => {
     });
 
     const delphorMockSOLData =
-      await delphorOracleProgram.account.coinData.fetch(delphorMockSOLPDA);
+      await delphorOracleAggregatorProgram.account.coinData.fetch(delphorMockSOLPDA);
 
     checkData(mockSOL, delphorMockSOLData.symbol, delphorMockSOLData.price);
   });
@@ -355,10 +355,10 @@ describe("swap", () => {
     [delphorMockUSDCPDA, delphorMockUSDCPDAbump] =
       await anchor.web3.PublicKey.findProgramAddress(
         [mockUSDCMint.toBuffer()],
-        delphorOracleProgram.programId
+        delphorOracleAggregatorProgram.programId
       );
 
-    await delphorOracleProgram.rpc.initCoin(
+    await delphorOracleAggregatorProgram.rpc.initCoin(
       delphorMockUSDCPDAbump,
       mockUSDC.decimals,
       mockUSDC.symbol,
@@ -376,7 +376,7 @@ describe("swap", () => {
     );
 
     const delphorMockUSDCData =
-      await delphorOracleProgram.account.coinData.fetch(delphorMockUSDCPDA);
+      await delphorOracleAggregatorProgram.account.coinData.fetch(delphorMockUSDCPDA);
 
     assert.ok(delphorMockUSDCData.symbol == mockUSDC.symbol);
     assert.ok(delphorMockUSDCData.mint.toBase58() == mockUSDCMint.toBase58());
@@ -387,11 +387,11 @@ describe("swap", () => {
   });
 
   it("DelphorOracle update mockUSDC price", async () => {
-    await delphorOracleProgram.rpc.updateCoinPrice({
+    await delphorOracleAggregatorProgram.rpc.updateCoinPrice({
       accounts: {
         switchboardOptimizedFeedAccount,
         pythPriceAccount,
-        coinOracle3: oracleMockUSDCPDA,
+        coinOracle3: delphorOracleMockUSDCPDA,
         coinData: delphorMockUSDCPDA,
         payer: adminAccount,
         systemProgram: anchor.web3.SystemProgram.programId,
@@ -399,7 +399,7 @@ describe("swap", () => {
     });
 
     const delphorMockUSDCData =
-      await delphorOracleProgram.account.coinData.fetch(delphorMockUSDCPDA);
+      await delphorOracleAggregatorProgram.account.coinData.fetch(delphorMockUSDCPDA);
 
     checkData(mockUSDC, delphorMockUSDCData.symbol, delphorMockUSDCData.price);
   });
@@ -571,14 +571,21 @@ describe("swap", () => {
     let buyFee = 300;
     let min = new anchor.BN(1 * 10 ** 9);
     let max = new anchor.BN(10 * 10 ** 9);
-    await superLiquidityProgram.rpc.updateUserVault(sellFee, buyFee, min, max, [mockSOLMint, mockUSDCMint], {
-      accounts: {
-        userAccount: alice.publicKey,
-        userVault: aliceMockSOLVault,
-        mint: mockSOLMint,
-      },
-      signers: [alice],
-    });
+    await superLiquidityProgram.rpc.updateUserVault(
+      sellFee,
+      buyFee,
+      min,
+      max,
+      [mockSOLMint, mockUSDCMint],
+      {
+        accounts: {
+          userAccount: alice.publicKey,
+          userVault: aliceMockSOLVault,
+          mint: mockSOLMint,
+        },
+        signers: [alice],
+      }
+    );
 
     const aliceMockSOLVaultData =
       await superLiquidityProgram.account.userCoinVault.fetch(
@@ -596,14 +603,21 @@ describe("swap", () => {
     let buyFee = 300;
     let min = new anchor.BN(1 * 10 ** 9);
     let max = new anchor.BN(10 * 10 ** 9);
-    await superLiquidityProgram.rpc.updateUserVault(sellFee, buyFee, min, max, [mockSOLMint, mockUSDCMint], {
-      accounts: {
-        userAccount: alice.publicKey,
-        userVault: aliceMockUSDCVault,
-        mint: mockUSDCMint,
-      },
-      signers: [alice],
-    });
+    await superLiquidityProgram.rpc.updateUserVault(
+      sellFee,
+      buyFee,
+      min,
+      max,
+      [mockSOLMint, mockUSDCMint],
+      {
+        accounts: {
+          userAccount: alice.publicKey,
+          userVault: aliceMockUSDCVault,
+          mint: mockUSDCMint,
+        },
+        signers: [alice],
+      }
+    );
 
     const aliceMockUSDCVaultData =
       await superLiquidityProgram.account.userCoinVault.fetch(
@@ -621,14 +635,21 @@ describe("swap", () => {
     let buyFee = 3;
     let min = new anchor.BN(1 * 10 ** 9);
     let max = new anchor.BN(10 * 10 ** 9);
-    await superLiquidityProgram.rpc.updateUserVault(sellFee, buyFee, min, max, [mockSOLMint, mockUSDCMint], {
-      accounts: {
-        userAccount: bob.publicKey,
-        userVault: bobMockSOLVault,
-        mint: mockSOLMint,
-      },
-      signers: [bob],
-    });
+    await superLiquidityProgram.rpc.updateUserVault(
+      sellFee,
+      buyFee,
+      min,
+      max,
+      [mockSOLMint, mockUSDCMint],
+      {
+        accounts: {
+          userAccount: bob.publicKey,
+          userVault: bobMockSOLVault,
+          mint: mockSOLMint,
+        },
+        signers: [bob],
+      }
+    );
 
     const bobMockSOLVaultData =
       await superLiquidityProgram.account.userCoinVault.fetch(bobMockSOLVault);
@@ -644,14 +665,21 @@ describe("swap", () => {
     let buyFee = 3;
     let min = new anchor.BN(1 * 10 ** 9);
     let max = new anchor.BN(10 * 10 ** 9);
-    await superLiquidityProgram.rpc.updateUserVault(sellFee, buyFee, min, max, [mockSOLMint, mockUSDCMint], {
-      accounts: {
-        userAccount: bob.publicKey,
-        userVault: bobMockUSDCVault,
-        mint: mockUSDCMint,
-      },
-      signers: [bob],
-    });
+    await superLiquidityProgram.rpc.updateUserVault(
+      sellFee,
+      buyFee,
+      min,
+      max,
+      [mockSOLMint, mockUSDCMint],
+      {
+        accounts: {
+          userAccount: bob.publicKey,
+          userVault: bobMockUSDCVault,
+          mint: mockUSDCMint,
+        },
+        signers: [bob],
+      }
+    );
 
     const bobMockUSDCVaultData =
       await superLiquidityProgram.account.userCoinVault.fetch(bobMockUSDCVault);
