@@ -45,18 +45,17 @@ pub struct Swap<'info> {
     pub token_program: AccountInfo<'info>,
 }
 impl<'info> Swap<'info> {
-    pub fn process(
-        &mut self,
-        swap_amount: u64,
-        min_amount: u64,
-        bump: u8
-    ) -> ProgramResult {
+    pub fn process(&mut self, swap_amount: u64, min_amount: u64, bump: u8) -> ProgramResult {
         let get_coin_price = self.get_coin_data.price;
         let get_coin_decimals = self.get_coin_data.decimals;
         let send_coin_price = self.send_coin_data.price;
         let send_coin_decimals = self.send_coin_data.decimals;
         let user_vault_from = &mut self.user_vault_from;
         let user_vault_to = &mut self.user_vault_to;
+
+        if !user_vault_from.swap_to.contains(&self.mint_send.key()) {
+            return Err(ErrorCode::VaultDoesntAcceptToken.into());
+        }
 
         let (get_coin_pda, _bump_seed) = Pubkey::find_program_address(
             &[self.mint_send.to_account_info().key.as_ref()],
@@ -159,4 +158,6 @@ pub enum ErrorCode {
     ExceedsMaxAmount,
     #[msg("Operation exceeds min balance to user_vault_from")]
     ExceedsMinAmount,
+    #[msg("Vault from doesn't accept received token.")]
+    VaultDoesntAcceptToken,
 }

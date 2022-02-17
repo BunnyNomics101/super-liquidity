@@ -15,10 +15,10 @@ pub struct UserCoinVault {
     pub bump: u8,
     pub user: Pubkey,
     pub mint: Pubkey,
+    pub swap_to: Vec<Pubkey>,
     pub amount: u64,
     pub min: u64,
     pub max: u64,
-
     pub buy_fee: u32,
     pub sell_fee: u32,
 

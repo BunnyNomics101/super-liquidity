@@ -62,7 +62,9 @@ describe("deposit", () => {
 
     assert.ok(
       alicemockSOL.toBase58() ==
-        (await getAssociatedTokenAccount(mockSOLMint, alice.publicKey)).toBase58()
+        (
+          await getAssociatedTokenAccount(mockSOLMint, alice.publicKey)
+        ).toBase58()
     );
 
     attackerMockSOL = await createAssociatedTokenAccount(
@@ -80,7 +82,13 @@ describe("deposit", () => {
 
     amount = new anchor.BN(5 * 10 ** 6);
     // Create user and program token accounts
-    await mintToAccount(provider, mockSOLMint, alicemockSOL, amount, adminAccount);
+    await mintToAccount(
+      provider,
+      mockSOLMint,
+      alicemockSOL,
+      amount,
+      adminAccount
+    );
 
     let aliceMockSOLAccount = await getTokenAccount(provider, alicemockSOL);
     assert.ok(aliceMockSOLAccount.amount.eq(amount));
@@ -131,7 +139,7 @@ describe("deposit", () => {
         program.programId
       );
 
-    await program.rpc.initUserVault(aliceMockSOLVaultBump, 0, 0, {
+    await program.rpc.initUserVault(aliceMockSOLVaultBump, 0, 0, [], {
       accounts: {
         globalState: globalState,
         userAccount: alice.publicKey,
@@ -237,7 +245,7 @@ describe("deposit", () => {
     let buyFee = 3;
     let min = new anchor.BN(5);
     let max = new anchor.BN(7);
-    await program.rpc.updateUserVault(sellFee, buyFee, min, max, {
+    await program.rpc.updateUserVault(sellFee, buyFee, min, max, [],{
       accounts: {
         userAccount: alice.publicKey,
         userVault: aliceMockSOLVault,
@@ -249,19 +257,10 @@ describe("deposit", () => {
     const aliceMockSOLVaultData = await program.account.userCoinVault.fetch(
       aliceMockSOLVault
     );
-    
+
     assert.ok(aliceMockSOLVaultData.buyFee == buyFee);
     assert.ok(aliceMockSOLVaultData.sellFee == sellFee);
     assert.ok(aliceMockSOLVaultData.min.eq(min));
     assert.ok(aliceMockSOLVaultData.max.eq(max));
-    
-  });
-
-  it("Get all the vaults", async () => {
-    let accounts = await program.account.userCoinVault.all();
-    console.log("🚀 ~ file: swap.js ~ line 840 ~ it ~ accounts", accounts);
-    console.log("🚀 ~ file: swap.js ~ line 784 ~ it ~ accounts", accounts[0].publicKey.toBase58())
-    console.log("🚀 ~ file: swap.js ~ line 784 ~ it ~ accounts", accounts[0].account.user.toBase58())
-    console.log("🚀 ~ file: swap.js ~ line 784 ~ it ~ accounts", accounts[0].account.mint.toBase58())
   });
 });

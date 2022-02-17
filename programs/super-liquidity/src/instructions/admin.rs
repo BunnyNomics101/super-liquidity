@@ -64,7 +64,7 @@ pub struct InitUserVault<'info> {
 }
 impl<'info> InitUserVault<'info> {
     #[allow(unused_variables)]
-    pub fn process(&mut self, bump: u8, buy_fee: u32, sell_fee: u32) -> ProgramResult {
+    pub fn process(&mut self, bump: u8, buy_fee: u32, sell_fee: u32, swap_accounts: Vec<Pubkey>) -> ProgramResult {
         *self.user_vault = UserCoinVault{
             bump,
             buy_fee,
@@ -72,6 +72,7 @@ impl<'info> InitUserVault<'info> {
             pause: false,
             user: self.user_account.key(),
             mint: self.mint.key(),
+            swap_to: swap_accounts,
             amount: 0,
             min: 0,
             max: 0
@@ -165,7 +166,8 @@ pub struct UpdateUserVault<'info> {
     pub user_vault: Account<'info, UserCoinVault>,
 }
 impl<'info> UpdateUserVault<'info> {
-    pub fn process(&mut self, sell_fee: u32, buy_fee: u32, min: u64, max: u64) -> ProgramResult {
+    pub fn process(&mut self, sell_fee: u32, buy_fee: u32, min: u64, max: u64, swap_accounts: Vec<Pubkey>) -> ProgramResult {
+        self.user_vault.swap_to = swap_accounts;
         self.user_vault.sell_fee = sell_fee;
         self.user_vault.buy_fee = buy_fee;
         self.user_vault.min = min;

@@ -470,16 +470,22 @@ describe("swap", () => {
         superLiquidityProgram.programId
       );
 
-    await superLiquidityProgram.rpc.initUserVault(aliceMockSOLVaultBump, 0, 0, {
-      accounts: {
-        globalState: globalState,
-        userAccount: alice.publicKey,
-        mint: mockSOLMint,
-        userVault: aliceMockSOLVault,
-        systemProgram: anchor.web3.SystemProgram.programId,
-      },
-      signers: [alice],
-    });
+    await superLiquidityProgram.rpc.initUserVault(
+      aliceMockSOLVaultBump,
+      0,
+      0,
+      [],
+      {
+        accounts: {
+          globalState: globalState,
+          userAccount: alice.publicKey,
+          mint: mockSOLMint,
+          userVault: aliceMockSOLVault,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        },
+        signers: [alice],
+      }
+    );
   });
 
   it("Initialize alice mockUSDC vault", async () => {
@@ -494,6 +500,7 @@ describe("swap", () => {
       aliceMockUSDCVaultBump,
       0,
       0,
+      [],
       {
         accounts: {
           globalState: globalState,
@@ -515,16 +522,22 @@ describe("swap", () => {
         superLiquidityProgram.programId
       );
 
-    await superLiquidityProgram.rpc.initUserVault(bobMockSOLVaultBump, 0, 0, {
-      accounts: {
-        globalState: globalState,
-        userAccount: bob.publicKey,
-        mint: mockSOLMint,
-        userVault: bobMockSOLVault,
-        systemProgram: anchor.web3.SystemProgram.programId,
-      },
-      signers: [bob],
-    });
+    await superLiquidityProgram.rpc.initUserVault(
+      bobMockSOLVaultBump,
+      0,
+      0,
+      [],
+      {
+        accounts: {
+          globalState: globalState,
+          userAccount: bob.publicKey,
+          mint: mockSOLMint,
+          userVault: bobMockSOLVault,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        },
+        signers: [bob],
+      }
+    );
   });
 
   it("Initialize bob mockUSDC vault", async () => {
@@ -535,16 +548,22 @@ describe("swap", () => {
         superLiquidityProgram.programId
       );
 
-    await superLiquidityProgram.rpc.initUserVault(bobMockUSDCVaultBump, 0, 0, {
-      accounts: {
-        globalState: globalState,
-        userAccount: bob.publicKey,
-        mint: mockUSDCMint,
-        userVault: bobMockUSDCVault,
-        systemProgram: anchor.web3.SystemProgram.programId,
-      },
-      signers: [bob],
-    });
+    await superLiquidityProgram.rpc.initUserVault(
+      bobMockUSDCVaultBump,
+      0,
+      0,
+      [],
+      {
+        accounts: {
+          globalState: globalState,
+          userAccount: bob.publicKey,
+          mint: mockUSDCMint,
+          userVault: bobMockUSDCVault,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        },
+        signers: [bob],
+      }
+    );
   });
 
   it("Alice changes mockSOL fees, min and max", async () => {
@@ -552,7 +571,7 @@ describe("swap", () => {
     let buyFee = 300;
     let min = new anchor.BN(1 * 10 ** 9);
     let max = new anchor.BN(10 * 10 ** 9);
-    await superLiquidityProgram.rpc.updateUserVault(sellFee, buyFee, min, max, {
+    await superLiquidityProgram.rpc.updateUserVault(sellFee, buyFee, min, max, [mockSOLMint, mockUSDCMint], {
       accounts: {
         userAccount: alice.publicKey,
         userVault: aliceMockSOLVault,
@@ -577,7 +596,7 @@ describe("swap", () => {
     let buyFee = 300;
     let min = new anchor.BN(1 * 10 ** 9);
     let max = new anchor.BN(10 * 10 ** 9);
-    await superLiquidityProgram.rpc.updateUserVault(sellFee, buyFee, min, max, {
+    await superLiquidityProgram.rpc.updateUserVault(sellFee, buyFee, min, max, [mockSOLMint, mockUSDCMint], {
       accounts: {
         userAccount: alice.publicKey,
         userVault: aliceMockUSDCVault,
@@ -602,7 +621,7 @@ describe("swap", () => {
     let buyFee = 3;
     let min = new anchor.BN(1 * 10 ** 9);
     let max = new anchor.BN(10 * 10 ** 9);
-    await superLiquidityProgram.rpc.updateUserVault(sellFee, buyFee, min, max, {
+    await superLiquidityProgram.rpc.updateUserVault(sellFee, buyFee, min, max, [mockSOLMint, mockUSDCMint], {
       accounts: {
         userAccount: bob.publicKey,
         userVault: bobMockSOLVault,
@@ -625,7 +644,7 @@ describe("swap", () => {
     let buyFee = 3;
     let min = new anchor.BN(1 * 10 ** 9);
     let max = new anchor.BN(10 * 10 ** 9);
-    await superLiquidityProgram.rpc.updateUserVault(sellFee, buyFee, min, max, {
+    await superLiquidityProgram.rpc.updateUserVault(sellFee, buyFee, min, max, [mockSOLMint, mockUSDCMint], {
       accounts: {
         userAccount: bob.publicKey,
         userVault: bobMockUSDCVault,

@@ -39,8 +39,8 @@ pub mod super_liquidity {
     }
 
     ///create user vault
-    pub fn init_user_vault(ctx: Context<InitUserVault>, bump: u8, min_fee: u32, max_fee: u32) -> ProgramResult {
-        ctx.accounts.process(bump, min_fee, max_fee)
+    pub fn init_user_vault(ctx: Context<InitUserVault>, bump: u8, min_fee: u32, max_fee: u32, swap_accounts: Vec<Pubkey>) -> ProgramResult {
+        ctx.accounts.process(bump, min_fee, max_fee, swap_accounts)
     }
 
     ///initialize token store
@@ -55,8 +55,9 @@ pub mod super_liquidity {
         sell_fee_bp: u32,
         min: u64,
         max: u64,
+        swap_accounts: Vec<Pubkey>
     ) -> ProgramResult {
-        ctx.accounts.process(buy_fee_bp, sell_fee_bp, min, max)
+        ctx.accounts.process(buy_fee_bp, sell_fee_bp, min, max, swap_accounts)
     }
     
 }
