@@ -1,6 +1,8 @@
 const anchor = require("@project-serum/anchor");
 const BN = require("@project-serum/anchor").BN;
+const PublicKey = require("@solana/web3.js").PublicKey;
 const assert = require("assert");
+const { programCall, expectProgramCallRevert } = require("./utils");
 
 describe("delphor-oracle", () => {
   const provider = anchor.Provider.env();
@@ -9,6 +11,10 @@ describe("delphor-oracle", () => {
   anchor.setProvider(provider);
 
   const program = anchor.workspace.DelphorOracle;
+
+  const authority = provider.wallet.publicKey;
+  const payer = provider.wallet.publicKey;
+  const systemProgram = anchor.web3.SystemProgram.programId;
 
   let tempCoin = {
     price: new BN(1000000),
@@ -28,7 +34,7 @@ describe("delphor-oracle", () => {
 
   it("Initialize coinInfo oracle", async () => {
     // compute a PDA based on program.programId + symbol
-    let [coinPDA, bump] = await anchor.web3.PublicKey.findProgramAddress(
+    let [coinPDA, bump] = await PublicKey.findProgramAddress(
       [tempCoin.symbol],
       program.programId
     );
@@ -38,18 +44,18 @@ describe("delphor-oracle", () => {
         resolve([event, slot]);
       });
 
-      await program.rpc
-        .createCoin(tempCoin.price, tempCoin.price, bump, tempCoin.symbol, {
-          accounts: {
-            coin: coinPDA,
-            authority: provider.wallet.publicKey,
-            payer: provider.wallet.publicKey,
-            systemProgram: anchor.web3.SystemProgram.programId,
-          },
-        })
-        .catch((err) => {
-          console.error(err);
-        });
+      await programCall(
+        program,
+        "createCoin",
+        [tempCoin.price, tempCoin.price, bump, tempCoin.symbol],
+        {
+          coin: coinPDA,
+          authority,
+          payer,
+          systemProgram,
+        }
+      );
+      
     });
 
     await program.removeEventListener(listener);
@@ -62,7 +68,7 @@ describe("delphor-oracle", () => {
     tempCoin.price = new BN(258);
 
     // compute a PDA based on program.programId + symbol
-    let [coinPDA, bump] = await anchor.web3.PublicKey.findProgramAddress(
+    let [coinPDA, bump] = await PublicKey.findProgramAddress(
       [tempCoin.symbol],
       program.programId
     );
@@ -72,16 +78,15 @@ describe("delphor-oracle", () => {
         resolve([event, slot]);
       });
 
-      await program.rpc
-        .updateCoin(tempCoin.price, tempCoin.price, {
-          accounts: {
-            coin: coinPDA,
-            authority: provider.wallet.publicKey,
-          },
-        })
-        .catch((err) => {
-          console.error(err);
-        });
+      await programCall(
+        program,
+        "updateCoin",
+        [tempCoin.price, tempCoin.price],
+        {
+          coin: coinPDA,
+          authority,
+        }
+      );
     });
 
     await program.removeEventListener(listener);
@@ -94,7 +99,7 @@ describe("delphor-oracle", () => {
     const aRandomKey = anchor.web3.Keypair.generate();
 
     // compute a PDA based on program.programId + symbol
-    let [coinPDA, bump] = await anchor.web3.PublicKey.findProgramAddress(
+    let [coinPDA, bump] = await PublicKey.findProgramAddress(
       [tempCoin.symbol],
       program.programId
     );
@@ -102,17 +107,19 @@ describe("delphor-oracle", () => {
     let coinInfo = await program.account.coinInfo.fetch(coinPDA);
     let lastUpdateTimestamp = coinInfo.lastUpdateTimestamp;
 
-    program.rpc
-      .updateCoin(new BN(5368), new BN(5368), {
-        accounts: {
-          authority: aRandomKey.publicKey,
+    assert.ok(
+      await expectProgramCallRevert(
+        program,
+        "updateCoin",
+        [new BN(5368), new BN(5368)],
+        {
           coin: coinPDA,
+          authority: aRandomKey.publicKey,
         },
-        signers: [aRandomKey],
-      })
-      .catch((err) => {
-        assert.ok(err.msg == "You are not authorized to perform this action.");
-      });
+        "You are not authorized to perform this action.",
+        [aRandomKey]
+      )
+    );
 
     coinInfo = await program.account.coinInfo.fetch(coinPDA);
 
@@ -123,22 +130,16 @@ describe("delphor-oracle", () => {
 
   it("Delete coin", async () => {
     // compute a PDA based on program.programId + symbol
-    let [coinPDA, bump] = await anchor.web3.PublicKey.findProgramAddress(
+    let [coinPDA, bump] = await PublicKey.findProgramAddress(
       [tempCoin.symbol],
       program.programId
     );
 
-    await program.rpc
-      .deleteCoin({
-        accounts: {
-          coin: coinPDA,
-          authority: provider.wallet.publicKey,
-          payer: provider.wallet.publicKey,
-        },
-      })
-      .catch((err) => {
-        console.error(err);
-      });
+    await programCall(program, "deleteCoin", [], {
+      coin: coinPDA,
+      authority,
+      payer,
+    });
 
     try {
       coinInfo = await program.account.coinInfo.fetch(coinPDA);

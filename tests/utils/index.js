@@ -32,8 +32,94 @@ async function createMint(provider, authority) {
   return mint.publicKey;
 }
 
+const oldConsoleLog = console.log;
+const oldConsoleError = console.error;
+
+function pauseConsole() {
+  console.log = function () {
+    const _noop = "";
+  };
+  console.error = function () {
+    const _noop = "";
+  };
+}
+
+function resumeConsole() {
+  console.log = oldConsoleLog;
+  console.error = oldConsoleError;
+}
+
+function checkError(error, errorExpected = undefined) {
+  let result = false;
+  resumeConsole();
+  if (error.msg) {
+    if (errorExpected) {
+      result = error.msg == errorExpected;
+    } else {
+      console.log(error.msg);
+    }
+  } else {
+    console.log("No msg error");
+    console.log(error);
+  }
+
+  return result;
+}
+
+async function programCall(program, f, params, accounts, signers = []) {
+  let tx;
+  pauseConsole();
+
+  if (signers.length == 0) {
+    tx = await program.rpc[f](...params, {
+      accounts,
+    }).catch((err) => {
+      checkError(err);
+    });
+  } else {
+    tx = await program.rpc[f](...params, {
+      accounts,
+      signers,
+    }).catch((err) => {
+      checkError(err);
+    });
+  }
+
+  resumeConsole();
+  return tx;
+}
+
+async function expectProgramCallRevert(
+  program,
+  f,
+  params,
+  accounts,
+  errorExpected,
+  signers = []
+) {
+  let errorResult;
+  pauseConsole();
+  if (signers.length == 0) {
+    errorResult = await program.rpc[f](...params, {
+      accounts,
+    }).catch((err) => {
+      return checkError(err, errorExpected);
+    });
+  } else {
+    errorResult = await program.rpc[f](...params, {
+      accounts,
+      signers,
+    }).catch((err) => {
+      return checkError(err, errorExpected);
+    });
+  }
+
+  resumeConsole();
+  return errorResult;
+}
+
 async function createMintInstructions(provider, authority, mint) {
-  let instructions = [
+  return [
     anchor.web3.SystemProgram.createAccount({
       fromPubkey: provider.wallet.publicKey,
       newAccountPubkey: mint,
@@ -47,7 +133,6 @@ async function createMintInstructions(provider, authority, mint) {
       mintAuthority: authority,
     }),
   ];
-  return instructions;
 }
 
 async function mintToAccount(
@@ -198,6 +283,8 @@ module.exports = {
   getBalance,
   airdropLamports,
   getAssociatedTokenAccount,
+  programCall,
+  expectProgramCallRevert,
 };
 
 // ----- Unused functions----- //
