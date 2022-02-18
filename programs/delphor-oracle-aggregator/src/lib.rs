@@ -5,7 +5,7 @@ use pyth_client::{load_price, load_product, Price, PriceConf, PriceStatus, Produ
 use std::{cmp, str};
 use switchboard_program::{FastRoundResultAccountData, SwitchboardAccountType};
 
-declare_id!("DJkR4f9MY9NBYsJS1m2aXmhM97B1nW8fMVCcSAtsBdg8");
+declare_id!("HbyTY89Se2c8Je7KDKHVjUEGN2sAruFAw3S3NwubzeyU");
 const MAX_SYMBOL_LEN: usize = 36;
 
 #[program]

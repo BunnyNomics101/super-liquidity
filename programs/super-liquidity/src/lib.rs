@@ -14,7 +14,7 @@ pub mod states;
 pub mod super_liquidity {
     use super::*;
 
-    declare_id!("EepceZ1Nf4yYGhTpRucWK1euRQFxu4xA2aMN6CGqCUGH");
+    declare_id!("4FCQYxXVaK1aWE7gTLhTB5CwyjZGRFPFJstJdcNsoqck");
 
     ///deposit
     pub fn deposit(ctx: Context<Deposit>, amount: u64) -> ProgramResult {

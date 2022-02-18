@@ -36,12 +36,12 @@ function getProgramData(
 
 const [delphorAggregatorId, delphorAggregatorProgram] = getProgramData(
   "../target/idl/delphor_oracle_aggregator.json",
-  "DJkR4f9MY9NBYsJS1m2aXmhM97B1nW8fMVCcSAtsBdg8"
+  "HbyTY89Se2c8Je7KDKHVjUEGN2sAruFAw3S3NwubzeyU"
 );
 
 const [delphorOracleId, delphorOracleProgram] = getProgramData(
   "../target/idl/delphor_oracle.json",
-  "EfufQbaDxhhq693vUSaeKU2aKvxpwk114Fw3qTkM87Ke"
+  "3xzPckGW3b771JsrcfQyRYzdPmsYgHjNohupSKHqjEV3"
 );
 
 const connection = new Connection(
