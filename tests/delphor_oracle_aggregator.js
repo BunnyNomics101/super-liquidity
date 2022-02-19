@@ -90,7 +90,7 @@ describe("delphor-oracle-aggregator", () => {
     );
   });
 
-  it("DelphorOracle init coin", async () => {
+  it("DelphorOracleAggregator init coin", async () => {
     [delphorAggregatorMockSOLPDA, delphorAggregatorMockSOLPDAbump] =
       await PublicKey.findProgramAddress(
         [mockSOLMint.toBuffer()],
@@ -124,7 +124,7 @@ describe("delphor-oracle-aggregator", () => {
     );
   });
 
-  it("DelphorOracle update price", async () => {
+  it("DelphorOracleAggregator update price", async () => {
     await programCall(delphorAggregatorProgram, "updateCoinPrice", [], {
       switchboardOptimizedFeedAccount,
       pythPriceAccount,
@@ -146,7 +146,7 @@ describe("delphor-oracle-aggregator", () => {
     );
   });
 
-  it("DelphorOracle update coinInfo", async () => {
+  it("DelphorOracle update coin price", async () => {
     mockSOL.price = new BN(258);
 
     await programCall(
@@ -171,7 +171,7 @@ describe("delphor-oracle-aggregator", () => {
     );
   });
 
-  it("DelphorOralce update price", async () => {
+  it("DelphorOralceAggregator update price", async () => {
     // Solana doesn't allow sending two identical tx's within the same block,
     // so we wait a second.
     await sleep(1000);
@@ -193,48 +193,6 @@ describe("delphor-oracle-aggregator", () => {
       checkEqualValues(
         [mockSOLMint, adminAccount, mockSOL.symbol, mockSOL.decimals],
         [pdaData.mint, pdaData.authority, pdaData.symbol, pdaData.decimals]
-      )
-    );
-  });
-
-  // TODO: Reject update price from non authority
-  // Or add checks to secure the accounts that are passed to the oracle
-  it("Reject update coinInfo oracle from non authority", async () => {
-    const aRandomKey = anchor.web3.Keypair.generate();
-
-    let pdaData = await delphorOracleProgram.account.coinInfo.fetch(
-      delphorOracleMockSOLPDA
-    );
-
-    let lastUpdateTimestamp = pdaData.lastUpdateTimestamp;
-
-    assert.ok(
-      await expectProgramCallRevert(
-        delphorOracleProgram,
-        "updateCoin",
-        [new BN(5368), new BN(5368)],
-        {
-          coin: delphorOracleMockSOLPDA,
-          authority: aRandomKey.publicKey,
-        },
-        "You are not authorized to perform this action.",
-        [aRandomKey]
-      )
-    );
-
-    pdaData = await delphorOracleProgram.account.coinInfo.fetch(
-      delphorOracleMockSOLPDA
-    );
-
-    assert.ok(
-      checkEqualValues(
-        [mockSOL.price, adminAccount, mockSOL.symbol, lastUpdateTimestamp],
-        [
-          pdaData.orcaPrice,
-          pdaData.authority,
-          pdaData.symbol,
-          pdaData.lastUpdateTimestamp,
-        ]
       )
     );
   });

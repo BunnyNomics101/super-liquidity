@@ -26,7 +26,7 @@ describe("delphor-oracle", () => {
 
   let listener = null;
 
-  it("Initialize coinInfo oracle", async () => {
+  it("Initialize coinInfo", async () => {
     // compute a PDA based on program.programId + symbol
     let [coinPDA, bump] = await PublicKey.findProgramAddress(
       [tempCoin.symbol],
@@ -74,7 +74,7 @@ describe("delphor-oracle", () => {
     );
   });
 
-  it("Update coinInfo oracle", async () => {
+  it("Update coinInfo", async () => {
     tempCoin.price = new BN(258);
 
     // compute a PDA based on program.programId + symbol
@@ -122,7 +122,7 @@ describe("delphor-oracle", () => {
     );
   });
 
-  it("Reject update coinInfo oracle from non authority", async () => {
+  it("Reject update coinInfo from non authority", async () => {
     const aRandomKey = anchor.web3.Keypair.generate();
 
     // compute a PDA based on program.programId + symbol

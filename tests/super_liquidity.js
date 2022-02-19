@@ -21,7 +21,7 @@ function checkData(mockSOL, symbol, price) {
   assert.ok(price.eq(mockSOL.price));
 }
 
-describe("swap", () => {
+describe("super-liquidity", () => {
   const provider = anchor.Provider.env();
   anchor.setProvider(provider);
 
@@ -69,7 +69,8 @@ describe("swap", () => {
     delphorOracleMockSOLPDAbump,
     delphorOracleMockSOLPDA,
     delphorOracleMockUSDCPDA,
-    delphorOracleMockUSDCPDAbump;
+    delphorOracleMockUSDCPDAbump,
+    finalAmount;
 
   function Lamport(value) {
     return new BN(value * 10 ** 9);
@@ -393,20 +394,11 @@ describe("swap", () => {
       superLiquidityProgram.programId
     );
 
-    try {
-      await superLiquidityProgram.account.globalState.fetch(globalState);
-    } catch {
-      await programCall(
-        superLiquidityProgram,
-        "initialize",
-        [globalStateBump],
-        {
-          adminAccount: adminAccount,
-          globalState,
-          systemProgram,
-        }
-      );
-    }
+    await programCall(superLiquidityProgram, "initialize", [globalStateBump], {
+      adminAccount: adminAccount,
+      globalState,
+      systemProgram,
+    });
   });
 
   it("Initialize MockSOL token store", async () => {
@@ -824,7 +816,7 @@ describe("swap", () => {
         aliceMockUSDCVault
       );
 
-    let finalAmount = new BN(
+    finalAmount = new BN(
       (bobSwapAmountSOLForUSDC *
         Math.trunc(
           ((mockSOL.price * (10000 - aliceMockSOLVaultData.buyFee)) /
@@ -854,6 +846,93 @@ describe("swap", () => {
           depositAmountAliceMockSOL.add(bobSwapAmountSOLForUSDC),
           mintMockSOLAmountToBob.sub(bobSwapAmountSOLForUSDC),
         ]
+      )
+    );
+  });
+
+  it("Alice withdraw SOL tokens from vault", async () => {
+    let aliceSOLVaultAmount = depositAmountAliceMockSOL.add(
+      bobSwapAmountSOLForUSDC
+    );
+    let aliceBeforeSOLBalance = (await getTokenAccount(provider, alicemockSOL))
+      .amount;
+
+    await programCall(
+      superLiquidityProgram,
+      "withdraw",
+      [tokenStoreAuthorityBump, aliceSOLVaultAmount],
+      {
+        vaultUser: alice.publicKey,
+        userVault: aliceMockSOLVault,
+        mint: mockSOLMint,
+        sendTokenTo: alicemockSOL,
+        tokenStoreAuthority: tokenStoreAuthority,
+        tokenStorePda: mockSOLStore,
+        userAccount: alice.publicKey,
+        systemProgram,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      },
+      [alice]
+    );
+
+    aliceMockSOLAccount = await getTokenAccount(provider, alicemockSOL);
+    let delphorMockSOLAccount = await getTokenAccount(provider, mockSOLStore);
+    const aliceMockSOLVaultData =
+      await superLiquidityProgram.account.userCoinVault.fetch(
+        aliceMockSOLVault
+      );
+
+    assert.ok(
+      checkEqualValues(
+        [
+          aliceMockSOLVaultData.amount,
+          delphorMockSOLAccount.amount,
+          aliceMockSOLAccount.amount,
+        ],
+        [0, 0, aliceBeforeSOLBalance.add(aliceSOLVaultAmount)]
+      )
+    );
+  });
+
+  it("Alice withdraw USDC tokens from vault", async () => {
+    let aliceUSDCVaultAmount = depositAmountAliceMockUSDC.sub(finalAmount);
+    let aliceBeforeUSDCBalance = (
+      await getTokenAccount(provider, alicemockUSDC)
+    ).amount;
+
+    await programCall(
+      superLiquidityProgram,
+      "withdraw",
+      [tokenStoreAuthorityBump, aliceUSDCVaultAmount],
+      {
+        vaultUser: alice.publicKey,
+        userVault: aliceMockUSDCVault,
+        mint: mockUSDCMint,
+        sendTokenTo: alicemockUSDC,
+        tokenStoreAuthority: tokenStoreAuthority,
+        tokenStorePda: mockUSDCStore,
+        userAccount: alice.publicKey,
+        systemProgram,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      },
+      [alice]
+    );
+
+    aliceMockUSDCAccount = await getTokenAccount(provider, alicemockUSDC);
+    let delphorMockUSDCAccount = await getTokenAccount(provider, mockUSDCStore);
+    const aliceMockUSDCVaultData =
+      await superLiquidityProgram.account.userCoinVault.fetch(
+        aliceMockUSDCVault
+      );
+
+    assert.ok(
+      checkEqualValues(
+        [
+          aliceMockUSDCVaultData.amount,
+          delphorMockUSDCAccount.amount,
+          aliceMockUSDCAccount.amount,
+        ],
+        [0, 0, aliceBeforeUSDCBalance.add(aliceUSDCVaultAmount)]
       )
     );
   });

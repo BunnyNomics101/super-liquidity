@@ -3,6 +3,7 @@ use anchor_lang::prelude::*;
 //-----------------------------------------------------
 ///delphor-user-program PDA
 #[account]
+#[derive(Default)]
 pub struct GlobalState {
     // Authority (admin address)
     pub admin_account: Pubkey,
@@ -11,6 +12,7 @@ pub struct GlobalState {
 
 //-----------------------------------------------------
 #[account]
+#[derive(Default)]
 pub struct UserCoinVault {
     pub bump: u8,
     pub user: Pubkey,
