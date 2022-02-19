@@ -1,7 +1,7 @@
 const anchor = require("@project-serum/anchor");
 const PublicKey = require("@solana/web3.js").PublicKey;
 const assert = require("assert");
-const { programCall } = require("./utils");
+const { programCall, checkEqualValues } = require("./utils");
 
 const {
   TOKEN_PROGRAM_ID,
@@ -33,7 +33,7 @@ describe("deposit", () => {
     globalState,
     globalStateBump,
     aliceMockSOLAccount,
-    programMockSOLAccount,
+    delphorMockSOLAccount,
     amount;
 
   it("Airdrop lamports to alice", async function () {
@@ -44,10 +44,11 @@ describe("deposit", () => {
     assert.ok(balance == anchor.web3.LAMPORTS_PER_SOL);
   });
 
-  it("Create and mint test tokens", async () => {
-    // Create MockSOL Mint
+  it("Create mockSOL token", async () => {
     mockSOLMint = await createMint(provider, adminAccount);
+  });
 
+  it("Mint mockSOL tokens to alice", async () => {
     alicemockSOL = await createAssociatedTokenAccount(
       provider,
       mockSOLMint,
@@ -62,7 +63,7 @@ describe("deposit", () => {
     );
 
     amount = new anchor.BN(5 * 10 ** 6);
-    // Create user and program token accounts
+
     await mintToAccount(
       provider,
       mockSOLMint,
@@ -71,7 +72,7 @@ describe("deposit", () => {
       adminAccount
     );
 
-    let aliceMockSOLAccount = await getTokenAccount(provider, alicemockSOL);
+    aliceMockSOLAccount = await getTokenAccount(provider, alicemockSOL);
     assert.ok(aliceMockSOLAccount.amount.eq(amount));
   });
 
@@ -88,7 +89,7 @@ describe("deposit", () => {
     });
   });
 
-  it("Initialize token store", async () => {
+  it("Initialize mockSOL token store", async () => {
     [tokenStoreAuthority, tokenStoreAuthorityBump] =
       await PublicKey.findProgramAddress(
         [Buffer.from("store_auth")],
@@ -109,8 +110,7 @@ describe("deposit", () => {
     );
   });
 
-  it("Initialize vault", async () => {
-    // Associated account PDA - store user data
+  it("Initialize alice mockSOL vault", async () => {
     [aliceMockSOLVault, aliceMockSOLVaultBump] =
       await PublicKey.findProgramAddress(
         [alice.publicKey.toBuffer(), mockSOLMint.toBuffer()],
@@ -130,9 +130,20 @@ describe("deposit", () => {
       },
       [alice]
     );
+
+    let aliceMockSOLVaultData = await program.account.userCoinVault.fetch(
+      aliceMockSOLVault
+    );
+
+    assert.ok(
+      checkEqualValues(
+        [aliceMockSOLVaultData.user, aliceMockSOLVaultData.mint],
+        [alice.publicKey, mockSOLMint]
+      )
+    );
   });
 
-  it("Deposit tokens", async () => {
+  it("Alice deposit mockSOL", async () => {
     await programCall(
       program,
       "deposit",
@@ -152,15 +163,21 @@ describe("deposit", () => {
     );
 
     aliceMockSOLAccount = await getTokenAccount(provider, alicemockSOL);
-    assert.ok(aliceMockSOLAccount.amount.eq(new anchor.BN(0)));
-
-    programMockSOLAccount = await getTokenAccount(provider, mockSOLStore);
-    assert.ok(programMockSOLAccount.amount.eq(amount));
-
+    delphorMockSOLAccount = await getTokenAccount(provider, mockSOLStore);
     const aliceMockSOLVaultData = await program.account.userCoinVault.fetch(
       aliceMockSOLVault
     );
-    assert.ok(aliceMockSOLVaultData.amount.eq(amount));
+
+    assert.ok(
+      checkEqualValues(
+        [
+          aliceMockSOLVaultData.amount,
+          delphorMockSOLAccount.amount,
+          aliceMockSOLAccount.amount,
+        ],
+        [amount, amount, 0]
+      )
+    );
   });
 
   it("Withdraw tokens", async () => {
@@ -183,42 +200,20 @@ describe("deposit", () => {
     );
 
     aliceMockSOLAccount = await getTokenAccount(provider, alicemockSOL);
-    assert.ok(aliceMockSOLAccount.amount.eq(amount));
-
-    programMockSOLAccount = await getTokenAccount(provider, mockSOLStore);
-    assert.ok(programMockSOLAccount.amount.eq(new anchor.BN(0)));
-
-    const aliceMockSOLVaultData = await program.account.userCoinVault.fetch(
-      aliceMockSOLVault
-    );
-    assert.ok(aliceMockSOLVaultData.amount.eq(new anchor.BN(0)));
-  });
-
-  it("User changes fees, min and max", async () => {
-    let sellFee = 1;
-    let buyFee = 3;
-    let min = new anchor.BN(5);
-    let max = new anchor.BN(7);
-
-    await programCall(
-      program,
-      "updateUserVault",
-      [sellFee, buyFee, min, max, []],
-      {
-        userAccount: alice.publicKey,
-        userVault: aliceMockSOLVault,
-        mint: mockSOLMint,
-      },
-      [alice]
-    );
-
+    delphorMockSOLAccount = await getTokenAccount(provider, mockSOLStore);
     const aliceMockSOLVaultData = await program.account.userCoinVault.fetch(
       aliceMockSOLVault
     );
 
-    assert.ok(aliceMockSOLVaultData.buyFee == buyFee);
-    assert.ok(aliceMockSOLVaultData.sellFee == sellFee);
-    assert.ok(aliceMockSOLVaultData.min.eq(min));
-    assert.ok(aliceMockSOLVaultData.max.eq(max));
+    assert.ok(
+      checkEqualValues(
+        [
+          aliceMockSOLVaultData.amount,
+          delphorMockSOLAccount.amount,
+          aliceMockSOLAccount.amount,
+        ],
+        [0, 0, amount]
+      )
+    );
   });
 });

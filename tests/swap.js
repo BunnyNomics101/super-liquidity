@@ -1,7 +1,7 @@
 const anchor = require("@project-serum/anchor");
 const BN = require("@project-serum/anchor").BN;
 const PublicKey = require("@solana/web3.js").PublicKey;
-const { programCall } = require("./utils");
+const { programCall, checkEqualValues } = require("./utils");
 const assert = require("assert");
 
 const {
@@ -23,8 +23,6 @@ function checkData(mockSOL, symbol, price) {
 
 describe("swap", () => {
   const provider = anchor.Provider.env();
-
-  // Configure the client to use the local cluster.
   anchor.setProvider(provider);
 
   const superLiquidityProgram = anchor.workspace.SuperLiquidity;
@@ -34,6 +32,9 @@ describe("swap", () => {
   const adminAccount = provider.wallet.publicKey;
   const alice = anchor.web3.Keypair.generate();
   const bob = anchor.web3.Keypair.generate();
+  const payer = provider.wallet.publicKey;
+  const authority = adminAccount;
+  const systemProgram = anchor.web3.SystemProgram.programId;
 
   let mockSOLMint,
     alicemockSOL,
@@ -63,6 +64,8 @@ describe("swap", () => {
     programMockUSDCAccount,
     delphorMockUSDCPDA,
     delphorMockSOLPDA,
+    delphorMockSOLPDAbump,
+    delphorMockUSDCPDAbump,
     delphorOracleMockSOLPDAbump,
     delphorOracleMockSOLPDA,
     delphorOracleMockUSDCPDA,
@@ -92,29 +95,9 @@ describe("swap", () => {
     decimals: 9,
   };
 
-  let pythProductAccount = new PublicKey("11111111111111111111111111111111");
-
-  let pythPriceAccount = new PublicKey("11111111111111111111111111111111");
-
-  let switchboardOptimizedFeedAccount = new PublicKey(
-    "11111111111111111111111111111111"
-  );
-
-  /*
-  if (process.env.ANCHOR_PROVIDER_URL == "https://api.devnet.solana.com") {
-    pythProductAccount = new PublicKey(
-      "os3is9HtWPHW4EXpGAkdr2prdWVs2pS8qKtf2ZYJdBw"
-    );
-
-    pythPriceAccount = new PublicKey(
-      "9a6RNx3tCu1TSs6TBSfV2XRXEPEZXQ6WB7jRojZRvyeZ"
-    );
-
-    switchboardOptimizedFeedAccount = new PublicKey(
-      "GvvC8SKcr9yrVMsFToU3E29TWtBFHcasPddaLYQqaYFw"
-    );
-  }
-  */
+  let pythProductAccount = systemProgram;
+  let pythPriceAccount = systemProgram;
+  let switchboardOptimizedFeedAccount = systemProgram;
 
   it("Airdrop lamports to alice", async function () {
     let balance = await getBalance(alice.publicKey);
@@ -150,9 +133,9 @@ describe("swap", () => {
       ],
       {
         coin: delphorOracleMockSOLPDA,
-        authority: provider.wallet.publicKey,
-        payer: provider.wallet.publicKey,
-        systemProgram: anchor.web3.SystemProgram.programId,
+        authority,
+        payer,
+        systemProgram,
       }
     );
 
@@ -186,9 +169,9 @@ describe("swap", () => {
       ],
       {
         coin: delphorOracleMockUSDCPDA,
-        authority: provider.wallet.publicKey,
-        payer: provider.wallet.publicKey,
-        systemProgram: anchor.web3.SystemProgram.programId,
+        authority,
+        payer,
+        systemProgram,
       }
     );
 
@@ -205,7 +188,6 @@ describe("swap", () => {
   });
 
   it("Create MockSOL and mint test tokens", async () => {
-    // Create MockSOL Mint
     mockSOLMint = await createMint(provider, adminAccount);
 
     alicemockSOL = await createAssociatedTokenAccount(
@@ -221,7 +203,6 @@ describe("swap", () => {
         ).toBase58()
     );
 
-    // Create user and program token accounts
     await mintToAccount(
       provider,
       mockSOLMint,
@@ -230,7 +211,7 @@ describe("swap", () => {
       adminAccount
     );
 
-    let aliceMockSOLAccount = await getTokenAccount(provider, alicemockSOL);
+    aliceMockSOLAccount = await getTokenAccount(provider, alicemockSOL);
     assert.ok(aliceMockSOLAccount.amount.eq(mintMockSOLAmountToAlice));
 
     bobmockSOL = await createAssociatedTokenAccount(
@@ -244,7 +225,6 @@ describe("swap", () => {
         (await getAssociatedTokenAccount(mockSOLMint, bob.publicKey)).toBase58()
     );
 
-    // Create user and program token accounts
     await mintToAccount(
       provider,
       mockSOLMint,
@@ -258,7 +238,6 @@ describe("swap", () => {
   });
 
   it("Create MockUSDC and mint test tokens", async () => {
-    // Create MockUSDC Mint
     mockUSDCMint = await createMint(provider, adminAccount);
 
     alicemockUSDC = await createAssociatedTokenAccount(
@@ -274,7 +253,6 @@ describe("swap", () => {
         ).toBase58()
     );
 
-    // Create user and program token accounts
     await mintToAccount(
       provider,
       mockUSDCMint,
@@ -283,7 +261,7 @@ describe("swap", () => {
       adminAccount
     );
 
-    let aliceMockUSDCAccount = await getTokenAccount(provider, alicemockUSDC);
+    aliceMockUSDCAccount = await getTokenAccount(provider, alicemockUSDC);
     assert.ok(aliceMockUSDCAccount.amount.eq(mintMockUSDCAmountToAlice));
 
     bobmockUSDC = await createAssociatedTokenAccount(
@@ -319,9 +297,9 @@ describe("swap", () => {
         pythProductAccount: pythProductAccount,
         coinData: delphorMockSOLPDA,
         mint: mockSOLMint,
-        authority: adminAccount,
-        payer: adminAccount,
-        systemProgram: anchor.web3.SystemProgram.programId,
+        authority,
+        payer,
+        systemProgram,
       }
     );
 
@@ -344,8 +322,8 @@ describe("swap", () => {
       pythPriceAccount,
       coinOracle3: delphorOracleMockSOLPDA,
       coinData: delphorMockSOLPDA,
-      payer: adminAccount,
-      systemProgram: anchor.web3.SystemProgram.programId,
+      payer,
+      systemProgram,
     });
 
     const delphorMockSOLData =
@@ -372,9 +350,9 @@ describe("swap", () => {
         pythProductAccount: pythProductAccount,
         coinData: delphorMockUSDCPDA,
         mint: mockUSDCMint,
-        authority: adminAccount,
-        payer: adminAccount,
-        systemProgram: anchor.web3.SystemProgram.programId,
+        authority,
+        payer,
+        systemProgram,
       }
     );
 
@@ -397,8 +375,8 @@ describe("swap", () => {
       pythPriceAccount,
       coinOracle3: delphorOracleMockUSDCPDA,
       coinData: delphorMockUSDCPDA,
-      payer: adminAccount,
-      systemProgram: anchor.web3.SystemProgram.programId,
+      payer,
+      systemProgram,
     });
 
     const delphorMockUSDCData =
@@ -414,11 +392,21 @@ describe("swap", () => {
       [adminAccount.toBuffer()],
       superLiquidityProgram.programId
     );
-    await programCall(superLiquidityProgram, "initialize", [globalStateBump], {
-      adminAccount: adminAccount,
-      globalState: globalState,
-      systemProgram: anchor.web3.SystemProgram.programId,
-    });
+
+    try {
+      await superLiquidityProgram.account.globalState.fetch(globalState);
+    } catch {
+      await programCall(
+        superLiquidityProgram,
+        "initialize",
+        [globalStateBump],
+        {
+          adminAccount: adminAccount,
+          globalState,
+          systemProgram,
+        }
+      );
+    }
   });
 
   it("Initialize MockSOL token store", async () => {
@@ -464,7 +452,6 @@ describe("swap", () => {
   });
 
   it("Initialize alice mockSOL vault", async () => {
-    // Associated account PDA - store user data
     [aliceMockSOLVault, aliceMockSOLVaultBump] =
       await PublicKey.findProgramAddress(
         [alice.publicKey.toBuffer(), mockSOLMint.toBuffer()],
@@ -476,13 +463,25 @@ describe("swap", () => {
       "initUserVault",
       [aliceMockSOLVaultBump, 0, 0, []],
       {
-        globalState: globalState,
+        globalState,
         userAccount: alice.publicKey,
         mint: mockSOLMint,
         userVault: aliceMockSOLVault,
-        systemProgram: anchor.web3.SystemProgram.programId,
+        systemProgram,
       },
       [alice]
+    );
+
+    let aliceMockSOLVaultData =
+      await superLiquidityProgram.account.userCoinVault.fetch(
+        aliceMockSOLVault
+      );
+
+    assert.ok(
+      checkEqualValues(
+        [aliceMockSOLVaultData.user, aliceMockSOLVaultData.mint],
+        [alice.publicKey, mockSOLMint]
+      )
     );
   });
 
@@ -499,13 +498,25 @@ describe("swap", () => {
       "initUserVault",
       [aliceMockUSDCVaultBump, 0, 0, []],
       {
-        globalState: globalState,
+        globalState,
         userAccount: alice.publicKey,
         mint: mockUSDCMint,
         userVault: aliceMockUSDCVault,
-        systemProgram: anchor.web3.SystemProgram.programId,
+        systemProgram,
       },
       [alice]
+    );
+
+    let aliceMockUSDCVaultData =
+      await superLiquidityProgram.account.userCoinVault.fetch(
+        aliceMockUSDCVault
+      );
+
+    assert.ok(
+      checkEqualValues(
+        [aliceMockUSDCVaultData.user, aliceMockUSDCVaultData.mint],
+        [alice.publicKey, mockUSDCMint]
+      )
     );
   });
 
@@ -521,11 +532,11 @@ describe("swap", () => {
       "initUserVault",
       [bobMockSOLVaultBump, 0, 0, []],
       {
-        globalState: globalState,
+        globalState,
         userAccount: bob.publicKey,
         mint: mockSOLMint,
         userVault: bobMockSOLVault,
-        systemProgram: anchor.web3.SystemProgram.programId,
+        systemProgram,
       },
       [bob]
     );
@@ -544,11 +555,11 @@ describe("swap", () => {
       "initUserVault",
       [bobMockUSDCVaultBump, 0, 0, []],
       {
-        globalState: globalState,
+        globalState,
         userAccount: bob.publicKey,
         mint: mockUSDCMint,
         userVault: bobMockUSDCVault,
-        systemProgram: anchor.web3.SystemProgram.programId,
+        systemProgram,
       },
       [bob]
     );
@@ -577,10 +588,17 @@ describe("swap", () => {
         aliceMockSOLVault
       );
 
-    assert.ok(aliceMockSOLVaultData.buyFee == buyFee);
-    assert.ok(aliceMockSOLVaultData.sellFee == sellFee);
-    assert.ok(aliceMockSOLVaultData.min.eq(min));
-    assert.ok(aliceMockSOLVaultData.max.eq(max));
+    assert.ok(
+      checkEqualValues(
+        [
+          aliceMockSOLVaultData.buyFee,
+          aliceMockSOLVaultData.sellFee,
+          aliceMockSOLVaultData.min,
+          aliceMockSOLVaultData.max,
+        ],
+        [buyFee, sellFee, min, max]
+      )
+    );
   });
 
   it("Alice changes mockUSDC fees, min and max", async () => {
@@ -606,10 +624,17 @@ describe("swap", () => {
         aliceMockUSDCVault
       );
 
-    assert.ok(aliceMockUSDCVaultData.buyFee == buyFee);
-    assert.ok(aliceMockUSDCVaultData.sellFee == sellFee);
-    assert.ok(aliceMockUSDCVaultData.min.eq(min));
-    assert.ok(aliceMockUSDCVaultData.max.eq(max));
+    assert.ok(
+      checkEqualValues(
+        [
+          aliceMockUSDCVaultData.buyFee,
+          aliceMockUSDCVaultData.sellFee,
+          aliceMockUSDCVaultData.min,
+          aliceMockUSDCVaultData.max,
+        ],
+        [buyFee, sellFee, min, max]
+      )
+    );
   });
 
   it("Bob changes mockSOL fees, min and max", async () => {
@@ -633,10 +658,17 @@ describe("swap", () => {
     const bobMockSOLVaultData =
       await superLiquidityProgram.account.userCoinVault.fetch(bobMockSOLVault);
 
-    assert.ok(bobMockSOLVaultData.buyFee == buyFee);
-    assert.ok(bobMockSOLVaultData.sellFee == sellFee);
-    assert.ok(bobMockSOLVaultData.min.eq(min));
-    assert.ok(bobMockSOLVaultData.max.eq(max));
+    assert.ok(
+      checkEqualValues(
+        [
+          bobMockSOLVaultData.buyFee,
+          bobMockSOLVaultData.sellFee,
+          bobMockSOLVaultData.min,
+          bobMockSOLVaultData.max,
+        ],
+        [buyFee, sellFee, min, max]
+      )
+    );
   });
 
   it("Bob changes mockUSDC fees, min and max", async () => {
@@ -660,10 +692,17 @@ describe("swap", () => {
     const bobMockUSDCVaultData =
       await superLiquidityProgram.account.userCoinVault.fetch(bobMockUSDCVault);
 
-    assert.ok(bobMockUSDCVaultData.buyFee == buyFee);
-    assert.ok(bobMockUSDCVaultData.sellFee == sellFee);
-    assert.ok(bobMockUSDCVaultData.min.eq(min));
-    assert.ok(bobMockUSDCVaultData.max.eq(max));
+    assert.ok(
+      checkEqualValues(
+        [
+          bobMockUSDCVaultData.buyFee,
+          bobMockUSDCVaultData.sellFee,
+          bobMockUSDCVaultData.min,
+          bobMockUSDCVaultData.max,
+        ],
+        [buyFee, sellFee, min, max]
+      )
+    );
   });
 
   it("Alice deposit mockSOL", async () => {
@@ -679,27 +718,33 @@ describe("swap", () => {
         getTokenFrom: alicemockSOL,
         getTokenFromAuthority: alice.publicKey,
         tokenStorePda: mockSOLStore,
-        systemProgram: anchor.web3.SystemProgram.programId,
+        systemProgram,
         tokenProgram: TOKEN_PROGRAM_ID,
       },
       [alice]
     );
 
     aliceMockSOLAccount = await getTokenAccount(provider, alicemockSOL);
-    assert.ok(
-      aliceMockSOLAccount.amount.eq(
-        mintMockSOLAmountToAlice.sub(depositAmountAliceMockSOL)
-      )
-    );
-
     programMockSOLAccount = await getTokenAccount(provider, mockSOLStore);
-    assert.ok(programMockSOLAccount.amount.eq(depositAmountAliceMockSOL));
-
     const aliceMockSOLVaultData =
       await superLiquidityProgram.account.userCoinVault.fetch(
         aliceMockSOLVault
       );
-    assert.ok(aliceMockSOLVaultData.amount.eq(depositAmountAliceMockSOL));
+
+    assert.ok(
+      checkEqualValues(
+        [
+          aliceMockSOLVaultData.amount,
+          programMockSOLAccount.amount,
+          aliceMockSOLAccount.amount,
+        ],
+        [
+          depositAmountAliceMockSOL,
+          depositAmountAliceMockSOL,
+          mintMockSOLAmountToAlice.sub(depositAmountAliceMockSOL),
+        ]
+      )
+    );
   });
 
   it("Alice deposit mockUSDC", async () => {
@@ -715,27 +760,33 @@ describe("swap", () => {
         getTokenFrom: alicemockUSDC,
         getTokenFromAuthority: alice.publicKey,
         tokenStorePda: mockUSDCStore,
-        systemProgram: anchor.web3.SystemProgram.programId,
+        systemProgram,
         tokenProgram: TOKEN_PROGRAM_ID,
       },
       [alice]
     );
 
     aliceMockUSDCAccount = await getTokenAccount(provider, alicemockUSDC);
-    assert.ok(
-      aliceMockUSDCAccount.amount.eq(
-        mintMockUSDCAmountToAlice.sub(depositAmountAliceMockUSDC)
-      )
-    );
-
     programMockUSDCAccount = await getTokenAccount(provider, mockUSDCStore);
-    assert.ok(programMockUSDCAccount.amount.eq(depositAmountAliceMockUSDC));
-
     const aliceMockUSDCVaultData =
       await superLiquidityProgram.account.userCoinVault.fetch(
         aliceMockUSDCVault
       );
-    assert.ok(aliceMockUSDCVaultData.amount.eq(depositAmountAliceMockUSDC));
+
+    assert.ok(
+      checkEqualValues(
+        [
+          aliceMockUSDCVaultData.amount,
+          programMockUSDCAccount.amount,
+          aliceMockUSDCAccount.amount,
+        ],
+        [
+          depositAmountAliceMockUSDC,
+          depositAmountAliceMockUSDC,
+          mintMockUSDCAmountToAlice.sub(depositAmountAliceMockUSDC),
+        ]
+      )
+    );
   });
 
   it("Bob swap mockSOL for mockUSDC", async () => {
@@ -756,36 +807,18 @@ describe("swap", () => {
         sendTokenTo: bobmockUSDC,
         tokenStorePdaFrom: mockUSDCStore,
         tokenStorePdaTo: mockSOLStore,
-        systemProgram: anchor.web3.SystemProgram.programId,
+        systemProgram,
         tokenProgram: TOKEN_PROGRAM_ID,
       },
       [bob]
     );
 
     bobMockSOLAccount = await getTokenAccount(provider, bobmockSOL);
-    assert.ok(
-      bobMockSOLAccount.amount.eq(
-        mintMockSOLAmountToBob.sub(bobSwapAmountSOLForUSDC)
-      )
-    );
-
     programMockSOLAccount = await getTokenAccount(provider, mockSOLStore);
-    assert.ok(
-      programMockSOLAccount.amount.eq(
-        depositAmountAliceMockSOL.add(bobSwapAmountSOLForUSDC)
-      )
-    );
-
     const aliceMockSOLVaultData =
       await superLiquidityProgram.account.userCoinVault.fetch(
         aliceMockSOLVault
       );
-    assert.ok(
-      aliceMockSOLVaultData.amount.eq(
-        depositAmountAliceMockSOL.add(bobSwapAmountSOLForUSDC)
-      )
-    );
-
     const aliceMockUSDCVaultData =
       await superLiquidityProgram.account.userCoinVault.fetch(
         aliceMockUSDCVault
@@ -804,11 +837,23 @@ describe("swap", () => {
     );
 
     bobMockUSDCAccount = await getTokenAccount(provider, bobmockUSDC);
-    assert.ok(bobMockUSDCAccount.amount.eq(finalAmount));
 
     assert.ok(
-      aliceMockUSDCVaultData.amount.eq(
-        depositAmountAliceMockUSDC.sub(finalAmount)
+      checkEqualValues(
+        [
+          aliceMockUSDCVaultData.amount,
+          bobMockUSDCAccount.amount,
+          aliceMockSOLVaultData.amount,
+          programMockSOLAccount.amount,
+          bobMockSOLAccount.amount,
+        ],
+        [
+          depositAmountAliceMockUSDC.sub(finalAmount),
+          finalAmount,
+          depositAmountAliceMockSOL.add(bobSwapAmountSOLForUSDC),
+          depositAmountAliceMockSOL.add(bobSwapAmountSOLForUSDC),
+          mintMockSOLAmountToBob.sub(bobSwapAmountSOLForUSDC),
+        ]
       )
     );
   });

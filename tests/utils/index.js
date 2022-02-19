@@ -13,6 +13,22 @@ async function getTokenAccount(provider, addr) {
   return await serumCmn.getTokenAccount(provider, addr);
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function checkEqualValues(localValue, storedValue) {
+  let result = localValue.length == storedValue.length;
+  if (result) {
+    for (let x = 0; x < localValue.length; x++) {
+      if (localValue[x].toString() != storedValue[x].toString()) {
+        return false;
+      }
+    }
+  }
+  return result;
+}
+
 async function createMint(provider, authority) {
   if (authority === undefined) {
     authority = provider.wallet.publicKey;
@@ -55,6 +71,9 @@ function checkError(error, errorExpected = undefined) {
   if (error.msg) {
     if (errorExpected) {
       result = error.msg == errorExpected;
+      if (!result) {
+        console.log("Errors don't match");
+      }
     } else {
       console.log(error.msg);
     }
@@ -285,45 +304,6 @@ module.exports = {
   getAssociatedTokenAccount,
   programCall,
   expectProgramCallRevert,
+  sleep,
+  checkEqualValues,
 };
-
-// ----- Unused functions----- //
-
-/*
-
-async function createTokenAccount(provider, mint, owner) {
-  const vault = anchor.web3.Keypair.generate();
-  const tx = new anchor.web3.Transaction();
-  tx.add(
-    ...(await createTokenAccountInstrs(provider, vault.publicKey, mint, owner))
-  );
-  await provider.send(tx, [vault]);
-  return vault.publicKey;
-}
-
-async function createTokenAccountInstrs(
-  provider,
-  newAccountPubkey,
-  mint,
-  owner,
-  lamports
-) {
-  if (lamports === undefined) {
-    lamports = await provider.connection.getMinimumBalanceForRentExemption(165);
-  }
-  return [
-    anchor.web3.SystemProgram.createAccount({
-      fromPubkey: provider.wallet.publicKey,
-      newAccountPubkey,
-      space: 165,
-      lamports,
-      programId: TOKEN_PROGRAM_ID,
-    }),
-    TokenInstructions.initializeAccount({
-      account: newAccountPubkey,
-      mint,
-      owner,
-    }),
-  ];
-}
-*/
