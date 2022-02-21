@@ -479,5 +479,8 @@
       "name": "NotTheOwner",
       "msg": "Not the owner"
     }
-  ]
+  ],
+  "metadata": {
+    "address": "4FCQYxXVaK1aWE7gTLhTB5CwyjZGRFPFJstJdcNsoqck"
+  }
 }
