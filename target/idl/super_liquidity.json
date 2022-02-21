@@ -410,12 +410,6 @@
             "type": "publicKey"
           },
           {
-            "name": "swapTo",
-            "type": {
-              "vec": "publicKey"
-            }
-          },
-          {
             "name": "amount",
             "type": "u64"
           },
@@ -434,6 +428,12 @@
           {
             "name": "sellFee",
             "type": "u32"
+          },
+          {
+            "name": "swapTo",
+            "type": {
+              "vec": "publicKey"
+            }
           },
           {
             "name": "pause",
@@ -479,8 +479,5 @@
       "name": "NotTheOwner",
       "msg": "Not the owner"
     }
-  ],
-  "metadata": {
-    "address": "4FCQYxXVaK1aWE7gTLhTB5CwyjZGRFPFJstJdcNsoqck"
-  }
+  ]
 }

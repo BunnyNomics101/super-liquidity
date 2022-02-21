@@ -51,7 +51,7 @@ pub struct InitUserVault<'info> {
     #[account(
         init,
         payer = user_account,
-        space = 8 + core::mem::size_of::<UserCoinVault>() + 128, // 128 bytes future expansion
+        space = 8 + core::mem::size_of::<UserCoinVault>() + 3600, // 3600 bytes future expansion
         seeds = [
             user_account.key().as_ref(),
             mint.key().as_ref(),
