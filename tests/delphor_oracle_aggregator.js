@@ -124,11 +124,49 @@ describe("delphor-oracle-aggregator", () => {
     );
   });
 
+  it("DelphorOracleAggregator reject update price with wrong oracles accounts", async () => {
+    const randomKey = anchor.web3.Keypair.generate();
+
+    assert.ok(
+      await expectProgramCallRevert(
+        delphorAggregatorProgram,
+        "updateCoinPrice",
+        [],
+        {
+          switchboardOptimizedFeedAccount: randomKey.publicKey,
+          pythPriceAccount,
+          delphorOracle: delphorOracleMockSOLPDA,
+          coinData: delphorAggregatorMockSOLPDA,
+          payer,
+          systemProgram,
+        },
+        "A raw constraint was violated"
+      )
+    );
+
+    assert.ok(
+      await expectProgramCallRevert(
+        delphorAggregatorProgram,
+        "updateCoinPrice",
+        [],
+        {
+          switchboardOptimizedFeedAccount,
+          pythPriceAccount: randomKey.publicKey,
+          delphorOracle: delphorOracleMockSOLPDA,
+          coinData: delphorAggregatorMockSOLPDA,
+          payer,
+          systemProgram,
+        },
+        "A raw constraint was violated"
+      )
+    );
+  });
+
   it("DelphorOracleAggregator update price", async () => {
     await programCall(delphorAggregatorProgram, "updateCoinPrice", [], {
       switchboardOptimizedFeedAccount,
       pythPriceAccount,
-      coinOracle3: delphorOracleMockSOLPDA,
+      delphorOracle: delphorOracleMockSOLPDA,
       coinData: delphorAggregatorMockSOLPDA,
       payer,
       systemProgram,
@@ -179,7 +217,7 @@ describe("delphor-oracle-aggregator", () => {
     await programCall(delphorAggregatorProgram, "updateCoinPrice", [], {
       switchboardOptimizedFeedAccount,
       pythPriceAccount,
-      coinOracle3: delphorOracleMockSOLPDA,
+      delphorOracle: delphorOracleMockSOLPDA,
       coinData: delphorAggregatorMockSOLPDA,
       payer,
       systemProgram,

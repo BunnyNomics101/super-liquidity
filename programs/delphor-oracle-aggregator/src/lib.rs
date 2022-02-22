@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
 use delphor_oracle::CoinInfo;
 use pyth_client::{load_price, load_product, Price, PriceConf, PriceStatus, Product};
+use std::result::Result as FunctionResult;
 use std::{cmp, str};
 use switchboard_program::{FastRoundResultAccountData, SwitchboardAccountType};
 
@@ -13,104 +14,37 @@ pub mod delphor_oracle_aggregator {
     use super::*;
     pub fn update_coin_price(ctx: Context<UpdateCoinPrice>) -> ProgramResult {
         let coin_data = &mut ctx.accounts.coin_data;
-        let coin_oracle3 = &mut ctx.accounts.coin_oracle3;
+        let delphor_oracle = &mut ctx.accounts.delphor_oracle;
 
-        // Switchboard
-        let mut switchboard_price: u64 = coin_oracle3.coin_gecko_price;
+        let mut switchboard_price: u64 = delphor_oracle.coin_gecko_price;
         if coin_data
             .switchboard_optimized_feed_account
             .key()
             .to_string()
             != "11111111111111111111111111111111"
         {
-            if coin_data.switchboard_optimized_feed_account.key()
-                != ctx.accounts.switchboard_optimized_feed_account.key()
-            {
-                msg!(
-                    "Expected switchboard account: {:?}",
-                    coin_data.switchboard_optimized_feed_account.key()
-                );
-                msg!(
-                    "Received: {:?}",
-                    ctx.accounts.switchboard_optimized_feed_account.key()
-                );
-                return Err(ErrorCode::SwitchboardAccountError.into());
-            }
-            let switchboard_optimized_feed_account =
-                &ctx.accounts.switchboard_optimized_feed_account;
-            let out: f64;
-            let account_buf = switchboard_optimized_feed_account.try_borrow_data()?;
-            if account_buf.len() == 0 {
-                msg!("The provided account is empty.");
-                return Err(ProgramError::InvalidAccountData);
-            }
-            if account_buf[0]
-                == SwitchboardAccountType::TYPE_AGGREGATOR_RESULT_PARSE_OPTIMIZED as u8
-            {
-                let feed_data = FastRoundResultAccountData::deserialize(&account_buf).unwrap();
-                out = feed_data.result.result;
-                switchboard_price = (out * u64::pow(10, 9) as f64) as u64;
-            } else {
-                return Err(ProgramError::InvalidAccountData);
+            let switchboard_price_result =
+                get_switchboard_price(&ctx.accounts.switchboard_optimized_feed_account);
+            match switchboard_price_result {
+                Ok(price) => switchboard_price = price,
+                Err(error) => return Err(error),
             }
         }
-        // ----------------- //
-
-        // Pyth
-        // Send 11111111111111111111111111111111 as pyth_product_account
-        // if pyth don't track the price of the token
-        let mut pyth_price: u64 = coin_oracle3.coin_gecko_price;
+        let mut pyth_price: u64 = delphor_oracle.coin_gecko_price;
         if coin_data.pyth_price_account.key().to_string() != "11111111111111111111111111111111" {
-            if coin_data.pyth_price_account.key() != ctx.accounts.pyth_price_account.key() {
-                msg!(
-                    "Expected price account: {:?}",
-                    coin_data.pyth_price_account.key()
-                );
-                msg!("Received: {:?}", ctx.accounts.pyth_price_account.key());
-                return Err(ErrorCode::PythPriceAccountError.into());
-            }
-
-            let pyth_price_account = &ctx.accounts.pyth_price_account.try_borrow_data().unwrap();
-            let pyth_price_data: &Price = load_price(&pyth_price_account)?;
-            if pyth_price_data.agg.status == PriceStatus::Trading {
-                let pyth_price_conf_data: &PriceConf =
-                    &pyth_price_data.get_current_price().unwrap();
-                let pyth_expo = pyth_price_conf_data.expo.abs() as u8;
-                if pyth_price_conf_data.price < 0 {
-                    pyth_price = 0;
-                } else {
-                    pyth_price = pyth_price_conf_data.price as u64;
-                }
-                if pyth_expo < coin_data.decimals {
-                    pyth_price = pyth_price * u64::pow(10, (coin_data.decimals - pyth_expo) as u32);
-                } else if pyth_expo > coin_data.decimals {
-                    pyth_price = pyth_price / u64::pow(10, (pyth_expo - coin_data.decimals) as u32);
-                }
+            let pyth_price_result =
+                get_pyth_price(&ctx.accounts.pyth_price_account, coin_data.decimals);
+            match pyth_price_result {
+                Ok(price) => pyth_price = price,
+                Err(error) => return Err(error),
             }
         }
-        // ------------------- //
 
-        let low = cmp::min(
-            pyth_price,
-            cmp::min(switchboard_price, coin_oracle3.coin_gecko_price),
+        coin_data.price = calculate_price(
+            &delphor_oracle.coin_gecko_price,
+            &pyth_price,
+            &switchboard_price,
         );
-        let max = cmp::max(
-            pyth_price,
-            cmp::max(switchboard_price, coin_oracle3.coin_gecko_price),
-        );
-        let mid = pyth_price + switchboard_price + coin_oracle3.coin_gecko_price - low - max;
-        // Exclude furthest price and average the other two
-        let ab: u64 = max - mid;
-        let bc: u64 = mid - low;
-        let ca: u64 = max - low;
-
-        if ab < bc && ab < ca {
-            coin_data.price = (max + mid) / 2;
-        } else if bc < ab && bc < ca {
-            coin_data.price = (mid + low) / 2;
-        } else {
-            coin_data.price = (low + max) / 2;
-        }
 
         Ok(())
     }
@@ -179,13 +113,72 @@ pub mod delphor_oracle_aggregator {
     }
 }
 
+fn get_switchboard_price(
+    switchboard_account: &AccountInfo<'_>,
+) -> FunctionResult<u64, ProgramError> {
+    let account_buf = switchboard_account.try_borrow_data()?;
+    if account_buf.len() == 0 {
+        msg!("The provided account is empty.");
+        return Err(ProgramError::InvalidAccountData);
+    }
+    if account_buf[0] != SwitchboardAccountType::TYPE_AGGREGATOR_RESULT_PARSE_OPTIMIZED as u8 {
+        return Err(ProgramError::InvalidAccountData);
+    }
+    let feed_data = FastRoundResultAccountData::deserialize(&account_buf).unwrap();
+    return Ok((feed_data.result.result * u64::pow(10, 9) as f64) as u64);
+}
+
+fn get_pyth_price(
+    pyth_account: &AccountInfo<'_>,
+    decimals: u8,
+) -> FunctionResult<u64, ProgramError> {
+    let mut pyth_price: u64 = 0;
+    let pyth_price_account = &pyth_account.try_borrow_data().unwrap();
+    let pyth_price_data: &Price = load_price(&pyth_price_account)?;
+    if pyth_price_data.agg.status == PriceStatus::Trading {
+        let pyth_price_conf_data: &PriceConf = &pyth_price_data.get_current_price().unwrap();
+        let pyth_expo = pyth_price_conf_data.expo.abs() as u8;
+        if pyth_price_conf_data.price < 0 {
+            pyth_price = 0;
+        } else {
+            pyth_price = pyth_price_conf_data.price as u64;
+        }
+        if pyth_expo < decimals {
+            pyth_price = pyth_price * u64::pow(10, (decimals - pyth_expo) as u32);
+        } else if pyth_expo > decimals {
+            pyth_price = pyth_price / u64::pow(10, (pyth_expo - decimals) as u32);
+        }
+    }
+    Ok(pyth_price)
+}
+
+fn calculate_price(price_a: &u64, price_b: &u64, price_c: &u64) -> u64 {
+    let low = cmp::min(price_b, cmp::min(price_c, price_a));
+    let max = cmp::max(price_b, cmp::max(price_c, price_a));
+    let mid = price_b + price_c + price_a - low - max;
+    // Exclude furthest price and average the other two
+    let ab: u64 = max - mid;
+    let bc: u64 = mid - low;
+    let ca: u64 = max - low;
+
+    if ab < bc && ab < ca {
+        return (max + mid) / 2;
+    } else if bc < ab && bc < ca {
+        return (mid + low) / 2;
+    } else {
+        return (low + max) / 2;
+    }
+}
+
 #[derive(Accounts)]
 pub struct UpdateCoinPrice<'info> {
+    #[account(constraint = switchboard_optimized_feed_account.key() == coin_data.switchboard_optimized_feed_account)]
     switchboard_optimized_feed_account: AccountInfo<'info>,
+    #[account(constraint = pyth_price_account.key() == coin_data.pyth_price_account)]
     pyth_price_account: AccountInfo<'info>,
     // struct CoinInfo is imported from delphor-oracle, so the owner MUST be delphor-oracle
     // no need for additional checks
-    coin_oracle3: Account<'info, CoinInfo>,
+    delphor_oracle: Account<'info, CoinInfo>,
     #[account(mut)]
     coin_data: Account<'info, CoinData>,
     payer: Signer<'info>,

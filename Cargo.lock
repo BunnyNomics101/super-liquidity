@@ -475,12 +475,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "delphor-oracle"
+version = "0.1.0"
+source = "git+https://github.com/Delphor-finance/super-liquidity.git#698b75cc6ac0ff9ccd1467e0527dced8e5d2bbf3"
+dependencies = [
+ "anchor-lang",
+]
+
+[[package]]
 name = "delphor-oracle-aggregator"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
- "delphor-oracle",
+ "delphor-oracle 0.1.0 (git+https://github.com/Delphor-finance/super-liquidity.git)",
+ "lexical",
+ "pyth-client",
+ "solana-program",
+ "switchboard-program",
+]
+
+[[package]]
+name = "delphor-oracle-aggregator"
+version = "0.1.0"
+source = "git+https://github.com/Delphor-finance/super-liquidity.git#698b75cc6ac0ff9ccd1467e0527dced8e5d2bbf3"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "delphor-oracle 0.1.0 (git+https://github.com/Delphor-finance/super-liquidity.git)",
  "lexical",
  "pyth-client",
  "solana-program",
@@ -1301,7 +1323,7 @@ version = "0.1.0"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
- "delphor-oracle-aggregator",
+ "delphor-oracle-aggregator 0.1.0 (git+https://github.com/Delphor-finance/super-liquidity.git)",
  "solana-program",
 ]
 

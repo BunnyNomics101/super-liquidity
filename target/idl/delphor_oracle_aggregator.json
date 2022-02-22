@@ -16,7 +16,7 @@
           "isSigner": false
         },
         {
-          "name": "coinOracle3",
+          "name": "delphorOracle",
           "isMut": false,
           "isSigner": false
         },

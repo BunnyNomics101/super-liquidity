@@ -321,7 +321,7 @@ describe("super-liquidity", () => {
     await programCall(delphorOracleAggregatorProgram, "updateCoinPrice", [], {
       switchboardOptimizedFeedAccount,
       pythPriceAccount,
-      coinOracle3: delphorOracleMockSOLPDA,
+      delphorOracle: delphorOracleMockSOLPDA,
       coinData: delphorMockSOLPDA,
       payer,
       systemProgram,
@@ -374,7 +374,7 @@ describe("super-liquidity", () => {
     await programCall(delphorOracleAggregatorProgram, "updateCoinPrice", [], {
       switchboardOptimizedFeedAccount,
       pythPriceAccount,
-      coinOracle3: delphorOracleMockUSDCPDA,
+      delphorOracle: delphorOracleMockUSDCPDA,
       coinData: delphorMockUSDCPDA,
       payer,
       systemProgram,
