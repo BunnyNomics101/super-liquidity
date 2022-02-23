@@ -17,16 +17,16 @@ pub mod super_liquidity {
     declare_id!("4FCQYxXVaK1aWE7gTLhTB5CwyjZGRFPFJstJdcNsoqck");
 
     ///deposit
-    pub fn deposit(ctx: Context<Deposit>, amount: u64) -> ProgramResult {
+    pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
         ctx.accounts.process(amount)
     }
 
     ///withdraw
-    pub fn withdraw(ctx: Context<Withdraw>, bump: u8, amount: u64) -> ProgramResult {
+    pub fn withdraw(ctx: Context<Withdraw>, bump: u8, amount: u64) -> Result<()> {
         ctx.accounts.process(bump, amount)
     }
 
-    pub fn swap(ctx: Context<Swap>, swap_amount: u64, min_amount: u64, bump: u8) -> ProgramResult {
+    pub fn swap(ctx: Context<Swap>, swap_amount: u64, min_amount: u64, bump: u8) -> Result<()> {
         ctx.accounts.process(swap_amount, min_amount, bump)
     }
 
@@ -34,18 +34,18 @@ pub mod super_liquidity {
     // ---- Admin --
     // -------------
     ///create global state
-    pub fn initialize(ctx: Context<Initialize>, bump: u8) -> ProgramResult {
+    pub fn initialize(ctx: Context<Initialize>, bump: u8) -> Result<()> {
         ctx.accounts.process(bump)
     }
 
     ///create user vault
-    pub fn init_user_vault(ctx: Context<InitUserVault>, bump: u8, min_fee: u32, max_fee: u32, swap_accounts: Vec<Pubkey>) -> ProgramResult {
+    pub fn init_user_vault(ctx: Context<InitUserVault>, bump: u8, min_fee: u32, max_fee: u32, swap_accounts: Vec<Pubkey>) -> Result<()> {
         ctx.accounts.process(bump, min_fee, max_fee, swap_accounts)
     }
 
     ///initialize token store
-    pub fn init_token_store(ctx: Context<InitTokenStore>, bump: u8) -> ProgramResult {
-        ctx.accounts.process(bump)
+    pub fn init_token_store(ctx: Context<InitTokenStore>) -> Result<()> {
+        ctx.accounts.process()
     }
 
     ///update user state
@@ -56,7 +56,7 @@ pub mod super_liquidity {
         min: u64,
         max: u64,
         swap_accounts: Vec<Pubkey>
-    ) -> ProgramResult {
+    ) -> Result<()> {
         ctx.accounts.process(buy_fee_bp, sell_fee_bp, min, max, swap_accounts)
     }
     

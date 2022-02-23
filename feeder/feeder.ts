@@ -70,11 +70,10 @@ async function delphorInitCoin(
   mint: PublicKey,
   symbol: string,
   coinData: PublicKey,
-  coinDataBump: number,
   pythProductAccount: PublicKey,
   switchboardOptimizedFeedAccount: PublicKey
 ) {
-  let params = [coinDataBump, DECIMALS, symbol];
+  let params = [DECIMALS, symbol];
   let accounts = {
     switchboardOptimizedFeedAccount,
     pythProductAccount,
@@ -122,9 +121,8 @@ async function createCoin(
   orcaPrice: BN,
   coin: PublicKey,
   symbol: string,
-  bump: number
 ) {
-  let params = [coinGeckoPrice, orcaPrice, bump, symbol];
+  let params = [coinGeckoPrice, orcaPrice, symbol];
   let accounts = {
     authority,
     coin,
@@ -240,8 +238,7 @@ async function main() {
             coinGeckoPrice,
             orcaPrice,
             coinPDAs[x],
-            symbol,
-            bumps[x]
+            symbol
           );
         }
         try {
@@ -259,7 +256,6 @@ async function main() {
             MINT_DEVNET_ACCOUNTS[x],
             symbol,
             delphorOraclePDAs[x],
-            delphorOracleBumps[x],
             PYTH_DEVNET_PRODUCT_ACCOUNTS[x],
             SWITCHBOARD_DEVNET_OPTIMIZED_FEED_ACCOUNTS[x]
           );

@@ -15,9 +15,8 @@ pub mod delphor_oracle {
         ctx: Context<CreateCoin>,
         coin_gecko_price: u64,
         orca_price: u64,
-        _pda_bump: u8,
         symbol: String,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         assert!(
             symbol.len() < MAX_SYMBOL_LEN,
             "max symbol len is {}",
@@ -46,10 +45,10 @@ pub mod delphor_oracle {
         ctx: Context<UpdateCoin>,
         coin_gecko_price: u64,
         orca_price: u64,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         let coin = &mut ctx.accounts.coin;
         if coin.authority != *ctx.accounts.authority.key {
-            return Err(ErrorCode::Unauthorized.into());
+            return Err(error!(ErrorCode::Unauthorized));
         }
         coin.coin_gecko_price = coin_gecko_price;
         coin.orca_price = orca_price;
@@ -63,11 +62,11 @@ pub mod delphor_oracle {
         Ok(())
     }
 
-    pub fn delete_coin(ctx: Context<DeleteCoin>) -> ProgramResult {
+    pub fn delete_coin(ctx: Context<DeleteCoin>) -> Result<()> {
         msg!("delete coin PDA");
         let coin = &mut ctx.accounts.coin;
         if coin.authority != *ctx.accounts.authority.key {
-            return Err(ErrorCode::Unauthorized.into());
+            return Err(error!(ErrorCode::Unauthorized));
         }
         // mark account as deleted (tombstone mark, avoid re-use account attack)
         coin.symbol = "*DELETED*".into();
@@ -90,11 +89,13 @@ pub mod delphor_oracle {
 //
 #[derive(Accounts)]
 #[instruction(coin_gecko_price: u64,
-    orca_price: u64, pda_bump:u8, symbol:String)]
+    orca_price: u64, symbol:String)]
 pub struct CreateCoin<'info> {
-    #[account(init,payer=payer,seeds=[symbol.as_bytes().as_ref()],bump=pda_bump, space=32+64+64+64+64+MAX_SYMBOL_LEN+128)]
+    #[account(init,payer=payer,seeds=[symbol.as_bytes().as_ref()],bump,space=32+64+64+64+64+MAX_SYMBOL_LEN+128)]
     coin: Account<'info, CoinInfo>,
+    /// CHECK: 
     authority: AccountInfo<'info>,
+    #[account(mut)]
     payer: Signer<'info>,
     system_program: Program<'info, System>,
 }
@@ -138,13 +139,14 @@ pub struct NewCoinInfo {
     pub orca_price: u64,
     pub last_update_timestamp: u64,
 }
+
 // #endregion code
 
 // ------------
 // -- Errors --
 // ------------
 // starts at 300 / 0x12c
-#[error]
+#[error_code]
 pub enum ErrorCode {
     #[msg("You are not authorized to perform this action.")]
     Unauthorized,

@@ -41,7 +41,7 @@ describe("delphor-oracle", () => {
       await programCall(
         program,
         "createCoin",
-        [tempCoin.price, tempCoin.price, bump, tempCoin.symbol],
+        [tempCoin.price, tempCoin.price, tempCoin.symbol],
         {
           coin: coinPDA,
           authority,

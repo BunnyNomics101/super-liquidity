@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-#[error]
+#[error_code]
 pub enum DelphorError {
     #[msg("Access denied")]
     AccessDenied,

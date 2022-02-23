@@ -129,7 +129,6 @@ describe("super-liquidity", () => {
       [
         mockSOL.price,
         mockSOL.price,
-        delphorOracleMockSOLPDAbump,
         mockSOL.symbol,
       ],
       {
@@ -165,7 +164,6 @@ describe("super-liquidity", () => {
       [
         mockUSDC.price,
         mockUSDC.price,
-        delphorOracleMockUSDCPDAbump,
         mockUSDC.symbol,
       ],
       {
@@ -292,7 +290,7 @@ describe("super-liquidity", () => {
     await programCall(
       delphorOracleAggregatorProgram,
       "initCoin",
-      [delphorMockSOLPDAbump, mockSOL.decimals, mockSOL.symbol],
+      [mockSOL.decimals, mockSOL.symbol],
       {
         switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
         pythProductAccount: pythProductAccount,
@@ -345,7 +343,7 @@ describe("super-liquidity", () => {
     await programCall(
       delphorOracleAggregatorProgram,
       "initCoin",
-      [delphorMockUSDCPDAbump, mockUSDC.decimals, mockUSDC.symbol],
+      [mockUSDC.decimals, mockUSDC.symbol],
       {
         switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
         pythProductAccount: pythProductAccount,

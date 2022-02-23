@@ -1,4 +1,4 @@
-anchor_version = "0.19.0"
+anchor_version = "0.22.0"
 
 #TODO: user .secret file to address
 [programs.localnet]

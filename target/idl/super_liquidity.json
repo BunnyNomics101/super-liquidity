@@ -212,7 +212,7 @@
       "accounts": [
         {
           "name": "adminAccount",
-          "isMut": false,
+          "isMut": true,
           "isSigner": true
         },
         {
@@ -293,7 +293,7 @@
         },
         {
           "name": "adminAccount",
-          "isMut": false,
+          "isMut": true,
           "isSigner": true
         },
         {
@@ -327,12 +327,7 @@
           "isSigner": false
         }
       ],
-      "args": [
-        {
-          "name": "bump",
-          "type": "u8"
-        }
-      ]
+      "args": []
     },
     {
       "name": "updateUserVault",

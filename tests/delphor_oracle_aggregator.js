@@ -67,7 +67,6 @@ describe("delphor-oracle-aggregator", () => {
       [
         mockSOL.price,
         mockSOL.price,
-        delphorOracleMockSOLPDAbump,
         mockSOL.symbol,
       ],
       {
@@ -100,7 +99,7 @@ describe("delphor-oracle-aggregator", () => {
     await programCall(
       delphorAggregatorProgram,
       "initCoin",
-      [delphorAggregatorMockSOLPDAbump, mockSOL.decimals, mockSOL.symbol],
+      [mockSOL.decimals, mockSOL.symbol],
       {
         switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
         pythProductAccount: pythProductAccount,

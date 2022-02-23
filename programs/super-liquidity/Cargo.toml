@@ -16,12 +16,10 @@ default = ["anchor-debug"]
 anchor-debug = []
 
 [dependencies]
-anchor-lang = "0.19.0"
-anchor-spl = "0.19.0"
+anchor-lang = "0.22.0"
+anchor-spl = "0.22.0"
 solana-program = "1.8.11"
-delphor-oracle-aggregator = { git = "https://github.com/Delphor-finance/super-liquidity.git", features = [
-    "cpi",
-] }
+delphor-oracle-aggregator = { path = "../delphor-oracle-aggregator", features = ["cpi"] }
 
 # kept here even if it generates a warning
 # in case this project is moved and/or compiled on its own
