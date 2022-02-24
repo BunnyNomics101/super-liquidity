@@ -11,3 +11,4 @@ keys
 .secret
 temp/
 expanded.sh
+package-lock.json

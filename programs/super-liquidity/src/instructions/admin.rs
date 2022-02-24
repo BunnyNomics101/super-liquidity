@@ -82,6 +82,7 @@ impl<'info> InitUserVault<'info> {
             amount: 0,
             min: 0,
             max: 0,
+            timestamp: Clock::get().unwrap().unix_timestamp as u64
         };
         Ok(())
     }
@@ -182,7 +183,7 @@ impl<'info> UpdateUserVault<'info> {
         self.user_vault.sell_fee = sell_fee;
         self.user_vault.buy_fee = buy_fee;
         self.user_vault.min = min;
-        self.user_vault.max = max;
+        self.user_vault.max = max;        
         Ok(())
     }
 }

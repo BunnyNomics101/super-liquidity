@@ -22,6 +22,7 @@ pub struct UserCoinVault {
     pub max: u64,
     pub buy_fee: u32,
     pub sell_fee: u32,
+    pub timestamp: u64,
     pub swap_to: Vec<Pubkey>,
 
     // pause operations

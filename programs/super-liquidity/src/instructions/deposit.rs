@@ -87,7 +87,7 @@ impl<'info> Deposit<'info> {
         )?;
 
         self.user_vault.amount += amount;
-
+        self.user_vault.timestamp = Clock::get().unwrap().unix_timestamp as u64;
         Ok(())
     }
 }

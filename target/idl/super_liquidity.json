@@ -425,6 +425,10 @@
             "type": "u32"
           },
           {
+            "name": "timestamp",
+            "type": "u64"
+          },
+          {
             "name": "swapTo",
             "type": {
               "vec": "publicKey"
