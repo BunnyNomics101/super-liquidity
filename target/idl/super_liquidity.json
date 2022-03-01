@@ -268,12 +268,36 @@
           "type": "u8"
         },
         {
-          "name": "minFee",
+          "name": "buyFee",
           "type": "u32"
         },
         {
-          "name": "maxFee",
+          "name": "sellFee",
           "type": "u32"
+        },
+        {
+          "name": "min",
+          "type": "u64"
+        },
+        {
+          "name": "max",
+          "type": "u64"
+        },
+        {
+          "name": "receiveStatus",
+          "type": "bool"
+        },
+        {
+          "name": "provideStatus",
+          "type": "bool"
+        },
+        {
+          "name": "limitPriceStatus",
+          "type": "bool"
+        },
+        {
+          "name": "limitPrice",
+          "type": "u64"
         },
         {
           "name": "swapAccounts",
@@ -350,11 +374,11 @@
       ],
       "args": [
         {
-          "name": "buyFeeBp",
+          "name": "buyFee",
           "type": "u32"
         },
         {
-          "name": "sellFeeBp",
+          "name": "sellFee",
           "type": "u32"
         },
         {
@@ -363,6 +387,22 @@
         },
         {
           "name": "max",
+          "type": "u64"
+        },
+        {
+          "name": "receiveStatus",
+          "type": "bool"
+        },
+        {
+          "name": "provideStatus",
+          "type": "bool"
+        },
+        {
+          "name": "limitPriceStatus",
+          "type": "bool"
+        },
+        {
+          "name": "limitPrice",
           "type": "u64"
         },
         {
@@ -429,14 +469,26 @@
             "type": "u64"
           },
           {
+            "name": "receiveStatus",
+            "type": "bool"
+          },
+          {
+            "name": "provideStatus",
+            "type": "bool"
+          },
+          {
+            "name": "limitPriceStatus",
+            "type": "bool"
+          },
+          {
+            "name": "limitPrice",
+            "type": "u64"
+          },
+          {
             "name": "swapTo",
             "type": {
               "vec": "publicKey"
             }
-          },
-          {
-            "name": "pause",
-            "type": "bool"
           }
         ]
       }
@@ -462,6 +514,15 @@
           },
           {
             "name": "VaultDoesntAcceptToken"
+          },
+          {
+            "name": "VaultProvideOff"
+          },
+          {
+            "name": "VaultRecieveOff"
+          },
+          {
+            "name": "PriceUnderLimitPrice"
           }
         ]
       }

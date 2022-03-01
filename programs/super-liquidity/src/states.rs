@@ -23,10 +23,11 @@ pub struct UserCoinVault {
     pub buy_fee: u32,
     pub sell_fee: u32,
     pub timestamp: u64,
+    pub receive_status: bool,
+    pub provide_status: bool,
+    pub limit_price_status: bool,
+    pub limit_price: u64,
     pub swap_to: Vec<Pubkey>,
-
-    // pause operations
-    pub pause: bool,
 }
 impl UserCoinVault {}
 

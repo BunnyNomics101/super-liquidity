@@ -1,7 +1,11 @@
 const anchor = require("@project-serum/anchor");
 const BN = require("@project-serum/anchor").BN;
 const PublicKey = require("@solana/web3.js").PublicKey;
-const { programCall, checkEqualValues } = require("./utils");
+const {
+  programCall,
+  checkEqualValues,
+  expectProgramCallRevert,
+} = require("./utils");
 const assert = require("assert");
 
 const {
@@ -105,7 +109,7 @@ describe("super-liquidity", () => {
     assert.ok(balance == 0);
     await airdropLamports(alice.publicKey);
     balance = await getBalance(alice.publicKey);
-    assert.ok(balance == anchor.web3.LAMPORTS_PER_SOL);
+    assert.ok(balance == anchor.web3.LAMPORTS_PER_SOL * 10);
   });
 
   it("Airdrop lamports to bob", async function () {
@@ -113,24 +117,19 @@ describe("super-liquidity", () => {
     assert.ok(balance == 0);
     await airdropLamports(bob.publicKey);
     balance = await getBalance(bob.publicKey);
-    assert.ok(balance == anchor.web3.LAMPORTS_PER_SOL);
+    assert.ok(balance == anchor.web3.LAMPORTS_PER_SOL * 10);
   });
 
   it("DelphorOracle create MockSOL coin", async () => {
-    [delphorOracleMockSOLPDA, delphorOracleMockSOLPDAbump] =
-      await PublicKey.findProgramAddress(
-        [mockSOL.symbol],
-        delphorOracleProgram.programId
-      );
+    [delphorOracleMockSOLPDA] = await PublicKey.findProgramAddress(
+      [mockSOL.symbol],
+      delphorOracleProgram.programId
+    );
 
     await programCall(
       delphorOracleProgram,
       "createCoin",
-      [
-        mockSOL.price,
-        mockSOL.price,
-        mockSOL.symbol,
-      ],
+      [mockSOL.price, mockSOL.price, mockSOL.symbol],
       {
         coin: delphorOracleMockSOLPDA,
         authority,
@@ -152,20 +151,15 @@ describe("super-liquidity", () => {
   });
 
   it("DelphorOracle create MockUSDC coin", async () => {
-    [delphorOracleMockUSDCPDA, delphorOracleMockUSDCPDAbump] =
-      await PublicKey.findProgramAddress(
-        [mockUSDC.symbol],
-        delphorOracleProgram.programId
-      );
+    [delphorOracleMockUSDCPDA] = await PublicKey.findProgramAddress(
+      [mockUSDC.symbol],
+      delphorOracleProgram.programId
+    );
 
     await programCall(
       delphorOracleProgram,
       "createCoin",
-      [
-        mockUSDC.price,
-        mockUSDC.price,
-        mockUSDC.symbol,
-      ],
+      [mockUSDC.price, mockUSDC.price, mockUSDC.symbol],
       {
         coin: delphorOracleMockUSDCPDA,
         authority,
@@ -281,11 +275,10 @@ describe("super-liquidity", () => {
   });
 
   it("DelphorOracle init coin", async () => {
-    [delphorMockSOLPDA, delphorMockSOLPDAbump] =
-      await PublicKey.findProgramAddress(
-        [mockSOLMint.toBuffer()],
-        delphorOracleAggregatorProgram.programId
-      );
+    [delphorMockSOLPDA] = await PublicKey.findProgramAddress(
+      [mockSOLMint.toBuffer()],
+      delphorOracleAggregatorProgram.programId
+    );
 
     await programCall(
       delphorOracleAggregatorProgram,
@@ -334,11 +327,10 @@ describe("super-liquidity", () => {
   });
 
   it("DelphorOracle init mockUSDC coin", async () => {
-    [delphorMockUSDCPDA, delphorMockUSDCPDAbump] =
-      await PublicKey.findProgramAddress(
-        [mockUSDCMint.toBuffer()],
-        delphorOracleAggregatorProgram.programId
-      );
+    [delphorMockUSDCPDA] = await PublicKey.findProgramAddress(
+      [mockUSDCMint.toBuffer()],
+      delphorOracleAggregatorProgram.programId
+    );
 
     await programCall(
       delphorOracleAggregatorProgram,
@@ -451,7 +443,18 @@ describe("super-liquidity", () => {
     await programCall(
       superLiquidityProgram,
       "initUserVault",
-      [aliceMockSOLVaultBump, 0, 0, []],
+      [
+        aliceMockSOLVaultBump,
+        0,
+        0,
+        new BN(0),
+        new BN(0),
+        false,
+        false,
+        false,
+        new BN(0),
+        [],
+      ],
       {
         globalState,
         userAccount: alice.publicKey,
@@ -486,7 +489,18 @@ describe("super-liquidity", () => {
     await programCall(
       superLiquidityProgram,
       "initUserVault",
-      [aliceMockUSDCVaultBump, 0, 0, []],
+      [
+        aliceMockUSDCVaultBump,
+        0,
+        0,
+        new BN(0),
+        new BN(0),
+        false,
+        false,
+        false,
+        new BN(0),
+        [],
+      ],
       {
         globalState,
         userAccount: alice.publicKey,
@@ -520,7 +534,18 @@ describe("super-liquidity", () => {
     await programCall(
       superLiquidityProgram,
       "initUserVault",
-      [bobMockSOLVaultBump, 0, 0, []],
+      [
+        bobMockSOLVaultBump,
+        0,
+        0,
+        new BN(0),
+        new BN(0),
+        false,
+        false,
+        false,
+        new BN(0),
+        [],
+      ],
       {
         globalState,
         userAccount: bob.publicKey,
@@ -543,7 +568,18 @@ describe("super-liquidity", () => {
     await programCall(
       superLiquidityProgram,
       "initUserVault",
-      [bobMockUSDCVaultBump, 0, 0, []],
+      [
+        bobMockUSDCVaultBump,
+        0,
+        0,
+        new BN(0),
+        new BN(0),
+        false,
+        false,
+        false,
+        new BN(0),
+        [],
+      ],
       {
         globalState,
         userAccount: bob.publicKey,
@@ -559,12 +595,22 @@ describe("super-liquidity", () => {
     let sellFee = 100;
     let buyFee = 300;
     let min = new anchor.BN(1 * 10 ** 9);
-    let max = new anchor.BN(10 * 10 ** 9);
+    let max = new anchor.BN(0);
 
     await programCall(
       superLiquidityProgram,
       "updateUserVault",
-      [sellFee, buyFee, min, max, [mockSOLMint, mockUSDCMint]],
+      [
+        sellFee,
+        buyFee,
+        min,
+        max,
+        true,
+        true,
+        true,
+        new BN(0),
+        [mockSOLMint, mockUSDCMint],
+      ],
       {
         userAccount: alice.publicKey,
         userVault: aliceMockSOLVault,
@@ -600,7 +646,17 @@ describe("super-liquidity", () => {
     await programCall(
       superLiquidityProgram,
       "updateUserVault",
-      [sellFee, buyFee, min, max, [mockSOLMint, mockUSDCMint]],
+      [
+        sellFee,
+        buyFee,
+        min,
+        max,
+        true,
+        true,
+        true,
+        new BN(0),
+        [mockSOLMint, mockUSDCMint],
+      ],
       {
         userAccount: alice.publicKey,
         userVault: aliceMockUSDCVault,
@@ -636,7 +692,17 @@ describe("super-liquidity", () => {
     await programCall(
       superLiquidityProgram,
       "updateUserVault",
-      [sellFee, buyFee, min, max, [mockSOLMint, mockUSDCMint]],
+      [
+        sellFee,
+        buyFee,
+        min,
+        max,
+        true,
+        true,
+        true,
+        new BN(0),
+        [mockSOLMint, mockUSDCMint],
+      ],
       {
         userAccount: bob.publicKey,
         userVault: bobMockSOLVault,
@@ -670,7 +736,17 @@ describe("super-liquidity", () => {
     await programCall(
       superLiquidityProgram,
       "updateUserVault",
-      [sellFee, buyFee, min, max, [mockSOLMint, mockUSDCMint]],
+      [
+        sellFee,
+        buyFee,
+        min,
+        max,
+        true,
+        true,
+        true,
+        new BN(0),
+        [mockSOLMint, mockUSDCMint],
+      ],
       {
         userAccount: bob.publicKey,
         userVault: bobMockUSDCVault,
@@ -775,6 +851,84 @@ describe("super-liquidity", () => {
           depositAmountAliceMockUSDC,
           mintMockUSDCAmountToAlice.sub(depositAmountAliceMockUSDC),
         ]
+      )
+    );
+  });
+
+  xit("Reject swap with error exceeds max balance", async () => {
+    assert.ok(
+      await expectProgramCallRevert(
+        superLiquidityProgram,
+        "swap",
+        [
+          bobSwapAmountSOLForUSDC,
+          bobSwapUSDCMinAmount,
+          tokenStoreAuthorityBump,
+        ],
+        {
+          getCoinData: delphorMockSOLPDA,
+          sendCoinData: delphorMockUSDCPDA,
+          userVaultFrom: aliceMockUSDCVault,
+          userVaultTo: aliceMockSOLVault,
+          tokenStoreAuthority: tokenStoreAuthority,
+          mintSend: mockSOLMint,
+          mintReceive: mockUSDCMint,
+          getTokenFrom: bobmockSOL,
+          getTokenFromAuthority: bob.publicKey,
+          sendTokenTo: bobmockUSDC,
+          tokenStorePdaFrom: mockUSDCStore,
+          tokenStorePdaTo: mockSOLStore,
+          systemProgram,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        },
+        "Operation exceeds max balance to user_vault_to",
+        [bob]
+      )
+    );
+  });
+
+  it("Alice changes mockSOL fees, min and max", async () => {
+    let sellFee = 100;
+    let buyFee = 300;
+    let min = new anchor.BN(1 * 10 ** 9);
+    let max = new anchor.BN(10 * 10 ** 9);
+
+    await programCall(
+      superLiquidityProgram,
+      "updateUserVault",
+      [
+        sellFee,
+        buyFee,
+        min,
+        max,
+        true,
+        true,
+        true,
+        new BN(0),
+        [mockSOLMint, mockUSDCMint],
+      ],
+      {
+        userAccount: alice.publicKey,
+        userVault: aliceMockSOLVault,
+        mint: mockSOLMint,
+      },
+      [alice]
+    );
+
+    const aliceMockSOLVaultData =
+      await superLiquidityProgram.account.userCoinVault.fetch(
+        aliceMockSOLVault
+      );
+
+    assert.ok(
+      checkEqualValues(
+        [
+          aliceMockSOLVaultData.buyFee,
+          aliceMockSOLVaultData.sellFee,
+          aliceMockSOLVaultData.min,
+          aliceMockSOLVaultData.max,
+        ],
+        [buyFee, sellFee, min, max]
       )
     );
   });

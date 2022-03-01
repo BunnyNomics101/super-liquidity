@@ -69,20 +69,29 @@ impl<'info> InitUserVault<'info> {
         bump: u8,
         buy_fee: u32,
         sell_fee: u32,
+        min: u64,
+        max: u64,
+        receive_status: bool,
+        provide_status: bool,
+        limit_price_status: bool,
+        limit_price: u64,
         swap_accounts: Vec<Pubkey>,
     ) -> Result<()> {
         *self.user_vault = UserCoinVault {
             bump,
-            buy_fee,
-            sell_fee,
-            pause: false,
             user: self.user_account.key(),
             mint: self.mint.key(),
-            swap_to: swap_accounts,
             amount: 0,
-            min: 0,
-            max: 0,
-            timestamp: Clock::get().unwrap().unix_timestamp as u64
+            min,
+            max,
+            buy_fee,
+            sell_fee,
+            timestamp: Clock::get().unwrap().unix_timestamp as u64,
+            receive_status: false,
+            provide_status: false,
+            limit_price_status: false,
+            limit_price: 0,
+            swap_to: swap_accounts,
         };
         Ok(())
     }
@@ -177,13 +186,22 @@ impl<'info> UpdateUserVault<'info> {
         buy_fee: u32,
         min: u64,
         max: u64,
+        receive_status: bool,
+        provide_status: bool,
+        limit_price_status: bool,
+        limit_price: u64,
         swap_accounts: Vec<Pubkey>,
     ) -> Result<()> {
-        self.user_vault.swap_to = swap_accounts;
         self.user_vault.sell_fee = sell_fee;
         self.user_vault.buy_fee = buy_fee;
         self.user_vault.min = min;
-        self.user_vault.max = max;        
+        self.user_vault.max = max;
+        self.user_vault.timestamp = Clock::get().unwrap().unix_timestamp as u64;
+        self.user_vault.receive_status = receive_status;
+        self.user_vault.provide_status = provide_status;
+        self.user_vault.limit_price_status = limit_price_status;
+        self.user_vault.limit_price = limit_price;
+        self.user_vault.swap_to = swap_accounts;
         Ok(())
     }
 }

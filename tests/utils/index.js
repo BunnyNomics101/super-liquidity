@@ -72,6 +72,8 @@ function checkError(error, errorExpected = undefined) {
     if (errorExpected) {
       result = error.msg == errorExpected;
       if (!result) {
+        console.log(error.msg)
+        console.log(errorExpected)
         console.log("Errors don't match");
       }
     } else {
@@ -288,7 +290,7 @@ async function getBalance(publicKey) {
 async function airdropLamports(publicKey) {
   let airdropTx = await connection.requestAirdrop(
     publicKey,
-    anchor.web3.LAMPORTS_PER_SOL
+    anchor.web3.LAMPORTS_PER_SOL * 10
   );
   await connection.confirmTransaction(airdropTx);
 }

@@ -1,7 +1,7 @@
 use crate::states::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
-use anchor_spl::token::{TokenAccount, Transfer, Token};
+use anchor_spl::token::{Token, TokenAccount, Transfer};
 use delphor_oracle_aggregator::CoinData;
 
 //-----------------------------------------------------
@@ -26,7 +26,8 @@ pub struct Swap<'info> {
     // token user sends
     pub mint_send: Account<'info, Mint>,
     // token user wants
-    #[account(constraint = mint_receive.key() != mint_send.key())] // Validates the tokens being swapped are differents
+    #[account(constraint = mint_receive.key() != mint_send.key())]
+    // Validates the tokens being swapped are differents
     pub mint_receive: Account<'info, Mint>,
     // Account where user have tokens
     #[account(mut, associated_token::mint = mint_send, associated_token::authority = get_token_from_authority)]
@@ -56,7 +57,7 @@ impl<'info> Swap<'info> {
         let user_vault_to = &mut self.user_vault_to;
 
         if !user_vault_from.swap_to.contains(&self.mint_send.key()) {
-            return Err(error!(ErrorCode::VaultDoesntAcceptToken));
+            return err!(ErrorCode::VaultDoesntAcceptToken);
         }
 
         let token_price: u128 = (get_coin_price as u128 * (10000 - user_vault_to.buy_fee as u128)
@@ -68,19 +69,34 @@ impl<'info> Swap<'info> {
             ((swap_amount as u128 * token_price) / u128::pow(10, get_coin_decimals as u32)) as u64;
 
         if amount_to_send < min_amount {
-            return Err(error!(ErrorCode::InsufficientAmount));
+            return err!(ErrorCode::InsufficientAmount);
         }
 
         if user_vault_from.amount < amount_to_send {
-            return Err(error!(ErrorCode::VaultInsufficientAmount));
+            return err!(ErrorCode::VaultInsufficientAmount);
         }
 
-        if user_vault_to.max != 0 && user_vault_to.amount + swap_amount > user_vault_to.max {
-            return Err(error!(ErrorCode::ExceedsMaxAmount));
+        if !user_vault_from.provide_status {
+            return err!(ErrorCode::VaultProvideOff);
         }
+
+        if !user_vault_to.receive_status {
+            return err!(ErrorCode::VaultRecieveOff);
+        }
+
+        if user_vault_from.limit_price_status && user_vault_from.limit_price > send_coin_price {
+            return err!(ErrorCode::PriceUnderLimitPrice);
+        }
+
+        if user_vault_to.amount + swap_amount > user_vault_to.max {
+            return err!(ErrorCode::ExceedsMaxAmount);
+        }
+
+        // require!(user_vault_to.amount + swap_amount > user_vault_to.max, ErrorCode::ExceedsMaxAmount);
+
 
         if user_vault_from.amount - amount_to_send < user_vault_from.min {
-            return Err(error!(ErrorCode::ExceedsMinAmount));
+            return err!(ErrorCode::ExceedsMinAmount);
         }
 
         anchor_spl::token::transfer(
@@ -166,4 +182,10 @@ pub enum ErrorCode {
     ExceedsMinAmount,
     #[msg("Vault from doesn't accept received token.")]
     VaultDoesntAcceptToken,
+    #[msg("Vault from paused.")]
+    VaultProvideOff,
+    #[msg("Vault to paused.")]
+    VaultRecieveOff,
+    #[msg("Current price for token requested is under the vault from limit price.")]
+    PriceUnderLimitPrice,
 }

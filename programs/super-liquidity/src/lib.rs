@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 // use anchor_lang::solana_program::pubkey::Pubkey;
 
-use instructions::{admin::*, deposit::*, withdraw::*, swap::*};
+use instructions::{admin::*, deposit::*, swap::*, withdraw::*};
 
 ///error
 pub mod error;
@@ -39,8 +39,31 @@ pub mod super_liquidity {
     }
 
     ///create user vault
-    pub fn init_user_vault(ctx: Context<InitUserVault>, bump: u8, min_fee: u32, max_fee: u32, swap_accounts: Vec<Pubkey>) -> Result<()> {
-        ctx.accounts.process(bump, min_fee, max_fee, swap_accounts)
+    pub fn init_user_vault(
+        ctx: Context<InitUserVault>,
+        bump: u8,
+        buy_fee: u32,
+        sell_fee: u32,
+        min: u64,
+        max: u64,
+        receive_status: bool,
+        provide_status: bool,
+        limit_price_status: bool,
+        limit_price: u64,
+        swap_accounts: Vec<Pubkey>,
+    ) -> Result<()> {
+        ctx.accounts.process(
+            bump,
+            buy_fee,
+            sell_fee,
+            min,
+            max,
+            receive_status,
+            provide_status,
+            limit_price_status,
+            limit_price,
+            swap_accounts,
+        )
     }
 
     ///initialize token store
@@ -51,13 +74,26 @@ pub mod super_liquidity {
     ///update user state
     pub fn update_user_vault(
         ctx: Context<UpdateUserVault>,
-        buy_fee_bp: u32,
-        sell_fee_bp: u32,
+        buy_fee: u32,
+        sell_fee: u32,
         min: u64,
         max: u64,
-        swap_accounts: Vec<Pubkey>
+        receive_status: bool,
+        provide_status: bool,
+        limit_price_status: bool,
+        limit_price: u64,
+        swap_accounts: Vec<Pubkey>,
     ) -> Result<()> {
-        ctx.accounts.process(buy_fee_bp, sell_fee_bp, min, max, swap_accounts)
+        ctx.accounts.process(
+            buy_fee,
+            sell_fee,
+            min,
+            max,
+            receive_status,
+            provide_status,
+            limit_price_status,
+            limit_price,
+            swap_accounts,
+        )
     }
-    
 }
