@@ -68,12 +68,17 @@ function resumeConsole() {
 function checkError(error, errorExpected = undefined) {
   let result = false;
   resumeConsole();
-  if (error.msg) {
+
+  if (error.logs) {
+    error.logs.map((log) => {
+      if(log.includes(errorExpected)){
+        result = true;
+      }
+    })
+  } else if (error.msg) {
     if (errorExpected) {
       result = error.msg == errorExpected;
       if (!result) {
-        console.log(error.msg)
-        console.log(errorExpected)
         console.log("Errors don't match");
       }
     } else {

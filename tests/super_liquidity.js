@@ -855,7 +855,7 @@ describe("super-liquidity", () => {
     );
   });
 
-  xit("Reject swap with error exceeds max balance", async () => {
+  it("Reject swap with error exceeds max balance", async () => {
     assert.ok(
       await expectProgramCallRevert(
         superLiquidityProgram,
