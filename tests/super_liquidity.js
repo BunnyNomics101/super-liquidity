@@ -1079,7 +1079,6 @@ describe("super-liquidity", () => {
       "withdraw",
       [tokenStoreAuthorityBump, aliceSOLVaultAmount],
       {
-        vaultUser: alice.publicKey,
         userVault: aliceMockSOLVault,
         mint: mockSOLMint,
         sendTokenTo: alicemockSOL,
@@ -1122,7 +1121,6 @@ describe("super-liquidity", () => {
       "withdraw",
       [tokenStoreAuthorityBump, aliceUSDCVaultAmount],
       {
-        vaultUser: alice.publicKey,
         userVault: aliceMockUSDCVault,
         mint: mockUSDCMint,
         sendTokenTo: alicemockUSDC,

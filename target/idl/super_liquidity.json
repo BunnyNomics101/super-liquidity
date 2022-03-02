@@ -62,11 +62,6 @@
       "name": "withdraw",
       "accounts": [
         {
-          "name": "vaultUser",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "userVault",
           "isMut": true,
           "isSigner": false
