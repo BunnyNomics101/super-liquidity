@@ -901,6 +901,84 @@ describe("super-liquidity", () => {
         buyFee,
         min,
         max,
+        false,
+        true,
+        true,
+        new BN(0),
+        [mockSOLMint, mockUSDCMint],
+      ],
+      {
+        userAccount: alice.publicKey,
+        userVault: aliceMockSOLVault,
+        mint: mockSOLMint,
+      },
+      [alice]
+    );
+
+    const aliceMockSOLVaultData =
+      await superLiquidityProgram.account.userCoinVault.fetch(
+        aliceMockSOLVault
+      );
+
+    assert.ok(
+      checkEqualValues(
+        [
+          aliceMockSOLVaultData.buyFee,
+          aliceMockSOLVaultData.sellFee,
+          aliceMockSOLVaultData.min,
+          aliceMockSOLVaultData.max,
+        ],
+        [buyFee, sellFee, min, max]
+      )
+    );
+  });
+
+  it("Reject swap with error vault to paused", async () => {
+    assert.ok(
+      await expectProgramCallRevert(
+        superLiquidityProgram,
+        "swap",
+        [
+          bobSwapAmountSOLForUSDC,
+          bobSwapUSDCMinAmount,
+          tokenStoreAuthorityBump,
+        ],
+        {
+          getCoinData: delphorMockSOLPDA,
+          sendCoinData: delphorMockUSDCPDA,
+          userVaultFrom: aliceMockUSDCVault,
+          userVaultTo: aliceMockSOLVault,
+          tokenStoreAuthority: tokenStoreAuthority,
+          mintSend: mockSOLMint,
+          mintReceive: mockUSDCMint,
+          getTokenFrom: bobmockSOL,
+          getTokenFromAuthority: bob.publicKey,
+          sendTokenTo: bobmockUSDC,
+          tokenStorePdaFrom: mockUSDCStore,
+          tokenStorePdaTo: mockSOLStore,
+          systemProgram,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        },
+        "Vault to paused.",
+        [bob]
+      )
+    );
+  });
+
+  it("Alice changes mockSOL fees, min and max", async () => {
+    let sellFee = 100;
+    let buyFee = 300;
+    let min = new anchor.BN(1 * 10 ** 9);
+    let max = new anchor.BN(10 * 10 ** 9);
+
+    await programCall(
+      superLiquidityProgram,
+      "updateUserVault",
+      [
+        sellFee,
+        buyFee,
+        min,
+        max,
         true,
         true,
         true,

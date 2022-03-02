@@ -60,22 +60,6 @@ impl<'info> Swap<'info> {
             return err!(ErrorCode::VaultDoesntAcceptToken);
         }
 
-        let token_price: u128 = (get_coin_price as u128 * (10000 - user_vault_to.buy_fee as u128)
-            / 10000)
-            * u128::pow(10, send_coin_decimals as u32)
-            / (send_coin_price as u128 * (10000 + user_vault_from.sell_fee as u128) / 10000);
-        // Calculate final amount with oracle price and fees
-        let amount_to_send: u64 =
-            ((swap_amount as u128 * token_price) / u128::pow(10, get_coin_decimals as u32)) as u64;
-
-        if amount_to_send < min_amount {
-            return err!(ErrorCode::InsufficientAmount);
-        }
-
-        if user_vault_from.amount < amount_to_send {
-            return err!(ErrorCode::VaultInsufficientAmount);
-        }
-
         if !user_vault_from.provide_status {
             return err!(ErrorCode::VaultProvideOff);
         }
@@ -92,8 +76,21 @@ impl<'info> Swap<'info> {
             return err!(ErrorCode::ExceedsMaxAmount);
         }
 
-        // require!(user_vault_to.amount + swap_amount > user_vault_to.max, ErrorCode::ExceedsMaxAmount);
+        let token_price: u128 = (get_coin_price as u128 * (10000 - user_vault_to.buy_fee as u128)
+            / 10000)
+            * u128::pow(10, send_coin_decimals as u32)
+            / (send_coin_price as u128 * (10000 + user_vault_from.sell_fee as u128) / 10000);
+        // Calculate final amount with oracle price and fees
+        let amount_to_send: u64 =
+            ((swap_amount as u128 * token_price) / u128::pow(10, get_coin_decimals as u32)) as u64;
 
+        if amount_to_send < min_amount {
+            return err!(ErrorCode::InsufficientAmount);
+        }
+
+        if user_vault_from.amount < amount_to_send {
+            return err!(ErrorCode::VaultInsufficientAmount);
+        }
 
         if user_vault_from.amount - amount_to_send < user_vault_from.min {
             return err!(ErrorCode::ExceedsMinAmount);
