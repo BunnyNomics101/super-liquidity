@@ -34,14 +34,13 @@ pub mod super_liquidity {
     // ---- Admin --
     // -------------
     ///create global state
-    pub fn initialize(ctx: Context<Initialize>, bump: u8) -> Result<()> {
-        ctx.accounts.process(bump)
+    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+        ctx.accounts.process(*ctx.bumps.get("global_state").unwrap())
     }
 
     ///create user vault
     pub fn init_user_vault(
         ctx: Context<InitUserVault>,
-        bump: u8,
         buy_fee: u32,
         sell_fee: u32,
         min: u64,
@@ -53,7 +52,7 @@ pub mod super_liquidity {
         swap_accounts: Vec<Pubkey>,
     ) -> Result<()> {
         ctx.accounts.process(
-            bump,
+            *ctx.bumps.get("user_vault").unwrap(),
             buy_fee,
             sell_fee,
             min,

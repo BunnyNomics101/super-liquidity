@@ -51,15 +51,10 @@ describe("super-liquidity", () => {
     tokenStoreAuthorityBump,
     tokenStoreAuthority,
     aliceMockSOLVault,
-    aliceMockSOLVaultBump,
     bobMockSOLVault,
-    bobMockSOLVaultBump,
     aliceMockUSDCVault,
-    aliceMockUSDCVaultBump,
     bobMockUSDCVault,
-    bobMockUSDCVaultBump,
     globalState,
-    globalStateBump,
     aliceMockSOLAccount,
     bobMockSOLAccount,
     programMockSOLAccount,
@@ -68,12 +63,8 @@ describe("super-liquidity", () => {
     programMockUSDCAccount,
     delphorMockUSDCPDA,
     delphorMockSOLPDA,
-    delphorMockSOLPDAbump,
-    delphorMockUSDCPDAbump,
-    delphorOracleMockSOLPDAbump,
     delphorOracleMockSOLPDA,
     delphorOracleMockUSDCPDA,
-    delphorOracleMockUSDCPDAbump,
     finalAmount;
 
   function Lamport(value) {
@@ -379,12 +370,12 @@ describe("super-liquidity", () => {
   });
 
   it("Initialize global state", async () => {
-    [globalState, globalStateBump] = await PublicKey.findProgramAddress(
+    [globalState] = await PublicKey.findProgramAddress(
       [adminAccount.toBuffer()],
       superLiquidityProgram.programId
     );
 
-    await programCall(superLiquidityProgram, "initialize", [globalStateBump], {
+    await programCall(superLiquidityProgram, "initialize", [], {
       adminAccount: adminAccount,
       globalState,
       systemProgram,
@@ -434,7 +425,7 @@ describe("super-liquidity", () => {
   });
 
   it("Initialize alice mockSOL vault", async () => {
-    [aliceMockSOLVault, aliceMockSOLVaultBump] =
+    [aliceMockSOLVault] =
       await PublicKey.findProgramAddress(
         [alice.publicKey.toBuffer(), mockSOLMint.toBuffer()],
         superLiquidityProgram.programId
@@ -444,7 +435,6 @@ describe("super-liquidity", () => {
       superLiquidityProgram,
       "initUserVault",
       [
-        aliceMockSOLVaultBump,
         0,
         0,
         new BN(0),
@@ -480,7 +470,7 @@ describe("super-liquidity", () => {
 
   it("Initialize alice mockUSDC vault", async () => {
     // Associated account PDA - store user data
-    [aliceMockUSDCVault, aliceMockUSDCVaultBump] =
+    [aliceMockUSDCVault] =
       await PublicKey.findProgramAddress(
         [alice.publicKey.toBuffer(), mockUSDCMint.toBuffer()],
         superLiquidityProgram.programId
@@ -490,7 +480,6 @@ describe("super-liquidity", () => {
       superLiquidityProgram,
       "initUserVault",
       [
-        aliceMockUSDCVaultBump,
         0,
         0,
         new BN(0),
@@ -526,7 +515,7 @@ describe("super-liquidity", () => {
 
   it("Initialize bob mockSOL vault", async () => {
     // Associated account PDA - store user data
-    [bobMockSOLVault, bobMockSOLVaultBump] = await PublicKey.findProgramAddress(
+    [bobMockSOLVault] = await PublicKey.findProgramAddress(
       [bob.publicKey.toBuffer(), mockSOLMint.toBuffer()],
       superLiquidityProgram.programId
     );
@@ -535,7 +524,6 @@ describe("super-liquidity", () => {
       superLiquidityProgram,
       "initUserVault",
       [
-        bobMockSOLVaultBump,
         0,
         0,
         new BN(0),
@@ -559,7 +547,7 @@ describe("super-liquidity", () => {
 
   it("Initialize bob mockUSDC vault", async () => {
     // Associated account PDA - store user data
-    [bobMockUSDCVault, bobMockUSDCVaultBump] =
+    [bobMockUSDCVault] =
       await PublicKey.findProgramAddress(
         [bob.publicKey.toBuffer(), mockUSDCMint.toBuffer()],
         superLiquidityProgram.programId
@@ -569,7 +557,6 @@ describe("super-liquidity", () => {
       superLiquidityProgram,
       "initUserVault",
       [
-        bobMockUSDCVaultBump,
         0,
         0,
         new BN(0),

@@ -29,6 +29,7 @@ impl<'info> Initialize<'info> {
     #[allow(unused_variables)]
     pub fn process(&mut self, bump: u8) -> Result<()> {
         self.global_state.admin_account = *self.admin_account.key;
+        self.global_state.bump = bump;
         Ok(())
     }
 }

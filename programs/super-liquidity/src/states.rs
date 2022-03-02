@@ -5,6 +5,7 @@ use anchor_lang::prelude::*;
 #[account]
 #[derive(Default)]
 pub struct GlobalState {
+    pub bump: u8,
     // Authority (admin address)
     pub admin_account: Pubkey,
 }
