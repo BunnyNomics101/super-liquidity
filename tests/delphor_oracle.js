@@ -28,14 +28,14 @@ describe("delphor-oracle", () => {
 
   it("Initialize coinInfo", async () => {
     // compute a PDA based on program.programId + symbol
-    let [coinPDA, bump] = await PublicKey.findProgramAddress(
+    let [coinPDA] = await PublicKey.findProgramAddress(
       [tempCoin.symbol],
       program.programId
     );
 
     let [event] = await new Promise(async (resolve, _reject) => {
-      listener = program.addEventListener("NewCoinInfo", (event, slot) => {
-        resolve([event, slot]);
+      listener = program.addEventListener("NewCoinInfo", (_event) => {
+        resolve([_event]);
       });
 
       await programCall(
@@ -84,8 +84,8 @@ describe("delphor-oracle", () => {
     );
 
     let [event] = await new Promise(async (resolve, _reject) => {
-      listener = program.addEventListener("NewCoinInfo", (event, slot) => {
-        resolve([event, slot]);
+      listener = program.addEventListener("NewCoinInfo", (_event) => {
+        resolve([_event]);
       });
 
       await programCall(

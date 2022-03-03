@@ -28,9 +28,7 @@ describe("delphor-oracle-aggregator", () => {
 
   let mockSOLMint,
     delphorOracleMockSOLPDA,
-    delphorOracleMockSOLPDAbump,
-    delphorAggregatorMockSOLPDA,
-    delphorAggregatorMockSOLPDAbump;
+    delphorAggregatorMockSOLPDA;
 
   let pythProductAccount = systemProgram;
   let pythPriceAccount = systemProgram;
@@ -55,7 +53,7 @@ describe("delphor-oracle-aggregator", () => {
   });
 
   it("DelphorOracle create coin", async () => {
-    [delphorOracleMockSOLPDA, delphorOracleMockSOLPDAbump] =
+    [delphorOracleMockSOLPDA] =
       await PublicKey.findProgramAddress(
         [mockSOL.symbol],
         delphorOracleProgram.programId
@@ -90,7 +88,7 @@ describe("delphor-oracle-aggregator", () => {
   });
 
   it("DelphorOracleAggregator init coin", async () => {
-    [delphorAggregatorMockSOLPDA, delphorAggregatorMockSOLPDAbump] =
+    [delphorAggregatorMockSOLPDA] =
       await PublicKey.findProgramAddress(
         [mockSOLMint.toBuffer()],
         delphorAggregatorProgram.programId

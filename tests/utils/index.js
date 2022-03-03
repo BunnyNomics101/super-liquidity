@@ -10,7 +10,7 @@ const {
 } = require("@solana/spl-token");
 
 async function getTokenAccount(provider, addr) {
-  return await serumCmn.getTokenAccount(provider, addr);
+  return serumCmn.getTokenAccount(provider, addr);
 }
 
 function sleep(ms) {
@@ -53,10 +53,10 @@ const oldConsoleError = console.error;
 
 function pauseConsole() {
   console.log = function () {
-    const _noop = "";
+    return;
   };
   console.error = function () {
-    const _noop = "";
+    return;
   };
 }
 
@@ -69,21 +69,14 @@ function checkError(error, errorExpected = undefined) {
   let result = false;
   resumeConsole();
 
-  if (error.logs) {
+  if (error.logs && errorExpected) {
     error.logs.map((log) => {
-      if(log.includes(errorExpected)){
+      if (log.includes(errorExpected)) {
         result = true;
       }
-    })
-  } else if (error.msg) {
-    if (errorExpected) {
-      result = error.msg == errorExpected;
-      if (!result) {
-        console.log("Errors don't match");
-      }
-    } else {
-      console.log(error.msg);
-    }
+    });
+  } else if (error.msg && errorExpected) {
+    result = error.msg == errorExpected;
   } else {
     console.log("No msg error");
     console.log(error);
