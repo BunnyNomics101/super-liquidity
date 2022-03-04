@@ -28,7 +28,6 @@ pub struct UserCoinVault {
     pub provide_status: bool,
     pub limit_price_status: bool,
     pub limit_price: u64,
-    pub swap_to: Vec<Pubkey>,
 }
 impl UserCoinVault {}
 

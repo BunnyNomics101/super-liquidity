@@ -49,7 +49,6 @@ pub mod super_liquidity {
         provide_status: bool,
         limit_price_status: bool,
         limit_price: u64,
-        swap_accounts: Vec<Pubkey>,
     ) -> Result<()> {
         ctx.accounts.process(
             *ctx.bumps.get("user_vault").unwrap(),
@@ -61,7 +60,6 @@ pub mod super_liquidity {
             provide_status,
             limit_price_status,
             limit_price,
-            swap_accounts,
         )
     }
 
@@ -81,7 +79,6 @@ pub mod super_liquidity {
         provide_status: bool,
         limit_price_status: bool,
         limit_price: u64,
-        swap_accounts: Vec<Pubkey>,
     ) -> Result<()> {
         ctx.accounts.process(
             buy_fee,
@@ -92,7 +89,6 @@ pub mod super_liquidity {
             provide_status,
             limit_price_status,
             limit_price,
-            swap_accounts,
         )
     }
 }

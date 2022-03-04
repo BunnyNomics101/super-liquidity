@@ -443,7 +443,6 @@ describe("super-liquidity", () => {
         false,
         false,
         new BN(0),
-        [],
       ],
       {
         globalState,
@@ -488,7 +487,6 @@ describe("super-liquidity", () => {
         false,
         false,
         new BN(0),
-        [],
       ],
       {
         globalState,
@@ -532,7 +530,6 @@ describe("super-liquidity", () => {
         false,
         false,
         new BN(0),
-        [],
       ],
       {
         globalState,
@@ -565,7 +562,6 @@ describe("super-liquidity", () => {
         false,
         false,
         new BN(0),
-        [],
       ],
       {
         globalState,
@@ -596,7 +592,6 @@ describe("super-liquidity", () => {
         true,
         true,
         new BN(0),
-        [mockSOLMint, mockUSDCMint],
       ],
       {
         userAccount: alice.publicKey,
@@ -642,7 +637,6 @@ describe("super-liquidity", () => {
         true,
         true,
         new BN(0),
-        [mockSOLMint, mockUSDCMint],
       ],
       {
         userAccount: alice.publicKey,
@@ -688,7 +682,6 @@ describe("super-liquidity", () => {
         true,
         true,
         new BN(0),
-        [mockSOLMint, mockUSDCMint],
       ],
       {
         userAccount: bob.publicKey,
@@ -732,7 +725,6 @@ describe("super-liquidity", () => {
         true,
         true,
         new BN(0),
-        [mockSOLMint, mockUSDCMint],
       ],
       {
         userAccount: bob.publicKey,
@@ -892,7 +884,6 @@ describe("super-liquidity", () => {
         true,
         true,
         new BN(0),
-        [mockSOLMint, mockUSDCMint],
       ],
       {
         userAccount: alice.publicKey,
@@ -970,7 +961,6 @@ describe("super-liquidity", () => {
         true,
         true,
         new BN(0),
-        [mockSOLMint, mockUSDCMint],
       ],
       {
         userAccount: alice.publicKey,

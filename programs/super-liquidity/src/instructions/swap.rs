@@ -56,10 +56,6 @@ impl<'info> Swap<'info> {
         let user_vault_from = &mut self.user_vault_from;
         let user_vault_to = &mut self.user_vault_to;
 
-        if !user_vault_from.swap_to.contains(&self.mint_send.key()) {
-            return err!(ErrorCode::VaultDoesntAcceptToken);
-        }
-
         if !user_vault_from.provide_status {
             return err!(ErrorCode::VaultProvideOff);
         }
@@ -177,8 +173,6 @@ pub enum ErrorCode {
     ExceedsMaxAmount,
     #[msg("Operation exceeds min balance to user_vault_from")]
     ExceedsMinAmount,
-    #[msg("Vault from doesn't accept received token.")]
-    VaultDoesntAcceptToken,
     #[msg("Vault from paused.")]
     VaultProvideOff,
     #[msg("Vault to paused.")]

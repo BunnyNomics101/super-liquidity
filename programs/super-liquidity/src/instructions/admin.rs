@@ -76,7 +76,6 @@ impl<'info> InitUserVault<'info> {
         provide_status: bool,
         limit_price_status: bool,
         limit_price: u64,
-        swap_accounts: Vec<Pubkey>,
     ) -> Result<()> {
         *self.user_vault = UserCoinVault {
             bump,
@@ -92,7 +91,6 @@ impl<'info> InitUserVault<'info> {
             provide_status: false,
             limit_price_status: false,
             limit_price: 0,
-            swap_to: swap_accounts,
         };
         Ok(())
     }
@@ -191,7 +189,6 @@ impl<'info> UpdateUserVault<'info> {
         provide_status: bool,
         limit_price_status: bool,
         limit_price: u64,
-        swap_accounts: Vec<Pubkey>,
     ) -> Result<()> {
         self.user_vault.sell_fee = sell_fee;
         self.user_vault.buy_fee = buy_fee;
@@ -202,7 +199,6 @@ impl<'info> UpdateUserVault<'info> {
         self.user_vault.provide_status = provide_status;
         self.user_vault.limit_price_status = limit_price_status;
         self.user_vault.limit_price = limit_price;
-        self.user_vault.swap_to = swap_accounts;
         Ok(())
     }
 }

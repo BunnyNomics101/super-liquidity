@@ -284,12 +284,6 @@
         {
           "name": "limitPrice",
           "type": "u64"
-        },
-        {
-          "name": "swapAccounts",
-          "type": {
-            "vec": "publicKey"
-          }
         }
       ]
     },
@@ -390,12 +384,6 @@
         {
           "name": "limitPrice",
           "type": "u64"
-        },
-        {
-          "name": "swapAccounts",
-          "type": {
-            "vec": "publicKey"
-          }
         }
       ]
     }
@@ -473,12 +461,6 @@
           {
             "name": "limitPrice",
             "type": "u64"
-          },
-          {
-            "name": "swapTo",
-            "type": {
-              "vec": "publicKey"
-            }
           }
         ]
       }
@@ -501,9 +483,6 @@
           },
           {
             "name": "ExceedsMinAmount"
-          },
-          {
-            "name": "VaultDoesntAcceptToken"
           },
           {
             "name": "VaultProvideOff"
