@@ -14,6 +14,14 @@ pub struct GlobalState {
 //-----------------------------------------------------
 #[account]
 #[derive(Default)]
+pub struct UserPortfolio {
+    pub bump: u8,
+    pub vaults: Vec<UserCoinVault>
+}
+impl UserPortfolio {}
+
+#[account]
+#[derive(Default)]
 pub struct UserCoinVault {
     pub bump: u8,
     pub user: Pubkey,
@@ -21,9 +29,9 @@ pub struct UserCoinVault {
     pub amount: u64,
     pub min: u64,
     pub max: u64,
-    pub buy_fee: u32,
-    pub sell_fee: u32,
-    pub timestamp: u64,
+    pub buy_fee: u8,
+    pub sell_fee: u8,
+    pub timestamp: u32,
     pub receive_status: bool,
     pub provide_status: bool,
     pub limit_price_status: bool,

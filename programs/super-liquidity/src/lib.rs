@@ -35,14 +35,15 @@ pub mod super_liquidity {
     // -------------
     ///create global state
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        ctx.accounts.process(*ctx.bumps.get("global_state").unwrap())
+        ctx.accounts
+            .process(*ctx.bumps.get("global_state").unwrap())
     }
 
     ///create user vault
     pub fn init_user_vault(
         ctx: Context<InitUserVault>,
-        buy_fee: u32,
-        sell_fee: u32,
+        buy_fee: u8,
+        sell_fee: u8,
         min: u64,
         max: u64,
         receive_status: bool,
@@ -61,6 +62,12 @@ pub mod super_liquidity {
             limit_price_status,
             limit_price,
         )
+    }
+
+    ///create user portfolio
+    pub fn init_user_portfolio(ctx: Context<InitUserPortfolio>) -> Result<()> {
+        ctx.accounts
+            .process(*ctx.bumps.get("user_portfolio").unwrap())
     }
 
     ///initialize token store
