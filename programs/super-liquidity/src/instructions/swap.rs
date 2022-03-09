@@ -122,7 +122,7 @@ impl<'info> Swap<'info> {
 
         user_vault_to.amount += swap_amount;
         user_vault_from.amount -= amount_to_send;
-        user_vault_from.timestamp = Clock::get().unwrap().unix_timestamp as u64;
+        user_vault_from.timestamp = Clock::get().unwrap().unix_timestamp as u32;
 
         Ok(())
     }

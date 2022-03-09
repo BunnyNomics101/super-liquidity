@@ -34,9 +34,13 @@ pub mod super_liquidity {
     // ---- Admin --
     // -------------
     ///create global state
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+    pub fn initialize_global_state(ctx: Context<InitGlobalState>) -> Result<()> {
         ctx.accounts
             .process(*ctx.bumps.get("global_state").unwrap())
+    }
+
+    pub fn add_token(ctx: Context<AddToken>) -> Result<()> {
+        ctx.accounts.process()
     }
 
     ///create user vault

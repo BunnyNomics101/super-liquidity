@@ -8,6 +8,7 @@ pub struct GlobalState {
     pub bump: u8,
     // Authority (admin address)
     pub admin_account: Pubkey,
+    pub tokens: Vec<Pubkey>
 }
 
 

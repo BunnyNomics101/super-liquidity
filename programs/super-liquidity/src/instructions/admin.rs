@@ -6,7 +6,7 @@ use anchor_spl::token::{InitializeAccount, Token, TokenAccount};
 //-----------------------------------------------------
 #[derive(Accounts)]
 #[instruction()]
-pub struct Initialize<'info> {
+pub struct InitGlobalState<'info> {
     // admin account
     #[account(mut)]
     pub admin_account: Signer<'info>,
@@ -25,11 +25,40 @@ pub struct Initialize<'info> {
 
     pub system_program: Program<'info, System>,
 }
-impl<'info> Initialize<'info> {
+impl<'info> InitGlobalState<'info> {
     #[allow(unused_variables)]
     pub fn process(&mut self, bump: u8) -> Result<()> {
         self.global_state.admin_account = *self.admin_account.key;
         self.global_state.bump = bump;
+        Ok(())
+    }
+}
+
+#[derive(Accounts)]
+#[instruction()]
+pub struct AddToken<'info> {
+    // admin account
+    #[account(mut)]
+    pub admin_account: Signer<'info>,
+
+    // Global state, create PDA
+    #[account(
+        seeds = [
+            admin_account.key().as_ref(),
+        ],
+        bump = global_state.bump,
+    )]
+    pub global_state: Account<'info, GlobalState>,
+    pub mint: Account<'info, Mint>,
+    pub system_program: Program<'info, System>,
+}
+impl<'info> AddToken<'info> {
+    #[allow(unused_variables)]
+    pub fn process(&mut self) -> Result<()> {
+        if self.global_state.tokens.contains(&self.mint.key()){
+            return err!(ErrorCode::TokenAlreadyAdded);
+        }
+        self.global_state.tokens.push(self.mint.key());
         Ok(())
     }
 }
@@ -127,13 +156,10 @@ pub struct InitUserPortfolio<'info> {
 }
 impl<'info> InitUserPortfolio<'info> {
     #[allow(unused_variables)]
-    pub fn process(
-        &mut self,
-        bump: u8
-    ) -> Result<()> {
+    pub fn process(&mut self, bump: u8) -> Result<()> {
         *self.user_portfolio = UserPortfolio {
             bump,
-            vaults: Vec::with_capacity(50)
+            vaults: Vec::with_capacity(50),
         };
         Ok(())
     }
@@ -244,4 +270,45 @@ impl<'info> UpdateUserVault<'info> {
         self.user_vault.limit_price = limit_price;
         Ok(())
     }
+}
+
+#[derive(Accounts)]
+pub struct UpdateUserPortfolio<'info> {
+    pub user_account: Signer<'info>,
+    pub mint: Account<'info, Mint>,
+    #[account(mut, seeds = [
+        user_account.key().as_ref(), mint.key().as_ref()
+    ], bump = user_portfolio.bump)]
+    pub user_portfolio: Account<'info, UserPortfolio>,
+}
+impl<'info> UpdateUserPortfolio<'info> {
+    pub fn process(
+        &mut self,
+        position: usize,
+        sell_fee: u16,
+        buy_fee: u16,
+        min: u64,
+        max: u64,
+        receive_status: bool,
+        provide_status: bool,
+        limit_price_status: bool,
+        limit_price: u64,
+    ) -> Result<()> {
+        self.user_portfolio.vaults[position].sell_fee = sell_fee;
+        self.user_portfolio.vaults[position].buy_fee = buy_fee;
+        self.user_portfolio.vaults[position].min = min;
+        self.user_portfolio.vaults[position].max = max;
+        self.user_portfolio.vaults[position].timestamp =
+            Clock::get().unwrap().unix_timestamp as u32;
+        self.user_portfolio.vaults[position].receive_status = receive_status;
+        self.user_portfolio.vaults[position].provide_status = provide_status;
+        self.user_portfolio.vaults[position].limit_price_status = limit_price_status;
+        self.user_portfolio.vaults[position].limit_price = limit_price;
+        Ok(())
+    }
+}
+
+#[error_code]
+pub enum ErrorCode {
+    TokenAlreadyAdded
 }
