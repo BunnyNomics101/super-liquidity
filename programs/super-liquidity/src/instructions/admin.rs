@@ -68,8 +68,8 @@ impl<'info> InitUserVault<'info> {
     pub fn process(
         &mut self,
         bump: u8,
-        buy_fee: u8,
-        sell_fee: u8,
+        buy_fee: u16,
+        sell_fee: u16,
         min: u64,
         max: u64,
         receive_status: bool,
@@ -224,8 +224,8 @@ pub struct UpdateUserVault<'info> {
 impl<'info> UpdateUserVault<'info> {
     pub fn process(
         &mut self,
-        sell_fee: u32,
-        buy_fee: u32,
+        sell_fee: u16,
+        buy_fee: u16,
         min: u64,
         max: u64,
         receive_status: bool,
@@ -237,7 +237,7 @@ impl<'info> UpdateUserVault<'info> {
         self.user_vault.buy_fee = buy_fee;
         self.user_vault.min = min;
         self.user_vault.max = max;
-        self.user_vault.timestamp = Clock::get().unwrap().unix_timestamp as u64;
+        self.user_vault.timestamp = Clock::get().unwrap().unix_timestamp as u32;
         self.user_vault.receive_status = receive_status;
         self.user_vault.provide_status = provide_status;
         self.user_vault.limit_price_status = limit_price_status;
