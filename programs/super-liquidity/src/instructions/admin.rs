@@ -54,7 +54,7 @@ pub struct AddToken<'info> {
 impl<'info> AddToken<'info> {
     #[allow(unused_variables)]
     pub fn process(&mut self) -> Result<()> {
-        if self.global_state.tokens.contains(&self.mint.key()){
+        if self.global_state.tokens.contains(&self.mint.key()) {
             return err!(ErrorCode::TokenAlreadyAdded);
         }
         self.global_state.tokens.push(self.mint.key());
@@ -134,5 +134,5 @@ impl<'info> ChangeAuthority<'info> {
 
 #[error_code]
 pub enum ErrorCode {
-    TokenAlreadyAdded
+    TokenAlreadyAdded,
 }

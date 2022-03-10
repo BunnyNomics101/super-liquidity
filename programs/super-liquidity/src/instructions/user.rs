@@ -68,13 +68,13 @@ pub struct UpdateUserLiquidityProvider<'info> {
     #[account(mut, seeds = [
         user_account.key().as_ref(), mint.key().as_ref()
     ], bump = user_vault.bump)]
-    pub user_vault: Account<'info, UserCoinVault>,
+    pub user_vault: Account<'info, UserVault>,
 }
 impl<'info> UpdateUserLiquidityProvider<'info> {
     pub fn process(
         &mut self,
-        sell_fee: u16,
         buy_fee: u16,
+        sell_fee: u16,
         min: u64,
         max: u64,
         receive_status: bool,
@@ -140,14 +140,14 @@ pub struct UpdateUserPortfolio<'info> {
     #[account(mut, seeds = [
         user_account.key().as_ref(), mint.key().as_ref()
     ], bump = user_portfolio.bump)]
-    pub user_portfolio: Account<'info, UserPortfolio>,
+    pub user_portfolio: Account<'info, UserVault>,
 }
 impl<'info> UpdateUserPortfolio<'info> {
     pub fn process(
         &mut self,
         position: usize,
-        sell_fee: u16,
         buy_fee: u16,
+        sell_fee: u16,
         min: u64,
         max: u64,
         receive_status: bool,

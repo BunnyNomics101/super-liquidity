@@ -16,12 +16,10 @@ pub mod super_liquidity {
 
     declare_id!("4FCQYxXVaK1aWE7gTLhTB5CwyjZGRFPFJstJdcNsoqck");
 
-    ///deposit
     pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
         ctx.accounts.process(amount)
     }
 
-    ///withdraw
     pub fn withdraw(ctx: Context<Withdraw>, bump: u8, amount: u64) -> Result<()> {
         ctx.accounts.process(bump, amount)
     }
@@ -30,20 +28,6 @@ pub mod super_liquidity {
         ctx.accounts.process(swap_amount, min_amount, bump)
     }
 
-    // -------------
-    // ---- Admin --
-    // -------------
-    ///create global state
-    pub fn initialize_global_state(ctx: Context<InitGlobalState>) -> Result<()> {
-        ctx.accounts
-            .process(*ctx.bumps.get("global_state").unwrap())
-    }
-
-    pub fn add_token(ctx: Context<AddToken>) -> Result<()> {
-        ctx.accounts.process()
-    }
-
-    ///create user vault
     pub fn init_user_liquidity_provider(
         ctx: Context<InitUserLiquiidtyProvider>,
         buy_fee: u16,
@@ -68,18 +52,6 @@ pub mod super_liquidity {
         )
     }
 
-    ///create user portfolio
-    pub fn init_user_portfolio(ctx: Context<InitUserPortfolio>) -> Result<()> {
-        ctx.accounts
-            .process(*ctx.bumps.get("user_portfolio").unwrap())
-    }
-
-    ///initialize token store
-    pub fn init_token_store(ctx: Context<InitTokenStore>) -> Result<()> {
-        ctx.accounts.process()
-    }
-
-    ///update user state
     pub fn update_user_liquidity_provider(
         ctx: Context<UpdateUserLiquidityProvider>,
         buy_fee: u16,
@@ -101,5 +73,49 @@ pub mod super_liquidity {
             limit_price_status,
             limit_price,
         )
+    }
+
+    pub fn init_user_portfolio(ctx: Context<InitUserPortfolio>) -> Result<()> {
+        ctx.accounts
+            .process(*ctx.bumps.get("user_portfolio").unwrap())
+    }
+
+    pub fn update_user_portfolio(
+        ctx: Context<UpdateUserPortfolio>,
+        position: usize,
+        buy_fee: u16,
+        sell_fee: u16,
+        min: u64,
+        max: u64,
+        receive_status: bool,
+        provide_status: bool,
+        limit_price_status: bool,
+        limit_price: u64,
+    ) -> Result<()> {
+        ctx.accounts.process(
+            position,
+            buy_fee,
+            sell_fee,
+            min,
+            max,
+            receive_status,
+            provide_status,
+            limit_price_status,
+            limit_price,
+        )
+    }
+
+    // Admin functions
+    pub fn initialize_global_state(ctx: Context<InitGlobalState>) -> Result<()> {
+        ctx.accounts
+            .process(*ctx.bumps.get("global_state").unwrap())
+    }
+
+    pub fn add_token(ctx: Context<AddToken>) -> Result<()> {
+        ctx.accounts.process()
+    }
+
+    pub fn init_token_store(ctx: Context<InitTokenStore>) -> Result<()> {
+        ctx.accounts.process()
     }
 }
