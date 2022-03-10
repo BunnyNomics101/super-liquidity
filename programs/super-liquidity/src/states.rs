@@ -8,24 +8,38 @@ pub struct GlobalState {
     pub bump: u8,
     // Authority (admin address)
     pub admin_account: Pubkey,
-    pub tokens: Vec<Pubkey>
+    pub tokens: Vec<Pubkey>,
 }
-
 
 //-----------------------------------------------------
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub enum VaultType {
+    Portfolio { auto_fee: bool, tolerance: u16 },
+    LiquidityProvider,
+}
+impl Default for VaultType {
+    fn default() -> Self {
+        VaultType::Portfolio {
+            auto_fee: true,
+            tolerance: 1000,
+        };
+        VaultType::LiquidityProvider
+    }
+}
+
 #[account]
 #[derive(Default)]
-pub struct UserPortfolio {
+pub struct UserVault {
     pub bump: u8,
-    pub vaults: Vec<UserCoinVault>
+    pub user: Pubkey,
+    pub vault_type: VaultType,
+    pub vaults: Vec<UserCoinVault>,
 }
-impl UserPortfolio {}
+impl UserVault {}
 
 #[account]
 #[derive(Default)]
 pub struct UserCoinVault {
-    pub bump: u8,
-    pub user: Pubkey,
     pub mint: Pubkey,
     pub amount: u64,
     pub min: u64,
