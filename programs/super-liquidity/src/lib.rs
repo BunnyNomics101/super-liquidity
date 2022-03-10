@@ -44,8 +44,8 @@ pub mod super_liquidity {
     }
 
     ///create user vault
-    pub fn init_user_vault(
-        ctx: Context<InitUserVault>,
+    pub fn init_user_liquidity_provider(
+        ctx: Context<InitUserLiquiidtyProvider>,
         buy_fee: u16,
         sell_fee: u16,
         min: u64,
@@ -80,8 +80,8 @@ pub mod super_liquidity {
     }
 
     ///update user state
-    pub fn update_user_vault(
-        ctx: Context<UpdateUserVault>,
+    pub fn update_user_liquidity_provider(
+        ctx: Context<UpdateUserLiquidityProvider>,
         buy_fee: u16,
         sell_fee: u16,
         min: u64,
