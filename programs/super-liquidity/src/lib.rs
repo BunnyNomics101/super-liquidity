@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 // use anchor_lang::solana_program::pubkey::Pubkey;
 
-use instructions::{admin::*, deposit::*, swap::*, withdraw::*};
+use instructions::{admin::*, deposit::*, swap::*, user::*, withdraw::*};
 
 ///error
 pub mod error;
