@@ -39,8 +39,7 @@ impl UserVault {}
 
 #[account]
 #[derive(Default)]
-pub struct UserCoinVault {
-    pub mint: Pubkey,
+struct UserCoinVault {
     pub amount: u64,
     pub min: u64,
     pub max: u64,

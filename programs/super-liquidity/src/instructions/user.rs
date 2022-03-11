@@ -4,58 +4,28 @@ use anchor_spl::token::Mint;
 
 #[derive(Accounts)]
 pub struct InitUserLiquiidtyProvider<'info> {
-    // global state
-    pub global_state: Account<'info, GlobalState>,
-
-    // user account, signer
     #[account(mut)]
     pub user_account: Signer<'info>,
-
-    // for what token
-    pub mint: Account<'info, Mint>,
-
-    // user vault, create PDA
     #[account(
         init,
         payer = user_account,
-        space = 8 + core::mem::size_of::<UserCoinVault>() + 1280, // 1280 bytes future expansion
+        space = 6168,
         seeds = [
             user_account.key().as_ref(),
-            mint.key().as_ref(),
+            "liquidity_provider".as_bytes().as_ref()
         ],
         bump,
     )]
-    pub user_vault: Account<'info, UserCoinVault>,
-
+    pub user_vault: Account<'info, UserVault>,
     pub system_program: Program<'info, System>,
 }
 impl<'info> InitUserLiquiidtyProvider<'info> {
-    #[allow(unused_variables)]
-    pub fn process(
-        &mut self,
-        bump: u8,
-        buy_fee: u16,
-        sell_fee: u16,
-        min: u64,
-        max: u64,
-        receive_status: bool,
-        provide_status: bool,
-        limit_price_status: bool,
-        limit_price: u64,
-    ) -> Result<()> {
-        *self.user_vault = UserCoinVault {
+    pub fn process(&mut self, bump: u8) -> Result<()> {
+        *self.user_vault = UserVault {
+            bump,
             user: self.user_account.key(),
-            mint: self.mint.key(),
-            amount: 0,
-            min,
-            max,
-            buy_fee,
-            sell_fee,
-            timestamp: Clock::get().unwrap().unix_timestamp as u32,
-            receive_status: false,
-            provide_status: false,
-            limit_price_status: false,
-            limit_price: 0,
+            vault_type: VaultType::LiquidityProvider,
+            vaults: Vec::with_capacity(50),
         };
         Ok(())
     }

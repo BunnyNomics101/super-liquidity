@@ -28,28 +28,8 @@ pub mod super_liquidity {
         ctx.accounts.process(swap_amount, min_amount, bump)
     }
 
-    pub fn init_user_liquidity_provider(
-        ctx: Context<InitUserLiquiidtyProvider>,
-        buy_fee: u16,
-        sell_fee: u16,
-        min: u64,
-        max: u64,
-        receive_status: bool,
-        provide_status: bool,
-        limit_price_status: bool,
-        limit_price: u64,
-    ) -> Result<()> {
-        ctx.accounts.process(
-            *ctx.bumps.get("user_vault").unwrap(),
-            buy_fee,
-            sell_fee,
-            min,
-            max,
-            receive_status,
-            provide_status,
-            limit_price_status,
-            limit_price,
-        )
+    pub fn init_user_liquidity_provider(ctx: Context<InitUserLiquiidtyProvider>) -> Result<()> {
+        ctx.accounts.process(*ctx.bumps.get("user_vault").unwrap())
     }
 
     pub fn update_user_liquidity_provider(
