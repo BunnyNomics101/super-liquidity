@@ -89,36 +89,27 @@ fn check_token_position(global_state: &GlobalState, mint: &Account<Mint>, positi
 
 #[derive(Accounts)]
 pub struct InitUserPortfolio<'info> {
-    // global state
-    pub global_state: Account<'info, GlobalState>,
-
-    // user account, signer
     #[account(mut)]
     pub user_account: Signer<'info>,
-
-    // for what token
-    pub mint: Account<'info, Mint>,
-
-    // user vault, create PDA
     #[account(
         init,
         payer = user_account,
-        space = 8 + core::mem::size_of::<UserCoinVault>() + 10800, // 10800 bytes future expansion
+        space = 6168,
         seeds = [
             user_account.key().as_ref(),
-            mint.key().as_ref(),
+            "portfolio_manager".as_bytes().as_ref()
         ],
         bump,
     )]
-    pub user_portfolio: Account<'info, UserPortfolio>,
-
+    pub user_portfolio: Account<'info, UserVault>,
     pub system_program: Program<'info, System>,
 }
 impl<'info> InitUserPortfolio<'info> {
-    #[allow(unused_variables)]
     pub fn process(&mut self, bump: u8) -> Result<()> {
-        *self.user_portfolio = UserPortfolio {
+        *self.user_portfolio = UserVault {
             bump,
+            user: self.user_account.key(),
+            vault_type: VaultType::PortfolioManager{ auto_fee: true, tolerance: 1000},
             vaults: Vec::with_capacity(50),
         };
         Ok(())

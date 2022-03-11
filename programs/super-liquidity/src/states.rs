@@ -16,12 +16,12 @@ pub struct GlobalState {
 //-----------------------------------------------------
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub enum VaultType {
-    Portfolio { auto_fee: bool, tolerance: u16 },
+    PortfolioManager { auto_fee: bool, tolerance: u16 },
     LiquidityProvider,
 }
 impl Default for VaultType {
     fn default() -> Self {
-        VaultType::Portfolio {
+        VaultType::PortfolioManager {
             auto_fee: true,
             tolerance: 1000,
         };
