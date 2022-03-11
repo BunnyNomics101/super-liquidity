@@ -34,6 +34,7 @@ pub mod super_liquidity {
 
     pub fn update_user_liquidity_provider(
         ctx: Context<UpdateUserLiquidityProvider>,
+        position: usize,
         buy_fee: u16,
         sell_fee: u16,
         min: u64,
@@ -44,6 +45,7 @@ pub mod super_liquidity {
         limit_price: u64,
     ) -> Result<()> {
         ctx.accounts.process(
+            position,
             buy_fee,
             sell_fee,
             min,

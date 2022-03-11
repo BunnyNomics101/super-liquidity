@@ -1,6 +1,8 @@
 use anchor_lang::prelude::*;
 
 //-----------------------------------------------------
+pub static ADMIN_ADDRESS: &str = "2kKx9xZB85wAbpvXLBui78jVZhPBuY3BxZ5Mad9d94h5";
+
 ///delphor-user-program PDA
 #[account]
 #[derive(Default)]
