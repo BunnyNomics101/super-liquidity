@@ -30,7 +30,7 @@ pub struct Deposit<'info> {
 impl<'info> Deposit<'info> {
     #[access_control(
         check_token_position(&self.global_state, &self.mint, position) && 
-        check_vault(&self.user_account, &self.mint, &self.user_vault)
+        check_vault(&self.user_account.key, &self.user_vault)
     )]
     pub fn process(&mut self, amount: u64, position: usize) -> Result<()> {
         let vault = &mut self.user_vault.vaults[position];

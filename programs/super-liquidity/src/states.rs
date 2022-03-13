@@ -69,19 +69,11 @@ pub fn check_token_position(
     Ok(())
 }
 
-pub fn check_vault(
-    user: &AccountInfo<'_>,
-    mint: &Account<Mint>,
-    user_vault: &Account<UserVault>,
-) -> Result<()> {
-    let (portfolio_pda, portfolio_bump) = Pubkey::find_program_address(
-        &[user.key().as_ref(), "portfolio_manager".as_ref()],
-        &crate::ID,
-    );
-    let (liquidity_provider_pda, liquidity_provider_bump) = Pubkey::find_program_address(
-        &[user.key().as_ref(), "liquidity_provider".as_ref()],
-        &crate::ID,
-    );
+pub fn check_vault(user: &Pubkey, user_vault: &Account<UserVault>) -> Result<()> {
+    let (portfolio_pda, portfolio_bump) =
+        Pubkey::find_program_address(&[user.as_ref(), "portfolio_manager".as_ref()], &crate::ID);
+    let (liquidity_provider_pda, liquidity_provider_bump) =
+        Pubkey::find_program_address(&[user.as_ref(), "liquidity_provider".as_ref()], &crate::ID);
     if (user_vault.key() != portfolio_pda && user_vault.bump != portfolio_bump)
         || (user_vault.key() != liquidity_provider_pda
             && user_vault.bump != liquidity_provider_bump)

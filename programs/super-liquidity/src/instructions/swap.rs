@@ -4,22 +4,11 @@ use anchor_spl::token::Mint;
 use anchor_spl::token::{Token, TokenAccount, Transfer};
 use delphor_oracle_aggregator::CoinData;
 
-//-----------------------------------------------------
-// Swap Instruction
 #[derive(Accounts)]
 pub struct Swap<'info> {
     // Accounts with price from oracle
-    pub get_coin_data: Account<'info, CoinData>,
-    pub send_coin_data: Account<'info, CoinData>,
-    // user_vault_from and user_vault_to must be from the same user
-    #[account(mut, seeds = [
-        user_vault_to.user.as_ref(), mint_receive.key().as_ref()
-    ], bump = user_vault_from.bump)]
-    pub user_vault_from: Box<Account<'info, UserCoinVault>>,
-    #[account(mut, seeds = [
-        user_vault_from.user.as_ref(), mint_send.key().as_ref()
-    ], bump = user_vault_to.bump)]
-    pub user_vault_to: Box<Account<'info, UserCoinVault>>,
+    pub delphor_aggregator_prices: Account<'info, CoinData>,
+    pub user_vault: Box<Account<'info, UserVault>>,
     /// CHECK:
     #[account(mut)]
     pub token_store_authority: AccountInfo<'info>,
@@ -47,7 +36,10 @@ pub struct Swap<'info> {
     pub token_program: Program<'info, Token>,
 }
 impl<'info> Swap<'info> {
-    #[access_control(check_oracle_accounts(&self))]
+    #[access_control(
+        check_oracle_accounts(&self) &&
+        check_vault(&self.user_vault.user, &self.user_vault)
+    )]
     pub fn process(&mut self, swap_amount: u64, min_amount: u64, bump: u8) -> Result<()> {
         let get_coin_price = self.get_coin_data.price;
         let get_coin_decimals = self.get_coin_data.decimals;
