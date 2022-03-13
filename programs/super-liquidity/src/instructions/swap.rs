@@ -14,9 +14,8 @@ pub struct Swap<'info> {
     pub token_store_authority: AccountInfo<'info>,
     // token user sends
     pub mint_send: Account<'info, Mint>,
-    // token user wants
+    // token user wants, validates the tokens being swapped are differents
     #[account(constraint = mint_receive.key() != mint_send.key())]
-    // Validates the tokens being swapped are differents
     pub mint_receive: Account<'info, Mint>,
     // Account where user have tokens
     #[account(mut, associated_token::mint = mint_send, associated_token::authority = get_token_from_authority)]
@@ -32,7 +31,6 @@ pub struct Swap<'info> {
     // PDA to deposit tokens
     #[account(mut, associated_token::mint = mint_send, associated_token::authority = token_store_authority)]
     pub token_store_pda_to: Box<Account<'info, TokenAccount>>,
-    pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
 }
 impl<'info> Swap<'info> {
