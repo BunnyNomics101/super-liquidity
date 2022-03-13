@@ -1,24 +1,25 @@
-use crate::error::*;
 use crate::states::*;
 use anchor_lang::prelude::*;
-use anchor_spl::token::{TokenAccount, Transfer, Token, Mint};
+use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
 
 //-----------------------------------------------------
 // Deposit Instruction
 #[derive(Accounts)]
 pub struct Deposit<'info> {
+    #[account(
+        seeds = [
+            ADMIN_ADDRESS.as_ref(),
+        ], 
+        bump = global_state.bump
+    )]
+    pub global_state: Account<'info, GlobalState>,
     /// CHECK:
     pub user_account: AccountInfo<'info>,
-    // User PDA according to the deposited token
-    #[account(mut, seeds = [
-        user_account.key().as_ref(), mint.key().as_ref()
-    ], bump = user_vault.bump)]
-    pub user_vault: Account<'info, UserCoinVault>,
+    pub user_vault: Account<'info, UserVault>,
     /// CHECK:
     pub token_store_authority: AccountInfo<'info>,
-    // for what token
     pub mint: Account<'info, Mint>,
-    // Account where user have tokens
+    // Account where user has the tokens
     #[account(mut, associated_token::mint = mint, associated_token::authority = get_token_from_authority)]
     pub get_token_from: Account<'info, TokenAccount>,
     // owner or delegate_authority
@@ -26,26 +27,15 @@ pub struct Deposit<'info> {
     // Account where the program will store the tokens
     #[account(mut, associated_token::mint = mint, associated_token::authority = token_store_authority)]
     pub token_store_pda: Account<'info, TokenAccount>,
-    pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
 }
 impl<'info> Deposit<'info> {
-    pub fn process(&mut self, amount: u64) -> Result<()> {
-        // check mint
-        if self.get_token_from.mint != self.user_vault.mint {
-            msg!(
-                "Invalid get_token_from.mint {}. Expected {}",
-                self.get_token_from.mint,
-                self.user_vault.mint,
-            );
-            return Err(ProgramError::InvalidAccountData.into());
-        }
-
-        // if delegated, check delegated amount
-        if *self.get_token_from_authority.key != self.get_token_from.owner {
-            msg!("invalid get_token_from owner/auth",);
-            return Err(error!(DelphorError::NotTheOwner));
-        }
+    #[access_control(
+        check_token_position(&self.global_state, &self.mint, position) && 
+        check_vault(&self.user_account, &self.mint, &self.user_vault)
+    )]
+    pub fn process(&mut self, amount: u64, position: usize) -> Result<()> {
+        let vault = &mut self.user_vault.vaults[position];
 
         if self.get_token_from.amount < amount {
             msg!(
@@ -54,24 +44,6 @@ impl<'info> Deposit<'info> {
                 self.get_token_from.amount
             );
             return Err(ProgramError::InsufficientFunds.into());
-        }
-        //TODO check token_store_pda == find_program_address(user_vault.mint,"TSTORE").0
-
-        let (pda, _bump_seed) = Pubkey::find_program_address(
-            &[
-                self.get_token_from_authority.to_account_info().key.as_ref(),
-                self.mint.to_account_info().key.as_ref(),
-            ],
-            &crate::ID,
-        );
-
-        if *self.user_vault.to_account_info().key != pda {
-            msg!(
-                "Invalid user_vault {}. Expected {}",
-                self.user_vault.to_account_info().key,
-                pda,
-            );
-            return Err(ProgramError::InvalidAccountData.into());
         }
 
         anchor_spl::token::transfer(
@@ -86,8 +58,8 @@ impl<'info> Deposit<'info> {
             amount,
         )?;
 
-        self.user_vault.amount += amount;
-        self.user_vault.timestamp = Clock::get().unwrap().unix_timestamp as u32;
+        vault.amount += amount;
+        vault.timestamp = Clock::get().unwrap().unix_timestamp as u32;
         Ok(())
     }
 }

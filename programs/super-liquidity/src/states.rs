@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_spl::token::Mint;
 
 //-----------------------------------------------------
 pub static ADMIN_ADDRESS: &str = "2kKx9xZB85wAbpvXLBui78jVZhPBuY3BxZ5Mad9d94h5";
@@ -43,9 +44,9 @@ impl UserVault {}
 #[derive(Default)]
 struct UserCoinVault {
     pub amount: u64,
-    pub min: u64, // token amount for LP, percentage for portfolio
-    pub max: u64, // token amount for LP, percentage for portfolio
-    pub buy_fee: u16, // 0 for portfolio
+    pub min: u64,      // token amount for LP, percentage for portfolio
+    pub max: u64,      // token amount for LP, percentage for portfolio
+    pub buy_fee: u16,  // 0 for portfolio
     pub sell_fee: u16, // 0 for portfolio
     pub timestamp: u32,
     pub receive_status: bool,
@@ -56,3 +57,42 @@ struct UserCoinVault {
 impl UserCoinVault {}
 
 //-----------------------------------------------------
+
+pub fn check_token_position(
+    global_state: &GlobalState,
+    mint: &Account<Mint>,
+    position: usize,
+) -> Result<()> {
+    if global_state.tokens[position] != mint.key() {
+        return err!(ErrorCode::InvalidTokenPosition);
+    }
+    Ok(())
+}
+
+pub fn check_vault(
+    user: &AccountInfo<'_>,
+    mint: &Account<Mint>,
+    user_vault: &Account<UserVault>,
+) -> Result<()> {
+    let (portfolio_pda, portfolio_bump) = Pubkey::find_program_address(
+        &[user.key().as_ref(), "portfolio_manager".as_ref()],
+        &crate::ID,
+    );
+    let (liquidity_provider_pda, liquidity_provider_bump) = Pubkey::find_program_address(
+        &[user.key().as_ref(), "liquidity_provider".as_ref()],
+        &crate::ID,
+    );
+    if (user_vault.key() != portfolio_pda && user_vault.bump != portfolio_bump)
+        || (user_vault.key() != liquidity_provider_pda
+            && user_vault.bump != liquidity_provider_bump)
+    {
+        return err!(ErrorCode::InvalidVaultAccount);
+    }
+    Ok(())
+}
+
+#[error_code]
+pub enum ErrorCode {
+    InvalidTokenPosition,
+    InvalidVaultAccount,
+}

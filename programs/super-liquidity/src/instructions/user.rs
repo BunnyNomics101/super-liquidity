@@ -153,15 +153,3 @@ impl<'info> UpdateUserPortfolio<'info> {
         Ok(())
     }
 }
-
-fn check_token_position(global_state: &GlobalState, mint: &Account<Mint>, position: usize) -> Result<()> {
-    if global_state.tokens[position] != mint.key() {
-        return err!(ErrorCode::InvalidTokenPosition);
-    }
-    Ok(())
-}
-
-#[error_code]
-pub enum ErrorCode {
-    InvalidTokenPosition
-}

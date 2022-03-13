@@ -25,7 +25,6 @@ pub struct InitGlobalState<'info> {
     pub system_program: Program<'info, System>,
 }
 impl<'info> InitGlobalState<'info> {
-    #[allow(unused_variables)]
     pub fn process(&mut self, bump: u8) -> Result<()> {
         self.global_state.admin_account = *self.admin_account.key;
         self.global_state.bump = bump;
@@ -52,7 +51,6 @@ pub struct AddToken<'info> {
     pub system_program: Program<'info, System>,
 }
 impl<'info> AddToken<'info> {
-    #[allow(unused_variables)]
     pub fn process(&mut self) -> Result<()> {
         if self.global_state.tokens.contains(&self.mint.key()) {
             return err!(ErrorCode::TokenAlreadyAdded);
@@ -96,7 +94,6 @@ pub struct InitTokenStore<'info> {
     pub rent: AccountInfo<'info>,
 }
 impl<'info> InitTokenStore<'info> {
-    #[allow(unused_variables)]
     pub fn process(&mut self) -> Result<()> {
         anchor_spl::token::initialize_account(CpiContext::new(
             self.token_program.to_account_info().clone(),
