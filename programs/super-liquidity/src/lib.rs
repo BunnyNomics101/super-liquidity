@@ -20,8 +20,8 @@ pub mod super_liquidity {
         ctx.accounts.process(amount, position)
     }
 
-    pub fn withdraw(ctx: Context<Withdraw>, bump: u8, amount: u64) -> Result<()> {
-        ctx.accounts.process(bump, amount)
+    pub fn withdraw(ctx: Context<Withdraw>, bump: u8, amount: u64, position: usize) -> Result<()> {
+        ctx.accounts.process(bump, amount, position)
     }
 
     pub fn swap(ctx: Context<Swap>, swap_amount: u64, min_amount: u64, bump: u8) -> Result<()> {

@@ -2,8 +2,6 @@ use crate::states::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
 
-//-----------------------------------------------------
-// Deposit Instruction
 #[derive(Accounts)]
 pub struct Deposit<'info> {
     #[account(
