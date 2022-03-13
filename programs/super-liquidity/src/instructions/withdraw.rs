@@ -11,7 +11,6 @@ pub struct Withdraw<'info> {
         bump = global_state.bump
     )]
     pub global_state: Account<'info, GlobalState>,
-    /// CHECK:
     pub user_account: Signer<'info>,
     pub user_vault: Account<'info, UserVault>,
     /// user account to receive tokens
