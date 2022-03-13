@@ -43,10 +43,10 @@ impl UserVault {}
 #[derive(Default)]
 struct UserCoinVault {
     pub amount: u64,
-    pub min: u64,
-    pub max: u64,
-    pub buy_fee: u16,
-    pub sell_fee: u16,
+    pub min: u64, // token amount for LP, percentage for portfolio
+    pub max: u64, // token amount for LP, percentage for portfolio
+    pub buy_fee: u16, // 0 for portfolio
+    pub sell_fee: u16, // 0 for portfolio
     pub timestamp: u32,
     pub receive_status: bool,
     pub provide_status: bool,

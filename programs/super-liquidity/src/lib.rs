@@ -65,8 +65,6 @@ pub mod super_liquidity {
     pub fn update_user_portfolio(
         ctx: Context<UpdateUserPortfolio>,
         position: usize,
-        buy_fee: u16,
-        sell_fee: u16,
         min: u64,
         max: u64,
         receive_status: bool,
@@ -76,8 +74,6 @@ pub mod super_liquidity {
     ) -> Result<()> {
         ctx.accounts.process(
             position,
-            buy_fee,
-            sell_fee,
             min,
             max,
             receive_status,
