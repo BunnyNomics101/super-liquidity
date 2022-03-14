@@ -1,10 +1,16 @@
 const anchor = require("@project-serum/anchor");
 const BN = require("@project-serum/anchor").BN;
 const PublicKey = require("@solana/web3.js").PublicKey;
+
+const {
+  createLiquidityProviderUser, selectSwappers
+} = require("./utils/swap")
+
 const {
   programCall,
   checkEqualValues,
   expectProgramCallRevert,
+  
 } = require("./utils");
 const assert = require("assert");
 
@@ -264,6 +270,7 @@ describe("super-liquidity", () => {
     bobMockUSDCAccount = await getTokenAccount(provider, bobmockUSDC);
     assert.ok(bobMockUSDCAccount.amount == 0);
   });
+  
 
   it("DelphorOracle init coin", async () => {
     [delphorMockSOLPDA] = await PublicKey.findProgramAddress(
@@ -381,6 +388,8 @@ describe("super-liquidity", () => {
       systemProgram,
     });
   });
+
+  
 
   it("Initialize MockSOL token store", async () => {
     [tokenStoreAuthority, tokenStoreAuthorityBump] =
@@ -1141,4 +1150,91 @@ describe("super-liquidity", () => {
       )
     );
   });
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  it("Proper liquidity provider selection swapping USDC for SOL", async () => {
+    console.log("USDC price: ", mockUSDC.price.toString())
+    console.log("SOL price: ", mockSOL.price.toString())
+
+    let userList = []
+    let generalParameters = {
+      provider,
+      adminAccount,
+      globalState,
+      systemProgram,
+      superLiquidityProgram,
+      tokenStoreAuthority
+    }
+    
+    let initUserVaultSOLParams = [
+      [Lamport(0.1), 30, 10, true, true],
+      [Lamport(10), 30, 10, true, false],
+      [Lamport(10), 30, 10, false, true],
+      [Lamport(10), 20, 10, false, false],
+    ]
+    let solParams = {
+      mint: mockSOLMint,
+      store: mockSOLStore,
+      initUserParams: initUserVaultSOLParams
+    }
+
+    let initUserVaultUSDCParams = [
+      [Lamport(0.1), 30, 10, true, true],
+      [Lamport(10), 30, 10, true, false],
+      [Lamport(10), 30, 10, false, true],
+      [Lamport(10), 20, 10, false, false],
+    ]
+    let usdcParams = {
+      mint: mockUSDCMint,
+      store: mockUSDCStore,
+      initUserParams: initUserVaultUSDCParams
+    }
+
+    let params = {
+      generalParameters,
+      solParams,
+      usdcParams
+    }
+
+    for(let i = 0; i < initUserVaultSOLParams.length; i++) {
+      let user = await createLiquidityProviderUser(
+        params,
+        i
+      )
+      await sleep(10)
+      userList.push(user)
+    }
+
+    let swappers = await selectSwappers(superLiquidityProgram, mockUSDCMint, mockSOLMint, Lamport(10))
+
+    let solVaults = await superLiquidityProgram.account.userCoinVault.all([
+      { memcmp: { offset: 41, bytes: mockSOLMint.toBase58() }}, 
+    ]);
+
+    
+
+    let allVaults = await superLiquidityProgram.account.userCoinVault.all();
+    console.log(
+      "There is a total of",
+      allVaults.length,
+      " vaults, and",
+      solVaults.length,
+      " of them has SOL as mint."
+    )
+    // allVaults.map(vault => {
+    //   console.log(JSON.stringify(vault))
+    // })
+    
+    // const user2Mint = allVaults[4].account.mint.toBase58();
+    // if(user2Mint == mockSOLMint.toBase58()) {
+    //   console.log("MockSol");
+    // } else if(user2Mint == mockUSDCMint.toBase58()) {
+    //   console.log("MockUsdc");
+    // }
+    
+  });
+
 });
