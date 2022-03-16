@@ -102,6 +102,16 @@ pub mod delphor_oracle_aggregator {
         coin_data.decimals = decimals;
         Ok(())
     }
+
+    pub fn init_global_account(ctx: Context<InitGlobalAccount>, authority: Pubkey) -> Result<()> {
+        let global_account = *ctx.accounts.global_account;
+        global_account = GlobalAccount {
+            bump: *ctx.bumps.get("global_account").unwrap(),
+            authority,
+            tokens_data: vec![],
+        };
+        Ok(())
+    }
 }
 
 fn get_switchboard_price(switchboard_account: &AccountInfo<'_>) -> Result<u64> {
@@ -203,7 +213,7 @@ pub struct InitGlobalAccount<'info> {
     #[account(
         init,
         payer = payer,
-        space = 32+32+64+64+8+MAX_SYMBOL_LEN,
+        space = 15200,
         seeds = [
             authority.as_ref()
         ],
@@ -229,10 +239,10 @@ struct TokenData {
     pub mint: Pubkey,
     pub price: u64,
     pub last_update_timestamp: u64,
-    pub symbol: String,
     pub decimals: u8,
     pub pyth_price_account: Pubkey,
     pub switchboard_optimized_feed_account: Pubkey,
+    pub symbol: String,
 }
 
 #[error_code]
