@@ -45,19 +45,21 @@ pub mod delphor_oracle_aggregator {
         Ok(())
     }
 
-    // Deserialization error in borsh with the order of the parameters.
-    // String must be the last.
-    pub fn init_coin(ctx: Context<InitGlobalAccount>, decimals: u8, symbol: String) -> Result<()> {
-        let coin_data = &mut ctx.accounts.coin_data;
-        let mint = &ctx.accounts.mint;
-        let authority = &ctx.accounts.authority;
+    pub fn init_global_account(ctx: Context<InitGlobalAccount>, authority: Pubkey) -> Result<()> {
+        let global_account = *ctx.accounts.global_account;
+        global_account = GlobalAccount {
+            bump: *ctx.bumps.get("global_account").unwrap(),
+            authority,
+            tokens_data: vec![],
+        };
+        Ok(())
+    }
+
+    pub fn add_token(ctx: Context<AddToken>, decimals: u8, symbol: String) -> Result<()> {
+        let global_account = *ctx.accounts.global_account;
 
         let switchboard_optimized_feed_account = &ctx.accounts.switchboard_optimized_feed_account;
-        if ctx
-            .accounts
-            .switchboard_optimized_feed_account
-            .key()
-            .to_string()
+        if switchboard_optimized_feed_account.key().to_string()
             != "11111111111111111111111111111111"
         {
             let account_buf = switchboard_optimized_feed_account.try_borrow_data()?;
@@ -71,8 +73,9 @@ pub mod delphor_oracle_aggregator {
                 return Err(ProgramError::InvalidAccountData.into());
             }
         }
-        if ctx.accounts.pyth_product_account.key().to_string() != "11111111111111111111111111111111"
-        {
+
+        let mut pyth_price_account = ctx.accounts.pyth_product_account.key();
+        if pyth_price_account.to_string() != "11111111111111111111111111111111" {
             let pyth_product_account =
                 &ctx.accounts.pyth_product_account.try_borrow_data().unwrap();
             let pyth_product_data: &Product = load_product(&pyth_product_account).unwrap();
@@ -86,30 +89,18 @@ pub mod delphor_oracle_aggregator {
                 msg!("Received: {}", pyth_product_metadata);
                 return Err(error!(ErrorCode::PythProductAccountError));
             }
-            coin_data.pyth_price_account = Pubkey::new(&pyth_product_data.px_acc.val);
-        } else {
-            coin_data.pyth_price_account = ctx.accounts.pyth_product_account.key();
+            pyth_price_account = Pubkey::new(&pyth_product_data.px_acc.val);
         }
 
-        coin_data.switchboard_optimized_feed_account = *ctx
-            .accounts
-            .switchboard_optimized_feed_account
-            .to_account_info()
-            .key;
-        coin_data.symbol = symbol;
-        coin_data.mint = *mint.to_account_info().key;
-        coin_data.authority = *authority.key;
-        coin_data.decimals = decimals;
-        Ok(())
-    }
-
-    pub fn init_global_account(ctx: Context<InitGlobalAccount>, authority: Pubkey) -> Result<()> {
-        let global_account = *ctx.accounts.global_account;
-        global_account = GlobalAccount {
-            bump: *ctx.bumps.get("global_account").unwrap(),
-            authority,
-            tokens_data: vec![],
-        };
+        global_account.tokens_data.push(TokenData {
+            mint: ctx.accounts.mint.key(),
+            price: 0,
+            last_update_timestamp: 0,
+            decimals,
+            pyth_price_account,
+            switchboard_optimized_feed_account: switchboard_optimized_feed_account.key(),
+            symbol,
+        });
         Ok(())
     }
 }
@@ -190,7 +181,7 @@ pub struct UpdateCoinPrice<'info> {
 }
 
 #[derive(Accounts)]
-pub struct InitTokenData<'info> {
+pub struct AddToken<'info> {
     #[account(
         mut,
         seeds = [
