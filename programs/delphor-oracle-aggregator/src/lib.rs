@@ -16,9 +16,7 @@ pub mod delphor_oracle_aggregator {
         let delphor_oracle = &mut ctx.accounts.delphor_oracle;
 
         let mut switchboard_price: u64 = delphor_oracle.coin_gecko_price;
-        if coin_data
-            .switchboard_optimized_feed_account
-            .to_string()
+        if coin_data.switchboard_optimized_feed_account.to_string()
             != "11111111111111111111111111111111"
         {
             let switchboard_price_result =
@@ -49,11 +47,7 @@ pub mod delphor_oracle_aggregator {
 
     // Deserialization error in borsh with the order of the parameters.
     // String must be the last.
-    pub fn init_coin(
-        ctx: Context<InitCoinPrice>,
-        decimals: u8,
-        symbol: String,
-    ) -> Result<()> {
+    pub fn init_coin(ctx: Context<InitGlobalAccount>, decimals: u8, symbol: String) -> Result<()> {
         let coin_data = &mut ctx.accounts.coin_data;
         let mint = &ctx.accounts.mint;
         let authority = &ctx.accounts.authority;
@@ -110,9 +104,7 @@ pub mod delphor_oracle_aggregator {
     }
 }
 
-fn get_switchboard_price(
-    switchboard_account: &AccountInfo<'_>,
-) -> Result<u64> {
+fn get_switchboard_price(switchboard_account: &AccountInfo<'_>) -> Result<u64> {
     let account_buf = switchboard_account.try_borrow_data()?;
     if account_buf.len() == 0 {
         msg!("The provided account is empty.");
@@ -125,10 +117,7 @@ fn get_switchboard_price(
     return Ok((feed_data.result.result * u64::pow(10, 9) as f64) as u64);
 }
 
-fn get_pyth_price(
-    pyth_account: &AccountInfo<'_>,
-    decimals: u8,
-) -> Result<u64> {
+fn get_pyth_price(pyth_account: &AccountInfo<'_>, decimals: u8) -> Result<u64> {
     let mut pyth_price: u64 = 0;
     let pyth_price_account = &pyth_account.try_borrow_data().unwrap();
     let pyth_price_data: &Price = load_price(&pyth_price_account).unwrap();
@@ -167,52 +156,77 @@ fn calculate_price(price_a: &u64, price_b: &u64, price_c: &u64) -> u64 {
     }
 }
 
+pub static ADMIN_ADDRESS: &str = "2kKx9xZB85wAbpvXLBui78jVZhPBuY3BxZ5Mad9d94h5";
+
 #[derive(Accounts)]
+#[instruction(position: usize)]
 pub struct UpdateCoinPrice<'info> {
-    /// CHECK:
-    #[account(constraint = switchboard_optimized_feed_account.key() == coin_data.switchboard_optimized_feed_account)]
+    #[account(constraint = switchboard_optimized_feed_account.key() == global_account.tokens_data[position].switchboard_optimized_feed_account)]
     switchboard_optimized_feed_account: AccountInfo<'info>,
-    /// CHECK:
-    #[account(constraint = pyth_price_account.key() == coin_data.pyth_price_account)]
+    #[account(constraint = pyth_price_account.key() == global_account.tokens_data[position].pyth_price_account)]
     pyth_price_account: AccountInfo<'info>,
     // struct CoinInfo is imported from delphor-oracle, so the owner MUST be delphor-oracle
     // no need for additional checks
     delphor_oracle: Account<'info, CoinInfo>,
-    #[account(mut)]
-    coin_data: Account<'info, CoinData>,
-    payer: Signer<'info>,
-    system_program: Program<'info, System>,
+    #[account(
+        mut,
+        seeds = [
+            authority.key().as_ref()
+        ],
+        bump = global_account.bump,
+    )]
+    global_account: Account<'info, GlobalAccount>,
+    authority: Signer<'info>,
 }
 
 #[derive(Accounts)]
-pub struct InitCoinPrice<'info> {
+pub struct InitTokenData<'info> {
     #[account(
-        init_if_needed,
-        payer = payer,
-        space = 32+32+64+64+8+MAX_SYMBOL_LEN,
+        mut,
         seeds = [
-            mint.key().as_ref()
+            authority.key().as_ref()
         ],
-        bump,
+        bump = global_account.bump,
     )]
-    coin_data: Account<'info, CoinData>,
+    global_account: Account<'info, GlobalAccount>,
     mint: Account<'info, Mint>,
-    /// CHECK:
-    authority: AccountInfo<'info>,
+    authority: Signer<'info>,
     /// CHECK:
     switchboard_optimized_feed_account: AccountInfo<'info>,
     /// CHECK:
     pyth_product_account: AccountInfo<'info>,
-    #[account(mut)]
+}
+
+#[derive(Accounts)]
+#[instruction(authority: Pubkey)]
+pub struct InitGlobalAccount<'info> {
+    #[account(
+        init,
+        payer = payer,
+        space = 32+32+64+64+8+MAX_SYMBOL_LEN,
+        seeds = [
+            authority.as_ref()
+        ],
+        bump,
+    )]
+    global_account: Account<'info, GlobalAccount>,
+    #[account(mut, constraint = payer.key().to_string() == ADMIN_ADDRESS)]
     payer: Signer<'info>,
     system_program: Program<'info, System>,
 }
 
 #[account]
 #[derive(Default)]
-pub struct CoinData {
-    pub mint: Pubkey,
+pub struct GlobalAccount {
+    pub bump: u8,
     pub authority: Pubkey,
+    pub tokens_data: Vec<TokenData>,
+}
+
+#[account]
+#[derive(Default)]
+struct TokenData {
+    pub mint: Pubkey,
     pub price: u64,
     pub last_update_timestamp: u64,
     pub symbol: String,
@@ -223,6 +237,7 @@ pub struct CoinData {
 
 #[error_code]
 pub enum ErrorCode {
+    TokenAlreadyExists,
     #[msg("Pyth accounts don't match.")]
     PythPriceAccountError,
     #[msg("Pyth product account don't contains expected symbol.")]
