@@ -15,6 +15,7 @@ pub mod delphor_oracle {
         ctx: Context<CreateCoin>,
         coin_gecko_price: u64,
         orca_price: u64,
+        serum_price: u64,
         symbol: String,
     ) -> Result<()> {
         assert!(
@@ -26,6 +27,7 @@ pub mod delphor_oracle {
         let coin = &mut ctx.accounts.coin;
         coin.coin_gecko_price = coin_gecko_price;
         coin.orca_price = orca_price;
+        coin.serum_price = serum_price;
         coin.last_update_timestamp = Clock::get().unwrap().unix_timestamp as u64;
         coin.authority = *ctx.accounts.authority.key;
         coin.symbol = symbol;
@@ -35,6 +37,7 @@ pub mod delphor_oracle {
             symbol: coin.symbol.clone(),
             coin_gecko_price: coin.coin_gecko_price,
             orca_price: coin.orca_price,
+            serum_price: coin.serum_price,
             last_update_timestamp: coin.last_update_timestamp,
         });
 
@@ -45,6 +48,7 @@ pub mod delphor_oracle {
         ctx: Context<UpdateCoin>,
         coin_gecko_price: u64,
         orca_price: u64,
+        serum_price: u64,
     ) -> Result<()> {
         let coin = &mut ctx.accounts.coin;
         if coin.authority != *ctx.accounts.authority.key {
@@ -52,11 +56,13 @@ pub mod delphor_oracle {
         }
         coin.coin_gecko_price = coin_gecko_price;
         coin.orca_price = orca_price;
+        coin.serum_price = serum_price;
         coin.last_update_timestamp = Clock::get().unwrap().unix_timestamp as u64;
         emit!(NewCoinInfo {
             symbol: coin.symbol.clone(),
             coin_gecko_price: coin.coin_gecko_price,
             orca_price: coin.orca_price,
+            serum_price: coin.serum_price,
             last_update_timestamp: coin.last_update_timestamp,
         });
         Ok(())
@@ -124,6 +130,7 @@ pub struct DeleteCoin<'info> {
 pub struct CoinInfo {
     pub orca_price: u64,
     pub coin_gecko_price: u64,
+    pub serum_price: u64,
     pub last_update_timestamp: u64,
     pub authority: Pubkey,
     pub symbol: String,
@@ -137,6 +144,7 @@ pub struct NewCoinInfo {
     pub symbol: String,
     pub coin_gecko_price: u64,
     pub orca_price: u64,
+    pub serum_price: u64,
     pub last_update_timestamp: u64,
 }
 
