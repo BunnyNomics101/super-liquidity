@@ -106,7 +106,7 @@ pub mod delphor_oracle_aggregator {
     }
 }
 
-fn check_token_position(
+pub fn check_token_position(
     global_state: &GlobalAccount,
     mint: &Account<Mint>,
     position: usize,
@@ -174,8 +174,10 @@ pub static ADMIN_ADDRESS: &str = "2kKx9xZB85wAbpvXLBui78jVZhPBuY3BxZ5Mad9d94h5";
 #[derive(Accounts)]
 #[instruction(position: usize)]
 pub struct UpdateCoinPrice<'info> {
+    /// CHECK:
     #[account(constraint = switchboard_optimized_feed_account.key() == global_account.tokens[position].switchboard_optimized_feed_account)]
     switchboard_optimized_feed_account: AccountInfo<'info>,
+    /// CHECK:
     #[account(constraint = pyth_price_account.key() == global_account.tokens[position].pyth_price_account)]
     pyth_price_account: AccountInfo<'info>,
     // struct CoinInfo is imported from delphor-oracle, so the owner MUST be delphor-oracle

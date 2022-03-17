@@ -42,7 +42,7 @@ impl UserVault {}
 
 #[account]
 #[derive(Default)]
-struct UserCoinVault {
+pub struct UserCoinVault {
     pub amount: u64,
     pub min: u64,      // token amount for LP, percentage for portfolio
     pub max: u64,      // token amount for LP, percentage for portfolio

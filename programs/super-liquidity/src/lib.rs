@@ -24,8 +24,16 @@ pub mod super_liquidity {
         ctx.accounts.process(bump, amount, position)
     }
 
-    pub fn swap(ctx: Context<Swap>, swap_amount: u64, min_amount: u64, bump: u8) -> Result<()> {
-        ctx.accounts.process(swap_amount, min_amount, bump)
+    pub fn swap(
+        ctx: Context<Swap>,
+        swap_amount: u64,
+        min_amount: u64,
+        bump: u8,
+        position_buy: usize,
+        position_sell: usize,
+    ) -> Result<()> {
+        ctx.accounts
+            .process(swap_amount, min_amount, bump, position_buy, position_sell)
     }
 
     pub fn init_user_liquidity_provider(ctx: Context<InitUserLiquiidtyProvider>) -> Result<()> {

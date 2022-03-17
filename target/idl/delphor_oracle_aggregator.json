@@ -3,7 +3,73 @@
   "name": "delphor_oracle_aggregator",
   "instructions": [
     {
-      "name": "updateCoinPrice",
+      "name": "initGlobalAccount",
+      "accounts": [
+        {
+          "name": "globalAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "authority",
+          "type": "publicKey"
+        }
+      ]
+    },
+    {
+      "name": "addToken",
+      "accounts": [
+        {
+          "name": "globalAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "switchboardOptimizedFeedAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "pythProductAccount",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "decimals",
+          "type": "u8"
+        },
+        {
+          "name": "symbol",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "updateTokenPrice",
       "accounts": [
         {
           "name": "switchboardOptimizedFeedAccount",
@@ -21,86 +87,63 @@
           "isSigner": false
         },
         {
-          "name": "coinData",
+          "name": "globalAccount",
           "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "payer",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "initCoin",
-      "accounts": [
-        {
-          "name": "coinData",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "mint",
-          "isMut": false,
           "isSigner": false
         },
         {
           "name": "authority",
           "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "switchboardOptimizedFeedAccount",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "pythProductAccount",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "payer",
-          "isMut": true,
           "isSigner": true
         },
         {
-          "name": "systemProgram",
+          "name": "mint",
           "isMut": false,
           "isSigner": false
         }
       ],
       "args": [
         {
-          "name": "decimals",
-          "type": "u8"
-        },
-        {
-          "name": "symbol",
-          "type": "string"
+          "name": "position",
+          "type": {
+            "defined": "usize"
+          }
         }
       ]
     }
   ],
   "accounts": [
     {
-      "name": "CoinData",
+      "name": "GlobalAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "tokens",
+            "type": {
+              "vec": {
+                "defined": "TokenData"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokenData",
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "mint",
-            "type": "publicKey"
-          },
-          {
-            "name": "authority",
             "type": "publicKey"
           },
           {
@@ -110,10 +153,6 @@
           {
             "name": "lastUpdateTimestamp",
             "type": "u64"
-          },
-          {
-            "name": "symbol",
-            "type": "string"
           },
           {
             "name": "decimals",
@@ -126,6 +165,10 @@
           {
             "name": "switchboardOptimizedFeedAccount",
             "type": "publicKey"
+          },
+          {
+            "name": "symbol",
+            "type": "string"
           }
         ]
       }
@@ -134,16 +177,24 @@
   "errors": [
     {
       "code": 6000,
+      "name": "InvalidTokenPosition"
+    },
+    {
+      "code": 6001,
+      "name": "TokenAlreadyExists"
+    },
+    {
+      "code": 6002,
       "name": "PythPriceAccountError",
       "msg": "Pyth accounts don't match."
     },
     {
-      "code": 6001,
+      "code": 6003,
       "name": "PythProductAccountError",
       "msg": "Pyth product account don't contains expected symbol."
     },
     {
-      "code": 6002,
+      "code": 6004,
       "name": "SwitchboardAccountError",
       "msg": "Switchboard accounts don't match."
     }
