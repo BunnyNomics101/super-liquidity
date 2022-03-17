@@ -26,47 +26,41 @@ describe("delphor-oracle-aggregator", () => {
     decimals: 9,
   };
 
+  let mockUSDC = {
+    price: new BN(1),
+    symbol: "USDC",
+    decimals: 9,
+  };
+
   let mockSOLMint,
+    mockUSDCMint,
     delphorOracleMockSOLPDA,
+    aggregatorGlobalAccount,
+    delphorOracleMockUSDCPDA,
     delphorAggregatorMockSOLPDA;
 
   let pythProductAccount = systemProgram;
   let pythPriceAccount = systemProgram;
   let switchboardOptimizedFeedAccount = systemProgram;
 
-  if (process.env.ANCHOR_PROVIDER_URL == "https://api.devnet.solana.com") {
-    pythProductAccount = new PublicKey(
-      "os3is9HtWPHW4EXpGAkdr2prdWVs2pS8qKtf2ZYJdBw"
-    );
-
-    pythPriceAccount = new PublicKey(
-      "9a6RNx3tCu1TSs6TBSfV2XRXEPEZXQ6WB7jRojZRvyeZ"
-    );
-
-    switchboardOptimizedFeedAccount = new PublicKey(
-      "GvvC8SKcr9yrVMsFToU3E29TWtBFHcasPddaLYQqaYFw"
-    );
-  }
-
-  it("Create MockSOL", async () => {
+  it("Create mockSOL", async () => {
     mockSOLMint = await createMint(provider, adminAccount);
   });
 
-  it("DelphorOracle create coin", async () => {
-    [delphorOracleMockSOLPDA] =
-      await PublicKey.findProgramAddress(
-        [mockSOL.symbol],
-        delphorOracleProgram.programId
-      );
+  it("Create mockUSDC", async () => {
+    mockUSDCMint = await createMint(provider, adminAccount);
+  });
+
+  it("DelphorOracle create mockSOL", async () => {
+    [delphorOracleMockSOLPDA] = await PublicKey.findProgramAddress(
+      [mockSOL.symbol],
+      delphorOracleProgram.programId
+    );
 
     await programCall(
       delphorOracleProgram,
       "createCoin",
-      [
-        mockSOL.price,
-        mockSOL.price,
-        mockSOL.symbol,
-      ],
+      [mockSOL.price, mockSOL.price, mockSOL.symbol],
       {
         coin: delphorOracleMockSOLPDA,
         authority: adminAccount,
@@ -87,40 +81,197 @@ describe("delphor-oracle-aggregator", () => {
     );
   });
 
-  it("DelphorOracleAggregator init coin", async () => {
-    [delphorAggregatorMockSOLPDA] =
-      await PublicKey.findProgramAddress(
-        [mockSOLMint.toBuffer()],
-        delphorAggregatorProgram.programId
-      );
+  it("DelphorOracle create mockUSDC", async () => {
+    [delphorOracleMockUSDCPDA] = await PublicKey.findProgramAddress(
+      [mockUSDC.symbol],
+      delphorOracleProgram.programId
+    );
 
     await programCall(
-      delphorAggregatorProgram,
-      "initCoin",
-      [mockSOL.decimals, mockSOL.symbol],
+      delphorOracleProgram,
+      "createCoin",
+      [mockUSDC.price, mockUSDC.price, mockUSDC.symbol],
       {
-        switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
-        pythProductAccount: pythProductAccount,
-        coinData: delphorAggregatorMockSOLPDA,
-        mint: mockSOLMint,
+        coin: delphorOracleMockUSDCPDA,
         authority: adminAccount,
         payer,
         systemProgram,
       }
     );
 
-    const pdaData = await delphorAggregatorProgram.account.coinData.fetch(
-      delphorAggregatorMockSOLPDA
+    const pdaData = await delphorOracleProgram.account.coinInfo.fetch(
+      delphorOracleMockUSDCPDA
     );
 
     assert.ok(
       checkEqualValues(
-        [mockSOLMint, adminAccount, mockSOL.symbol, mockSOL.decimals],
-        [pdaData.mint, pdaData.authority, pdaData.symbol, pdaData.decimals]
+        [mockUSDC.price, adminAccount, mockUSDC.symbol],
+        [pdaData.orcaPrice, pdaData.authority, pdaData.symbol]
       )
     );
   });
 
+  it("DelphorAggregator init global account", async () => {
+    let bumpGlobalAccount;
+    [aggregatorGlobalAccount, bumpGlobalAccount] =
+      await PublicKey.findProgramAddress(
+        [adminAccount.toBuffer()],
+        delphorAggregatorProgram.programId
+      );
+
+    await programCall(
+      delphorAggregatorProgram,
+      "initGlobalAccount",
+      [adminAccount],
+      {
+        globalAccount: aggregatorGlobalAccount,
+        payer,
+        systemProgram,
+      }
+    );
+
+    const globalAccount =
+      await delphorAggregatorProgram.account.globalAccount.fetch(
+        aggregatorGlobalAccount
+      );
+
+    assert.ok(
+      checkEqualValues(
+        [bumpGlobalAccount, adminAccount, []],
+        [globalAccount.bump, globalAccount.authority, globalAccount.tokens]
+      )
+    );
+  });
+
+  it("DelphorAggregator add mockSOL", async () => {
+    await programCall(
+      delphorAggregatorProgram,
+      "addToken",
+      [mockSOL.decimals, mockSOL.symbol],
+      {
+        globalAccount: aggregatorGlobalAccount,
+        mint: mockSOLMint,
+        switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
+        pythProductAccount: pythProductAccount,
+        authority: adminAccount,
+      }
+    );
+
+    const globalAccount =
+      await delphorAggregatorProgram.account.globalAccount.fetch(
+        aggregatorGlobalAccount
+      );
+
+    let mockSOLData = globalAccount.tokens[0];
+    assert.ok(
+      checkEqualValues(
+        [
+          1,
+          0,
+          0,
+          mockSOLMint,
+          mockSOL.decimals,
+          pythProductAccount,
+          switchboardOptimizedFeedAccount,
+          mockSOL.symbol,
+        ],
+        [
+          globalAccount.tokens.length,
+          mockSOLData.price,
+          mockSOLData.lastUpdateTimestamp,
+          mockSOLData.mint,
+          mockSOLData.decimals,
+          mockSOLData.pythPriceAccount,
+          mockSOLData.switchboardOptimizedFeedAccount,
+          mockSOLData.symbol,
+        ]
+      )
+    );
+  });
+
+  it("DelphorAggregator add mockUSDC", async () => {
+    await programCall(
+      delphorAggregatorProgram,
+      "addToken",
+      [mockUSDC.decimals, mockUSDC.symbol],
+      {
+        globalAccount: aggregatorGlobalAccount,
+        mint: mockUSDCMint,
+        switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
+        pythProductAccount: pythProductAccount,
+        authority: adminAccount,
+      }
+    );
+
+    const globalAccount =
+      await delphorAggregatorProgram.account.globalAccount.fetch(
+        aggregatorGlobalAccount
+      );
+
+    let mockUSDCData = globalAccount.tokens[1];
+    assert.ok(
+      checkEqualValues(
+        [
+          2,
+          0,
+          0,
+          mockUSDCMint,
+          mockUSDC.decimals,
+          pythProductAccount,
+          switchboardOptimizedFeedAccount,
+          mockUSDC.symbol,
+        ],
+        [
+          globalAccount.tokens.length,
+          mockUSDCData.price,
+          mockUSDCData.lastUpdateTimestamp,
+          mockUSDCData.mint,
+          mockUSDCData.decimals,
+          mockUSDCData.pythPriceAccount,
+          mockUSDCData.switchboardOptimizedFeedAccount,
+          mockUSDCData.symbol,
+        ]
+      )
+    );
+  });
+
+  it("DelphorAggregator update mockSOL price", async () => {
+    await programCall(delphorAggregatorProgram, "updateTokenPrice", [0], {
+      switchboardOptimizedFeedAccount,
+      pythPriceAccount,
+      delphorOracle: delphorOracleMockSOLPDA,
+      globalAccount: aggregatorGlobalAccount,
+      authority: adminAccount,
+      mint: mockSOLMint,
+    });
+
+    const globalAccount =
+      await delphorAggregatorProgram.account.globalAccount.fetch(
+        aggregatorGlobalAccount
+      );
+
+    assert.ok(globalAccount.tokens[0].price.eq(mockSOL.price));
+  });
+
+  it("DelphorAggregator update mockUSDC price", async () => {
+    await programCall(delphorAggregatorProgram, "updateTokenPrice", [1], {
+      switchboardOptimizedFeedAccount,
+      pythPriceAccount,
+      delphorOracle: delphorOracleMockUSDCPDA,
+      globalAccount: aggregatorGlobalAccount,
+      authority: adminAccount,
+      mint: mockUSDCMint,
+    });
+
+    const globalAccount =
+      await delphorAggregatorProgram.account.globalAccount.fetch(
+        aggregatorGlobalAccount
+      );
+
+    assert.ok(globalAccount.tokens[1].price.eq(mockUSDC.price));
+  });
+
+  /*
   it("DelphorOracleAggregator reject update price with wrong oracles accounts", async () => {
     const randomKey = anchor.web3.Keypair.generate();
 
@@ -158,77 +309,5 @@ describe("delphor-oracle-aggregator", () => {
       )
     );
   });
-
-  it("DelphorOracleAggregator update price", async () => {
-    await programCall(delphorAggregatorProgram, "updateCoinPrice", [], {
-      switchboardOptimizedFeedAccount,
-      pythPriceAccount,
-      delphorOracle: delphorOracleMockSOLPDA,
-      coinData: delphorAggregatorMockSOLPDA,
-      payer,
-      systemProgram,
-    });
-
-    const pdaData = await delphorAggregatorProgram.account.coinData.fetch(
-      delphorAggregatorMockSOLPDA
-    );
-
-    assert.ok(
-      checkEqualValues(
-        [mockSOLMint, adminAccount, mockSOL.symbol, mockSOL.decimals],
-        [pdaData.mint, pdaData.authority, pdaData.symbol, pdaData.decimals]
-      )
-    );
-  });
-
-  it("DelphorOracle update coin price", async () => {
-    mockSOL.price = new BN(258);
-
-    await programCall(
-      delphorOracleProgram,
-      "updateCoin",
-      [mockSOL.price, mockSOL.price],
-      {
-        coin: delphorOracleMockSOLPDA,
-        authority: provider.wallet.publicKey,
-      }
-    );
-
-    const pdaData = await delphorOracleProgram.account.coinInfo.fetch(
-      delphorOracleMockSOLPDA
-    );
-
-    assert.ok(
-      checkEqualValues(
-        [mockSOL.price, adminAccount, mockSOL.symbol],
-        [pdaData.orcaPrice, pdaData.authority, pdaData.symbol]
-      )
-    );
-  });
-
-  it("DelphorOralceAggregator update price", async () => {
-    // Solana doesn't allow sending two identical tx's within the same block,
-    // so we wait a second.
-    await sleep(1000);
-
-    await programCall(delphorAggregatorProgram, "updateCoinPrice", [], {
-      switchboardOptimizedFeedAccount,
-      pythPriceAccount,
-      delphorOracle: delphorOracleMockSOLPDA,
-      coinData: delphorAggregatorMockSOLPDA,
-      payer,
-      systemProgram,
-    });
-
-    const pdaData = await delphorAggregatorProgram.account.coinData.fetch(
-      delphorAggregatorMockSOLPDA
-    );
-
-    assert.ok(
-      checkEqualValues(
-        [mockSOLMint, adminAccount, mockSOL.symbol, mockSOL.decimals],
-        [pdaData.mint, pdaData.authority, pdaData.symbol, pdaData.decimals]
-      )
-    );
-  });
+  */
 });
