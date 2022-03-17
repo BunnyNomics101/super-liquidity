@@ -219,7 +219,7 @@ pub struct InitGlobalAccount<'info> {
     #[account(
         init,
         payer = payer,
-        space = 15200,
+        space = 10240,
         seeds = [
             authority.as_ref()
         ],
