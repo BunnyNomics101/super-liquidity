@@ -56,7 +56,7 @@ impl<'info> UpdateUserLiquidityProvider<'info> {
     #[access_control(check_token_position(&self.global_state, &self.mint, position))]
     pub fn process(
         &mut self,
-        position: usize,
+        position: u8,
         buy_fee: u16,
         sell_fee: u16,
         min: u64,
@@ -66,7 +66,7 @@ impl<'info> UpdateUserLiquidityProvider<'info> {
         limit_price_status: bool,
         limit_price: u64,
     ) -> Result<()> {
-        let vault = &mut self.user_vault.vaults[position];
+        let vault = &mut self.user_vault.vaults[position as usize];
         vault.buy_fee = buy_fee;
         vault.sell_fee = sell_fee;
         vault.min = min;
@@ -134,7 +134,7 @@ impl<'info> UpdateUserPortfolio<'info> {
     #[access_control(check_token_position(&self.global_state, &self.mint, position))]
     pub fn process(
         &mut self,
-        position: usize,
+        position: u8,
         min: u64,
         max: u64,
         receive_status: bool,
@@ -142,7 +142,7 @@ impl<'info> UpdateUserPortfolio<'info> {
         limit_price_status: bool,
         limit_price: u64,
     ) -> Result<()> {
-        let vault = &mut self.user_portfolio.vaults[position];
+        let vault = &mut self.user_portfolio.vaults[position as usize];
         vault.min = min;
         vault.max = max;
         vault.timestamp = Clock::get().unwrap().unix_timestamp as u32;

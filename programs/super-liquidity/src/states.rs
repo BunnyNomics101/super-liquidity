@@ -40,8 +40,7 @@ pub struct UserVault {
 }
 impl UserVault {}
 
-#[account]
-#[derive(Default)]
+#[derive(Default, Clone, AnchorSerialize, AnchorDeserialize)]
 pub struct UserCoinVault {
     pub amount: u64,
     pub min: u64,      // token amount for LP, percentage for portfolio
@@ -61,9 +60,9 @@ impl UserCoinVault {}
 pub fn check_token_position(
     global_state: &GlobalState,
     mint: &Account<Mint>,
-    position: usize,
+    position: u8,
 ) -> Result<()> {
-    if global_state.tokens[position] != mint.key() {
+    if global_state.tokens[position as usize] != mint.key() {
         return err!(ErrorCode::InvalidTokenPosition);
     }
     Ok(())

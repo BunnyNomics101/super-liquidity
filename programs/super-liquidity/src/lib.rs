@@ -16,11 +16,11 @@ pub mod super_liquidity {
 
     declare_id!("4FCQYxXVaK1aWE7gTLhTB5CwyjZGRFPFJstJdcNsoqck");
 
-    pub fn deposit(ctx: Context<Deposit>, amount: u64, position: usize) -> Result<()> {
+    pub fn deposit(ctx: Context<Deposit>, amount: u64, position: u8) -> Result<()> {
         ctx.accounts.process(amount, position)
     }
 
-    pub fn withdraw(ctx: Context<Withdraw>, bump: u8, amount: u64, position: usize) -> Result<()> {
+    pub fn withdraw(ctx: Context<Withdraw>, bump: u8, amount: u64, position: u8) -> Result<()> {
         ctx.accounts.process(bump, amount, position)
     }
 
@@ -29,8 +29,8 @@ pub mod super_liquidity {
         swap_amount: u64,
         min_amount: u64,
         bump: u8,
-        position_buy: usize,
-        position_sell: usize,
+        position_buy: u8,
+        position_sell: u8,
     ) -> Result<()> {
         ctx.accounts
             .process(swap_amount, min_amount, bump, position_buy, position_sell)
@@ -42,7 +42,7 @@ pub mod super_liquidity {
 
     pub fn update_user_liquidity_provider(
         ctx: Context<UpdateUserLiquidityProvider>,
-        position: usize,
+        position: u8,
         buy_fee: u16,
         sell_fee: u16,
         min: u64,
@@ -72,7 +72,7 @@ pub mod super_liquidity {
 
     pub fn update_user_portfolio(
         ctx: Context<UpdateUserPortfolio>,
-        position: usize,
+        position: u8,
         min: u64,
         max: u64,
         receive_status: bool,

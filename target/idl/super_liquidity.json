@@ -58,9 +58,7 @@
         },
         {
           "name": "position",
-          "type": {
-            "defined": "usize"
-          }
+          "type": "u8"
         }
       ]
     },
@@ -124,9 +122,7 @@
         },
         {
           "name": "position",
-          "type": {
-            "defined": "usize"
-          }
+          "type": "u8"
         }
       ]
     },
@@ -209,15 +205,11 @@
         },
         {
           "name": "positionBuy",
-          "type": {
-            "defined": "usize"
-          }
+          "type": "u8"
         },
         {
           "name": "positionSell",
-          "type": {
-            "defined": "usize"
-          }
+          "type": "u8"
         }
       ]
     },
@@ -269,9 +261,7 @@
       "args": [
         {
           "name": "position",
-          "type": {
-            "defined": "usize"
-          }
+          "type": "u8"
         },
         {
           "name": "buyFee",
@@ -355,9 +345,7 @@
       "args": [
         {
           "name": "position",
-          "type": {
-            "defined": "usize"
-          }
+          "type": "u8"
         },
         {
           "name": "min",
@@ -531,7 +519,9 @@
           }
         ]
       }
-    },
+    }
+  ],
+  "types": [
     {
       "name": "UserCoinVault",
       "type": {
@@ -579,9 +569,7 @@
           }
         ]
       }
-    }
-  ],
-  "types": [
+    },
     {
       "name": "DelphorError",
       "type": {
@@ -626,5 +614,8 @@
       "code": 6000,
       "name": "TokenAlreadyAdded"
     }
-  ]
+  ],
+  "metadata": {
+    "address": "4FCQYxXVaK1aWE7gTLhTB5CwyjZGRFPFJstJdcNsoqck"
+  }
 }

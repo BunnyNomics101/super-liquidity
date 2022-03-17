@@ -105,9 +105,7 @@
       "args": [
         {
           "name": "position",
-          "type": {
-            "defined": "usize"
-          }
+          "type": "u8"
         }
       ]
     }
@@ -136,7 +134,9 @@
           }
         ]
       }
-    },
+    }
+  ],
+  "types": [
     {
       "name": "TokenData",
       "type": {
@@ -198,5 +198,8 @@
       "name": "SwitchboardAccountError",
       "msg": "Switchboard accounts don't match."
     }
-  ]
+  ],
+  "metadata": {
+    "address": "HbyTY89Se2c8Je7KDKHVjUEGN2sAruFAw3S3NwubzeyU"
+  }
 }

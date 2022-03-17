@@ -31,8 +31,8 @@ impl<'info> Withdraw<'info> {
         check_token_position(&self.global_state, &self.mint, position) && 
         check_vault(&self.user_account.key, &self.user_vault)
     )]
-    pub fn process(&mut self, bump: u8, amount: u64, position: usize) -> Result<()> {
-        let vault = &mut self.user_vault.vaults[position];
+    pub fn process(&mut self, bump: u8, amount: u64, position: u8) -> Result<()> {
+        let vault = &mut self.user_vault.vaults[position as usize];
         if vault.amount < amount {
             msg!(
                 "Requested to withdraw {} but you have only {}",

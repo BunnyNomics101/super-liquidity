@@ -70,8 +70,8 @@ pub mod delphor_oracle_aggregator {
     #[access_control(
         check_token_position(&ctx.accounts.global_account, &ctx.accounts.mint, position)
     )]
-    pub fn update_token_price(ctx: Context<UpdateCoinPrice>, position: usize) -> Result<()> {
-        let token_data = &mut ctx.accounts.global_account.tokens[position];
+    pub fn update_token_price(ctx: Context<UpdateCoinPrice>, position: u8) -> Result<()> {
+        let token_data = &mut ctx.accounts.global_account.tokens[position as usize];
         let delphor_oracle = &mut ctx.accounts.delphor_oracle;
 
         let mut switchboard_price: u64 = delphor_oracle.coin_gecko_price;
@@ -109,9 +109,9 @@ pub mod delphor_oracle_aggregator {
 pub fn check_token_position(
     global_state: &GlobalAccount,
     mint: &Account<Mint>,
-    position: usize,
+    position: u8,
 ) -> Result<()> {
-    if global_state.tokens[position].mint != mint.key() {
+    if global_state.tokens[position as usize].mint != mint.key() {
         return err!(ErrorCode::InvalidTokenPosition);
     }
     Ok(())
@@ -239,8 +239,7 @@ pub struct GlobalAccount {
     pub tokens: Vec<TokenData>,
 }
 
-#[account]
-#[derive(Default)]
+#[derive(Default, Clone, AnchorSerialize, AnchorDeserialize)]
 pub struct TokenData {
     pub mint: Pubkey,
     pub price: u64,

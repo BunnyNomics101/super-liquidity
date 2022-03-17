@@ -52,15 +52,15 @@ impl<'info> Swap<'info> {
         swap_amount: u64,
         min_amount: u64,
         bump: u8,
-        position_sell: usize,
-        position_buy: usize,
+        position_sell: u8,
+        position_buy: u8,
     ) -> Result<()> {
-        let sell_coin_price = self.delphor_aggregator_prices.tokens[position_sell].price;
-        let sell_coin_decimals = self.delphor_aggregator_prices.tokens[position_sell].decimals;
-        let buy_coin_price = self.delphor_aggregator_prices.tokens[position_buy].price;
-        let buy_coin_decimals = self.delphor_aggregator_prices.tokens[position_buy].decimals;
-        let user_vault_from = &self.user_vault.vaults[position_buy];
-        let user_vault_to = &self.user_vault.vaults[position_sell];
+        let sell_coin_price = self.delphor_aggregator_prices.tokens[position_sell as usize].price;
+        let sell_coin_decimals = self.delphor_aggregator_prices.tokens[position_sell as usize].decimals;
+        let buy_coin_price = self.delphor_aggregator_prices.tokens[position_buy as usize].price;
+        let buy_coin_decimals = self.delphor_aggregator_prices.tokens[position_buy as usize].decimals;
+        let user_vault_from = &self.user_vault.vaults[position_buy as usize];
+        let user_vault_to = &self.user_vault.vaults[position_sell as usize];
 
         if !user_vault_from.provide_status {
             return err!(ErrorCode::VaultProvideOff);
@@ -126,9 +126,9 @@ impl<'info> Swap<'info> {
             amount_to_send,
         )?;
 
-        self.user_vault.vaults[position_sell].amount += swap_amount;
-        self.user_vault.vaults[position_buy].amount -= amount_to_send;
-        self.user_vault.vaults[position_buy].timestamp = Clock::get().unwrap().unix_timestamp as u32;
+        self.user_vault.vaults[position_sell as usize].amount += swap_amount;
+        self.user_vault.vaults[position_buy as usize].amount -= amount_to_send;
+        self.user_vault.vaults[position_buy as usize].timestamp = Clock::get().unwrap().unix_timestamp as u32;
 
         Ok(())
     }
