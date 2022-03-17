@@ -15,6 +15,12 @@ pub struct Deposit<'info> {
     pub user_account: AccountInfo<'info>,
     pub user_vault: Account<'info, UserVault>,
     /// CHECK:
+    #[account(
+        seeds = [
+            "store_auth".as_ref()
+        ],
+        bump,
+    )]
     pub token_store_authority: AccountInfo<'info>,
     pub mint: Account<'info, Mint>,
     // Account where user has the tokens
@@ -23,7 +29,10 @@ pub struct Deposit<'info> {
     // owner or delegate_authority
     pub get_token_from_authority: Signer<'info>,
     // Account where the program will store the tokens
-    #[account(mut, associated_token::mint = mint, associated_token::authority = token_store_authority)]
+    #[account(mut,
+        associated_token::mint = mint, 
+        associated_token::authority = token_store_authority
+    )]
     pub token_store_pda: Account<'info, TokenAccount>,
     pub token_program: Program<'info, Token>,
 }

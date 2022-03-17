@@ -100,8 +100,4 @@ pub mod super_liquidity {
     pub fn add_token(ctx: Context<AddToken>) -> Result<()> {
         ctx.accounts.process()
     }
-
-    pub fn init_token_store(ctx: Context<InitTokenStore>) -> Result<()> {
-        ctx.accounts.process()
-    }
 }
