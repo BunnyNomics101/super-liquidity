@@ -95,9 +95,9 @@ pub mod delphor_oracle {
 //
 #[derive(Accounts)]
 #[instruction(coin_gecko_price: u64,
-    orca_price: u64, symbol:String)]
+    orca_price: u64, serum_price: u64, symbol:String)]
 pub struct CreateCoin<'info> {
-    #[account(init,payer=payer,seeds=[symbol.as_bytes().as_ref()],bump,space=32+64+64+64+64+MAX_SYMBOL_LEN+128)]
+    #[account(init,payer=payer,seeds=[symbol.as_bytes().as_ref()],bump,space=32+64+64+64+64+64+MAX_SYMBOL_LEN+128)]
     coin: Account<'info, CoinInfo>,
     /// CHECK: 
     authority: AccountInfo<'info>,
