@@ -172,16 +172,17 @@ fn calculate_price(price_a: &u64, price_b: &u64, price_c: &u64) -> u64 {
 pub static ADMIN_ADDRESS: &str = "2kKx9xZB85wAbpvXLBui78jVZhPBuY3BxZ5Mad9d94h5";
 
 #[derive(Accounts)]
-#[instruction(position: usize)]
+#[instruction(position: u8)]
 pub struct UpdateCoinPrice<'info> {
     /// CHECK:
-    #[account(constraint = switchboard_optimized_feed_account.key() == global_account.tokens[position].switchboard_optimized_feed_account)]
+    #[account(constraint = switchboard_optimized_feed_account.key() == global_account.tokens[position as usize].switchboard_optimized_feed_account)]
     switchboard_optimized_feed_account: AccountInfo<'info>,
     /// CHECK:
-    #[account(constraint = pyth_price_account.key() == global_account.tokens[position].pyth_price_account)]
+    #[account(constraint = pyth_price_account.key() == global_account.tokens[position as usize].pyth_price_account)]
     pyth_price_account: AccountInfo<'info>,
     // struct CoinInfo is imported from delphor-oracle, so the owner MUST be delphor-oracle
     // no need for additional checks
+    #[account(constraint = delphor_oracle.symbol == global_account.tokens[position as usize].symbol)]
     delphor_oracle: Account<'info, CoinInfo>,
     #[account(
         mut,
