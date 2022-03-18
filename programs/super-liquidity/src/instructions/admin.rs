@@ -27,6 +27,7 @@ impl<'info> InitGlobalState<'info> {
     pub fn process(&mut self, bump: u8) -> Result<()> {
         self.global_state.admin_account = *self.admin_account.key;
         self.global_state.bump = bump;
+        self.global_state.tokens = vec![];
         Ok(())
     }
 }
@@ -54,6 +55,7 @@ impl<'info> AddToken<'info> {
         if self.global_state.tokens.contains(&self.mint.key()) {
             return err!(ErrorCode::TokenAlreadyAdded);
         }
+
         self.global_state.tokens.push(self.mint.key());
         Ok(())
     }

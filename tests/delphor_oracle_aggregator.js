@@ -35,9 +35,8 @@ describe("delphor-oracle-aggregator", () => {
   let mockSOLMint,
     mockUSDCMint,
     delphorOracleMockSOLPDA,
-    aggregatorGlobalAccount,
     delphorOracleMockUSDCPDA,
-    delphorAggregatorMockSOLPDA;
+    aggregatorGlobalAccount;
 
   let pythProductAccount = systemProgram;
   let pythPriceAccount = systemProgram;

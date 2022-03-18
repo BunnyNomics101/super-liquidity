@@ -31,8 +31,7 @@ describe("super-liquidity", () => {
 
   const superLiquidityProgram = anchor.workspace.SuperLiquidity;
   const delphorOracleProgram = anchor.workspace.DelphorOracle;
-  const delphorOracleAggregatorProgram =
-    anchor.workspace.DelphorOracleAggregator;
+  const delphorAggregatorProgram = anchor.workspace.DelphorOracleAggregator;
   const adminAccount = provider.wallet.publicKey;
   const alice = anchor.web3.Keypair.generate();
   const bob = anchor.web3.Keypair.generate();
@@ -65,6 +64,7 @@ describe("super-liquidity", () => {
     delphorMockSOLPDA,
     delphorOracleMockSOLPDA,
     delphorOracleMockUSDCPDA,
+    aggregatorGlobalAccount,
     finalAmount;
 
   function Lamport(value) {
@@ -111,64 +111,12 @@ describe("super-liquidity", () => {
     assert.ok(balance == anchor.web3.LAMPORTS_PER_SOL * 10);
   });
 
-  it("DelphorOracle create MockSOL coin", async () => {
-    [delphorOracleMockSOLPDA] = await PublicKey.findProgramAddress(
-      [mockSOL.symbol],
-      delphorOracleProgram.programId
-    );
-
-    await programCall(
-      delphorOracleProgram,
-      "createCoin",
-      [mockSOL.price, mockSOL.price, mockSOL.symbol],
-      {
-        coin: delphorOracleMockSOLPDA,
-        authority,
-        payer,
-        systemProgram,
-      }
-    );
-
-    const delphorOracleMockSOLData =
-      await delphorOracleProgram.account.coinInfo.fetch(
-        delphorOracleMockSOLPDA
-      );
-
-    checkData(
-      mockSOL,
-      delphorOracleMockSOLData.symbol,
-      delphorOracleMockSOLData.coinGeckoPrice
-    );
+  it("Create mockSOL mint", async () => {
+    mockSOLMint = await createMint(provider, adminAccount);
   });
 
-  it("DelphorOracle create MockUSDC coin", async () => {
-    [delphorOracleMockUSDCPDA] = await PublicKey.findProgramAddress(
-      [mockUSDC.symbol],
-      delphorOracleProgram.programId
-    );
-
-    await programCall(
-      delphorOracleProgram,
-      "createCoin",
-      [mockUSDC.price, mockUSDC.price, mockUSDC.symbol],
-      {
-        coin: delphorOracleMockUSDCPDA,
-        authority,
-        payer,
-        systemProgram,
-      }
-    );
-
-    const delphorOracleMockUSDCData =
-      await delphorOracleProgram.account.coinInfo.fetch(
-        delphorOracleMockUSDCPDA
-      );
-
-    checkData(
-      mockUSDC,
-      delphorOracleMockUSDCData.symbol,
-      delphorOracleMockUSDCData.coinGeckoPrice
-    );
+  it("Create mockUSDC mint", async () => {
+    mockUSDCMint = await createMint(provider, adminAccount);
   });
 
   it("Create MockSOL and mint test tokens", async () => {
@@ -265,129 +213,259 @@ describe("super-liquidity", () => {
     assert.ok(bobMockUSDCAccount.amount == 0);
   });
 
-  it("DelphorOracle init coin", async () => {
-    [delphorMockSOLPDA] = await PublicKey.findProgramAddress(
-      [mockSOLMint.toBuffer()],
-      delphorOracleAggregatorProgram.programId
+  it("DelphorOracle create mockSOL", async () => {
+    [delphorOracleMockSOLPDA] = await PublicKey.findProgramAddress(
+      [mockSOL.symbol],
+      delphorOracleProgram.programId
     );
 
     await programCall(
-      delphorOracleAggregatorProgram,
-      "initCoin",
-      [mockSOL.decimals, mockSOL.symbol],
+      delphorOracleProgram,
+      "createCoin",
+      [mockSOL.price, mockSOL.price, mockSOL.price, mockSOL.symbol],
       {
-        switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
-        pythProductAccount: pythProductAccount,
-        coinData: delphorMockSOLPDA,
-        mint: mockSOLMint,
-        authority,
+        coin: delphorOracleMockSOLPDA,
+        authority: adminAccount,
         payer,
         systemProgram,
       }
     );
 
-    const delphorMockSOLData =
-      await delphorOracleAggregatorProgram.account.coinData.fetch(
-        delphorMockSOLPDA
-      );
-
-    assert.ok(delphorMockSOLData.symbol == mockSOL.symbol);
-    assert.ok(delphorMockSOLData.mint.toBase58() == mockSOLMint.toBase58());
-    assert.ok(
-      delphorMockSOLData.authority.toBase58() == adminAccount.toBase58()
+    const pdaData = await delphorOracleProgram.account.coinInfo.fetch(
+      delphorOracleMockSOLPDA
     );
-    assert.ok(delphorMockSOLData.decimals == mockSOL.decimals);
+
+    assert.ok(
+      checkEqualValues(
+        [mockSOL.price, adminAccount, mockSOL.symbol],
+        [pdaData.orcaPrice, pdaData.authority, pdaData.symbol]
+      )
+    );
   });
 
-  it("DelphorOracle update price", async () => {
-    await programCall(delphorOracleAggregatorProgram, "updateCoinPrice", [], {
+  it("DelphorOracle create mockUSDC", async () => {
+    [delphorOracleMockUSDCPDA] = await PublicKey.findProgramAddress(
+      [mockUSDC.symbol],
+      delphorOracleProgram.programId
+    );
+
+    await programCall(
+      delphorOracleProgram,
+      "createCoin",
+      [mockUSDC.price, mockUSDC.price, mockUSDC.price, mockUSDC.symbol],
+      {
+        coin: delphorOracleMockUSDCPDA,
+        authority: adminAccount,
+        payer,
+        systemProgram,
+      }
+    );
+
+    const pdaData = await delphorOracleProgram.account.coinInfo.fetch(
+      delphorOracleMockUSDCPDA
+    );
+
+    assert.ok(
+      checkEqualValues(
+        [mockUSDC.price, adminAccount, mockUSDC.symbol],
+        [pdaData.orcaPrice, pdaData.authority, pdaData.symbol]
+      )
+    );
+  });
+
+  it("DelphorAggregator init global account", async () => {
+    let bumpGlobalAccount;
+    [aggregatorGlobalAccount, bumpGlobalAccount] =
+      await PublicKey.findProgramAddress(
+        [adminAccount.toBuffer()],
+        delphorAggregatorProgram.programId
+      );
+
+    await programCall(
+      delphorAggregatorProgram,
+      "initGlobalAccount",
+      [adminAccount],
+      {
+        globalAccount: aggregatorGlobalAccount,
+        payer,
+        systemProgram,
+      }
+    );
+
+    const globalAccount =
+      await delphorAggregatorProgram.account.globalAccount.fetch(
+        aggregatorGlobalAccount
+      );
+
+    assert.ok(
+      checkEqualValues(
+        [bumpGlobalAccount, adminAccount, []],
+        [globalAccount.bump, globalAccount.authority, globalAccount.tokens]
+      )
+    );
+  });
+
+  it("DelphorAggregator add mockSOL", async () => {
+    await programCall(
+      delphorAggregatorProgram,
+      "addToken",
+      [mockSOL.decimals, mockSOL.symbol],
+      {
+        globalAccount: aggregatorGlobalAccount,
+        mint: mockSOLMint,
+        switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
+        pythProductAccount: pythProductAccount,
+        authority: adminAccount,
+      }
+    );
+
+    const globalAccount =
+      await delphorAggregatorProgram.account.globalAccount.fetch(
+        aggregatorGlobalAccount
+      );
+
+    let mockSOLData = globalAccount.tokens[0];
+    assert.ok(
+      checkEqualValues(
+        [
+          1,
+          0,
+          0,
+          mockSOLMint,
+          mockSOL.decimals,
+          pythProductAccount,
+          switchboardOptimizedFeedAccount,
+          mockSOL.symbol,
+        ],
+        [
+          globalAccount.tokens.length,
+          mockSOLData.price,
+          mockSOLData.lastUpdateTimestamp,
+          mockSOLData.mint,
+          mockSOLData.decimals,
+          mockSOLData.pythPriceAccount,
+          mockSOLData.switchboardOptimizedFeedAccount,
+          mockSOLData.symbol,
+        ]
+      )
+    );
+  });
+
+  it("DelphorAggregator add mockUSDC", async () => {
+    await programCall(
+      delphorAggregatorProgram,
+      "addToken",
+      [mockUSDC.decimals, mockUSDC.symbol],
+      {
+        globalAccount: aggregatorGlobalAccount,
+        mint: mockUSDCMint,
+        switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
+        pythProductAccount: pythProductAccount,
+        authority: adminAccount,
+      }
+    );
+
+    const globalAccount =
+      await delphorAggregatorProgram.account.globalAccount.fetch(
+        aggregatorGlobalAccount
+      );
+
+    let mockUSDCData = globalAccount.tokens[1];
+    assert.ok(
+      checkEqualValues(
+        [
+          2,
+          0,
+          0,
+          mockUSDCMint,
+          mockUSDC.decimals,
+          pythProductAccount,
+          switchboardOptimizedFeedAccount,
+          mockUSDC.symbol,
+        ],
+        [
+          globalAccount.tokens.length,
+          mockUSDCData.price,
+          mockUSDCData.lastUpdateTimestamp,
+          mockUSDCData.mint,
+          mockUSDCData.decimals,
+          mockUSDCData.pythPriceAccount,
+          mockUSDCData.switchboardOptimizedFeedAccount,
+          mockUSDCData.symbol,
+        ]
+      )
+    );
+  });
+
+  it("DelphorAggregator update mockSOL price", async () => {
+    await programCall(delphorAggregatorProgram, "updateTokenPrice", [0], {
       switchboardOptimizedFeedAccount,
       pythPriceAccount,
       delphorOracle: delphorOracleMockSOLPDA,
-      coinData: delphorMockSOLPDA,
-      payer,
-      systemProgram,
+      globalAccount: aggregatorGlobalAccount,
+      authority: adminAccount,
+      mint: mockSOLMint,
     });
 
-    const delphorMockSOLData =
-      await delphorOracleAggregatorProgram.account.coinData.fetch(
-        delphorMockSOLPDA
+    const globalAccount =
+      await delphorAggregatorProgram.account.globalAccount.fetch(
+        aggregatorGlobalAccount
       );
 
-    checkData(mockSOL, delphorMockSOLData.symbol, delphorMockSOLData.price);
+    assert.ok(globalAccount.tokens[0].price.eq(mockSOL.price));
   });
 
-  it("DelphorOracle init mockUSDC coin", async () => {
-    [delphorMockUSDCPDA] = await PublicKey.findProgramAddress(
-      [mockUSDCMint.toBuffer()],
-      delphorOracleAggregatorProgram.programId
-    );
-
-    await programCall(
-      delphorOracleAggregatorProgram,
-      "initCoin",
-      [mockUSDC.decimals, mockUSDC.symbol],
-      {
-        switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
-        pythProductAccount: pythProductAccount,
-        coinData: delphorMockUSDCPDA,
-        mint: mockUSDCMint,
-        authority,
-        payer,
-        systemProgram,
-      }
-    );
-
-    const delphorMockUSDCData =
-      await delphorOracleAggregatorProgram.account.coinData.fetch(
-        delphorMockUSDCPDA
-      );
-
-    assert.ok(delphorMockUSDCData.symbol == mockUSDC.symbol);
-    assert.ok(delphorMockUSDCData.mint.toBase58() == mockUSDCMint.toBase58());
-    assert.ok(
-      delphorMockUSDCData.authority.toBase58() == adminAccount.toBase58()
-    );
-    assert.ok(delphorMockUSDCData.decimals == mockUSDC.decimals);
-  });
-
-  it("DelphorOracle update mockUSDC price", async () => {
-    await programCall(delphorOracleAggregatorProgram, "updateCoinPrice", [], {
+  it("DelphorAggregator update mockUSDC price", async () => {
+    await programCall(delphorAggregatorProgram, "updateTokenPrice", [1], {
       switchboardOptimizedFeedAccount,
       pythPriceAccount,
       delphorOracle: delphorOracleMockUSDCPDA,
-      coinData: delphorMockUSDCPDA,
-      payer,
-      systemProgram,
+      globalAccount: aggregatorGlobalAccount,
+      authority: adminAccount,
+      mint: mockUSDCMint,
     });
 
-    const delphorMockUSDCData =
-      await delphorOracleAggregatorProgram.account.coinData.fetch(
-        delphorMockUSDCPDA
+    const globalAccount =
+      await delphorAggregatorProgram.account.globalAccount.fetch(
+        aggregatorGlobalAccount
       );
 
-    checkData(mockUSDC, delphorMockUSDCData.symbol, delphorMockUSDCData.price);
+    assert.ok(globalAccount.tokens[1].price.eq(mockUSDC.price));
   });
 
   it("Initialize global state", async () => {
-    [globalState] = await PublicKey.findProgramAddress(
+    let globalStateBump;
+    [globalState, globalStateBump] = await PublicKey.findProgramAddress(
       [adminAccount.toBuffer()],
       superLiquidityProgram.programId
     );
 
-    await programCall(superLiquidityProgram, "initialize", [], {
+    await programCall(superLiquidityProgram, "initializeGlobalState", [], {
       adminAccount: adminAccount,
       globalState,
       systemProgram,
     });
+
+    const globalStateData =
+      await superLiquidityProgram.account.globalState.fetch(globalState);
+
+    assert.ok(
+      checkEqualValues(
+        [adminAccount, globalStateBump, 0],
+        [
+          globalStateData.adminAccount,
+          globalStateData.bump,
+          globalStateData.tokens.length,
+        ]
+      )
+    );
   });
 
   it("Initialize MockSOL token store", async () => {
-    [tokenStoreAuthority, tokenStoreAuthorityBump] =
-      await PublicKey.findProgramAddress(
-        [Buffer.from("store_auth")],
-        superLiquidityProgram.programId
-      );
+    [tokenStoreAuthority] = await PublicKey.findProgramAddress(
+      [Buffer.from("store_auth")],
+      superLiquidityProgram.programId
+    );
 
     mockSOLStore = await createAssociatedTokenAccount(
       provider,
@@ -404,12 +482,6 @@ describe("super-liquidity", () => {
   });
 
   it("Initialize MockUSDC token store", async () => {
-    [tokenStoreAuthority, tokenStoreAuthorityBump] =
-      await PublicKey.findProgramAddress(
-        [Buffer.from("store_auth")],
-        superLiquidityProgram.programId
-      );
-
     mockUSDCStore = await createAssociatedTokenAccount(
       provider,
       mockUSDCMint,
@@ -424,26 +496,42 @@ describe("super-liquidity", () => {
     );
   });
 
+  it("Add mockSOL to globalState", async () => {
+    await programCall(superLiquidityProgram, "addToken", [], {
+      adminAccount,
+      globalState,
+      mint: mockSOLMint,
+      systemProgram,
+    });
+
+    await new Promise(r => setTimeout(r, 10000));
+
+
+    const globalStateData =
+      await superLiquidityProgram.account.globalState.fetch(globalState);
+
+    console.log(mockSOLMint.toString());
+    console.log(globalStateData.adminAccount.toBase58());
+    console.log(globalStateData.tokens[0].toString());
+    assert.ok(
+      checkEqualValues(
+        [1, mockSOLMint],
+        [globalStateData.tokens.length, globalStateData.tokens[0]]
+      )
+    );
+  });
+
+  /*
   it("Initialize alice mockSOL vault", async () => {
-    [aliceMockSOLVault] =
-      await PublicKey.findProgramAddress(
-        [alice.publicKey.toBuffer(), mockSOLMint.toBuffer()],
-        superLiquidityProgram.programId
-      );
+    [aliceMockSOLVault] = await PublicKey.findProgramAddress(
+      [alice.publicKey.toBuffer(), mockSOLMint.toBuffer()],
+      superLiquidityProgram.programId
+    );
 
     await programCall(
       superLiquidityProgram,
       "initUserVault",
-      [
-        0,
-        0,
-        new BN(0),
-        new BN(0),
-        false,
-        false,
-        false,
-        new BN(0),
-      ],
+      [0, 0, new BN(0), new BN(0), false, false, false, new BN(0)],
       {
         globalState,
         userAccount: alice.publicKey,
@@ -469,25 +557,15 @@ describe("super-liquidity", () => {
 
   it("Initialize alice mockUSDC vault", async () => {
     // Associated account PDA - store user data
-    [aliceMockUSDCVault] =
-      await PublicKey.findProgramAddress(
-        [alice.publicKey.toBuffer(), mockUSDCMint.toBuffer()],
-        superLiquidityProgram.programId
-      );
+    [aliceMockUSDCVault] = await PublicKey.findProgramAddress(
+      [alice.publicKey.toBuffer(), mockUSDCMint.toBuffer()],
+      superLiquidityProgram.programId
+    );
 
     await programCall(
       superLiquidityProgram,
       "initUserVault",
-      [
-        0,
-        0,
-        new BN(0),
-        new BN(0),
-        false,
-        false,
-        false,
-        new BN(0),
-      ],
+      [0, 0, new BN(0), new BN(0), false, false, false, new BN(0)],
       {
         globalState,
         userAccount: alice.publicKey,
@@ -521,16 +599,7 @@ describe("super-liquidity", () => {
     await programCall(
       superLiquidityProgram,
       "initUserVault",
-      [
-        0,
-        0,
-        new BN(0),
-        new BN(0),
-        false,
-        false,
-        false,
-        new BN(0),
-      ],
+      [0, 0, new BN(0), new BN(0), false, false, false, new BN(0)],
       {
         globalState,
         userAccount: bob.publicKey,
@@ -544,25 +613,15 @@ describe("super-liquidity", () => {
 
   it("Initialize bob mockUSDC vault", async () => {
     // Associated account PDA - store user data
-    [bobMockUSDCVault] =
-      await PublicKey.findProgramAddress(
-        [bob.publicKey.toBuffer(), mockUSDCMint.toBuffer()],
-        superLiquidityProgram.programId
-      );
+    [bobMockUSDCVault] = await PublicKey.findProgramAddress(
+      [bob.publicKey.toBuffer(), mockUSDCMint.toBuffer()],
+      superLiquidityProgram.programId
+    );
 
     await programCall(
       superLiquidityProgram,
       "initUserVault",
-      [
-        0,
-        0,
-        new BN(0),
-        new BN(0),
-        false,
-        false,
-        false,
-        new BN(0),
-      ],
+      [0, 0, new BN(0), new BN(0), false, false, false, new BN(0)],
       {
         globalState,
         userAccount: bob.publicKey,
@@ -583,16 +642,7 @@ describe("super-liquidity", () => {
     await programCall(
       superLiquidityProgram,
       "updateUserVault",
-      [
-        sellFee,
-        buyFee,
-        min,
-        max,
-        true,
-        true,
-        true,
-        new BN(0),
-      ],
+      [sellFee, buyFee, min, max, true, true, true, new BN(0)],
       {
         userAccount: alice.publicKey,
         userVault: aliceMockSOLVault,
@@ -628,16 +678,7 @@ describe("super-liquidity", () => {
     await programCall(
       superLiquidityProgram,
       "updateUserVault",
-      [
-        sellFee,
-        buyFee,
-        min,
-        max,
-        true,
-        true,
-        true,
-        new BN(0),
-      ],
+      [sellFee, buyFee, min, max, true, true, true, new BN(0)],
       {
         userAccount: alice.publicKey,
         userVault: aliceMockUSDCVault,
@@ -673,16 +714,7 @@ describe("super-liquidity", () => {
     await programCall(
       superLiquidityProgram,
       "updateUserVault",
-      [
-        sellFee,
-        buyFee,
-        min,
-        max,
-        true,
-        true,
-        true,
-        new BN(0),
-      ],
+      [sellFee, buyFee, min, max, true, true, true, new BN(0)],
       {
         userAccount: bob.publicKey,
         userVault: bobMockSOLVault,
@@ -716,16 +748,7 @@ describe("super-liquidity", () => {
     await programCall(
       superLiquidityProgram,
       "updateUserVault",
-      [
-        sellFee,
-        buyFee,
-        min,
-        max,
-        true,
-        true,
-        true,
-        new BN(0),
-      ],
+      [sellFee, buyFee, min, max, true, true, true, new BN(0)],
       {
         userAccount: bob.publicKey,
         userVault: bobMockUSDCVault,
@@ -875,16 +898,7 @@ describe("super-liquidity", () => {
     await programCall(
       superLiquidityProgram,
       "updateUserVault",
-      [
-        sellFee,
-        buyFee,
-        min,
-        max,
-        false,
-        true,
-        true,
-        new BN(0),
-      ],
+      [sellFee, buyFee, min, max, false, true, true, new BN(0)],
       {
         userAccount: alice.publicKey,
         userVault: aliceMockSOLVault,
@@ -952,16 +966,7 @@ describe("super-liquidity", () => {
     await programCall(
       superLiquidityProgram,
       "updateUserVault",
-      [
-        sellFee,
-        buyFee,
-        min,
-        max,
-        true,
-        true,
-        true,
-        new BN(0),
-      ],
+      [sellFee, buyFee, min, max, true, true, true, new BN(0)],
       {
         userAccount: alice.publicKey,
         userVault: aliceMockSOLVault,
@@ -1141,4 +1146,5 @@ describe("super-liquidity", () => {
       )
     );
   });
+  */
 });
