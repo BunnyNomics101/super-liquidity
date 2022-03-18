@@ -15,7 +15,7 @@ pub struct InitGlobalState<'info> {
         payer = admin_account,
         space = 8 + core::mem::size_of::<GlobalState>() + 64 * 32, // 2048 bytes for 64 tokens
         seeds = [
-            admin_account.key().as_ref(),
+            get_admin().as_ref(),
         ],
         bump,
     )]
@@ -24,6 +24,7 @@ pub struct InitGlobalState<'info> {
     pub system_program: Program<'info, System>,
 }
 impl<'info> InitGlobalState<'info> {
+    #[access_control(only_owner(&self.admin_account.key))]
     pub fn process(&mut self, bump: u8) -> Result<()> {
         *self.global_state = GlobalState {
             admin_account: self.admin_account.key(),
@@ -45,7 +46,7 @@ pub struct AddToken<'info> {
     #[account(
         mut,
         seeds = [
-            admin_account.key().as_ref(),
+            get_admin().as_ref(),
         ],
         bump = global_state.bump,
     )]
@@ -53,6 +54,7 @@ pub struct AddToken<'info> {
     pub mint: Account<'info, Mint>,
 }
 impl<'info> AddToken<'info> {
+    #[access_control(only_owner(&self.admin_account.key))]
     pub fn process(&mut self) -> Result<()> {
         if self.global_state.tokens.contains(&self.mint.key()) {
             return err!(ErrorCode::TokenAlreadyAdded);
@@ -83,7 +85,15 @@ impl<'info> ChangeAuthority<'info> {
     }
 }
 
+fn only_owner(user: &Pubkey) -> Result<()> {
+    if user != &get_admin() {
+        return err!(ErrorCode::AdminAccessError);
+    }
+    Ok(())
+}
+
 #[error_code]
 pub enum ErrorCode {
+    AdminAccessError,
     TokenAlreadyAdded,
 }

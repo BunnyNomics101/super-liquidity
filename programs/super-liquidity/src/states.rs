@@ -2,7 +2,11 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
 
 //-----------------------------------------------------
-pub static ADMIN_ADDRESS: &str = "2kKx9xZB85wAbpvXLBui78jVZhPBuY3BxZ5Mad9d94h5";
+pub fn get_admin() -> Pubkey {
+    return "2kKx9xZB85wAbpvXLBui78jVZhPBuY3BxZ5Mad9d94h5"
+        .parse()
+        .unwrap();
+}
 
 ///delphor-user-program PDA
 #[account]

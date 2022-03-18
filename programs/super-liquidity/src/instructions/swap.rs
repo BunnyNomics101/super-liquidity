@@ -8,7 +8,7 @@ use delphor_oracle_aggregator::{check_token_position as check_token_aggregator, 
 pub struct Swap<'info> {
     #[account(
         seeds = [
-            ADMIN_ADDRESS.as_ref(),
+            get_admin().as_ref(),
         ], 
         bump = global_state.bump
     )]

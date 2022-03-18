@@ -46,7 +46,7 @@ impl<'info> InitUserLiquidityProvider<'info> {
 pub struct UpdateUserLiquidityProvider<'info> {
     #[account(
         seeds = [
-            ADMIN_ADDRESS.as_ref(),
+            get_admin().as_ref(),
         ], 
         bump = global_state.bump
     )]
@@ -105,16 +105,27 @@ pub struct InitUserPortfolio<'info> {
         ],
         bump,
     )]
-    pub user_portfolio: Account<'info, UserVault>,
+    pub user_vault: Account<'info, UserVault>,
     pub system_program: Program<'info, System>,
 }
 impl<'info> InitUserPortfolio<'info> {
     pub fn process(&mut self, bump: u8) -> Result<()> {
-        *self.user_portfolio = UserVault {
+        *self.user_vault = UserVault {
             bump,
             user: self.user_account.key(),
             vault_type: VaultType::PortfolioManager{ auto_fee: true, tolerance: 1000},
-            vaults: Vec::with_capacity(50),
+            vaults: vec![UserCoinVault{
+                amount: 0,
+                min: 0,
+                max: 0,
+                buy_fee: 0,
+                sell_fee: 0,
+                timestamp: 0,
+                receive_status: false,
+                provide_status: false,
+                limit_price_status: false,
+                limit_price: 0,
+            }; 50],
         };
         Ok(())
     }
@@ -124,7 +135,7 @@ impl<'info> InitUserPortfolio<'info> {
 pub struct UpdateUserPortfolio<'info> {
     #[account(
         seeds = [
-            ADMIN_ADDRESS.as_ref(),
+            get_admin().as_ref(),
         ], 
         bump = global_state.bump
     )]
@@ -137,9 +148,9 @@ pub struct UpdateUserPortfolio<'info> {
             user_account.key().as_ref(),
             "portfolio_manager".as_bytes().as_ref()
         ], 
-        bump = user_portfolio.bump
+        bump = user_vault.bump
     )]
-    pub user_portfolio: Account<'info, UserVault>,
+    pub user_vault: Account<'info, UserVault>,
 }
 impl<'info> UpdateUserPortfolio<'info> {
     #[access_control(check_token_position(&self.global_state, &self.mint, position))]
@@ -153,7 +164,7 @@ impl<'info> UpdateUserPortfolio<'info> {
         limit_price_status: bool,
         limit_price: u64,
     ) -> Result<()> {
-        let vault = &mut self.user_portfolio.vaults[position as usize];
+        let vault = &mut self.user_vault.vaults[position as usize];
         vault.min = min;
         vault.max = max;
         vault.timestamp = Clock::get().unwrap().unix_timestamp as u32;

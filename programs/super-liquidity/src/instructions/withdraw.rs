@@ -6,7 +6,7 @@ use anchor_spl::token::{Token, TokenAccount, Transfer, Mint};
 pub struct Withdraw<'info> {
     #[account(
         seeds = [
-            ADMIN_ADDRESS.as_ref(),
+            get_admin().as_ref(),
         ], 
         bump = global_state.bump
     )]

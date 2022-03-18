@@ -101,11 +101,6 @@
           "isSigner": false
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
@@ -306,7 +301,7 @@
           "isSigner": true
         },
         {
-          "name": "userPortfolio",
+          "name": "userVault",
           "isMut": true,
           "isSigner": false
         },
@@ -337,7 +332,7 @@
           "isSigner": false
         },
         {
-          "name": "userPortfolio",
+          "name": "userVault",
           "isMut": true,
           "isSigner": false
         }
@@ -404,16 +399,11 @@
         },
         {
           "name": "globalState",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
           "name": "mint",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
           "isMut": false,
           "isSigner": false
         }
@@ -566,6 +556,10 @@
   "errors": [
     {
       "code": 6000,
+      "name": "AdminAccessError"
+    },
+    {
+      "code": 6001,
       "name": "TokenAlreadyAdded"
     }
   ],

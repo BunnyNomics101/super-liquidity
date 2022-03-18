@@ -6,7 +6,7 @@ use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
 pub struct Deposit<'info> {
     #[account(
         seeds = [
-            ADMIN_ADDRESS.as_ref(),
+            get_admin().as_ref(),
         ], 
         bump = global_state.bump
     )]

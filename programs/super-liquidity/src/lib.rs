@@ -67,7 +67,7 @@ pub mod super_liquidity {
 
     pub fn init_user_portfolio(ctx: Context<InitUserPortfolio>) -> Result<()> {
         ctx.accounts
-            .process(*ctx.bumps.get("user_portfolio").unwrap())
+            .process(*ctx.bumps.get("user_vault").unwrap())
     }
 
     pub fn update_user_portfolio(
