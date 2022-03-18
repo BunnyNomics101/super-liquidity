@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
 
 #[derive(Accounts)]
-pub struct InitUserLiquiidtyProvider<'info> {
+pub struct InitUserLiquidityProvider<'info> {
     #[account(mut)]
     pub user_account: Signer<'info>,
     #[account(
@@ -19,13 +19,24 @@ pub struct InitUserLiquiidtyProvider<'info> {
     pub user_vault: Account<'info, UserVault>,
     pub system_program: Program<'info, System>,
 }
-impl<'info> InitUserLiquiidtyProvider<'info> {
+impl<'info> InitUserLiquidityProvider<'info> {
     pub fn process(&mut self, bump: u8) -> Result<()> {
         *self.user_vault = UserVault {
             bump,
             user: self.user_account.key(),
             vault_type: VaultType::LiquidityProvider,
-            vaults: Vec::with_capacity(50),
+            vaults: vec![UserCoinVault{
+                amount: 0,
+                min: 0,
+                max: 0,
+                buy_fee: 0,
+                sell_fee: 0,
+                timestamp: 0,
+                receive_status: false,
+                provide_status: false,
+                limit_price_status: false,
+                limit_price: 0,
+            }; 50],
         };
         Ok(())
     }

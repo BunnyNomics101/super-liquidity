@@ -36,7 +36,7 @@ pub mod super_liquidity {
             .process(swap_amount, min_amount, bump, position_buy, position_sell)
     }
 
-    pub fn init_user_liquidity_provider(ctx: Context<InitUserLiquiidtyProvider>) -> Result<()> {
+    pub fn init_user_liquidity_provider(ctx: Context<InitUserLiquidityProvider>) -> Result<()> {
         ctx.accounts.process(*ctx.bumps.get("user_vault").unwrap())
     }
 

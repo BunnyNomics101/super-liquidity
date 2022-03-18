@@ -13,7 +13,7 @@ pub struct InitGlobalState<'info> {
     #[account(
         init,
         payer = admin_account,
-        space = 8 + core::mem::size_of::<GlobalState>() + 128, // 128 bytes future expansion
+        space = 8 + core::mem::size_of::<GlobalState>() + 64 * 32, // 2048 bytes for 64 tokens
         seeds = [
             admin_account.key().as_ref(),
         ],
@@ -25,9 +25,11 @@ pub struct InitGlobalState<'info> {
 }
 impl<'info> InitGlobalState<'info> {
     pub fn process(&mut self, bump: u8) -> Result<()> {
-        self.global_state.admin_account = *self.admin_account.key;
-        self.global_state.bump = bump;
-        self.global_state.tokens = vec![];
+        *self.global_state = GlobalState {
+            admin_account: self.admin_account.key(),
+            bump,
+            tokens: vec![],
+        };
         Ok(())
     }
 }
@@ -41,6 +43,7 @@ pub struct AddToken<'info> {
 
     // Global state, create PDA
     #[account(
+        mut,
         seeds = [
             admin_account.key().as_ref(),
         ],
@@ -48,7 +51,6 @@ pub struct AddToken<'info> {
     )]
     pub global_state: Account<'info, GlobalState>,
     pub mint: Account<'info, Mint>,
-    pub system_program: Program<'info, System>,
 }
 impl<'info> AddToken<'info> {
     pub fn process(&mut self) -> Result<()> {

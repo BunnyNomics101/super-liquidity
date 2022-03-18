@@ -23,7 +23,6 @@ pub struct Withdraw<'info> {
     /// store to withdraw tokens from
     #[account(mut, associated_token::mint = mint, associated_token::authority = token_store_authority, constraint = token_store_pda.mint == send_token_to.mint)]
     pub token_store_pda: Account<'info, TokenAccount>,
-    pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
 }
 impl<'info> Withdraw<'info> {
