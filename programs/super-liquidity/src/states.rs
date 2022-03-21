@@ -77,13 +77,13 @@ pub fn check_vault(user: &Pubkey, user_vault: &Account<UserVault>) -> Result<()>
         Pubkey::find_program_address(&[user.as_ref(), "portfolio_manager".as_ref()], &crate::ID);
     let (liquidity_provider_pda, liquidity_provider_bump) =
         Pubkey::find_program_address(&[user.as_ref(), "liquidity_provider".as_ref()], &crate::ID);
-    if (user_vault.key() != portfolio_pda && user_vault.bump != portfolio_bump)
-        || (user_vault.key() != liquidity_provider_pda
-            && user_vault.bump != liquidity_provider_bump)
+    if (user_vault.key() == portfolio_pda && user_vault.bump == portfolio_bump)
+        || (user_vault.key() == liquidity_provider_pda
+            && user_vault.bump == liquidity_provider_bump)
     {
-        return err!(ErrorCode::InvalidVaultAccount);
+        return Ok(());
     }
-    Ok(())
+    return err!(ErrorCode::InvalidVaultAccount);
 }
 
 #[error_code]
