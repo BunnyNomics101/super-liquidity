@@ -3,6 +3,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount, Transfer, Mint};
 
 #[derive(Accounts)]
+#[instruction(bump: u8, amount: u64, position: u8)]
 pub struct Withdraw<'info> {
     #[account(
         seeds = [
@@ -22,7 +23,7 @@ pub struct Withdraw<'info> {
         seeds = [
             "store_auth".as_ref()
         ],
-        bump,
+        bump = bump,
     )]
     pub token_store_authority: AccountInfo<'info>,
     pub mint: Account<'info, Mint>,

@@ -5,6 +5,7 @@ use anchor_spl::token::{Token, TokenAccount, Transfer};
 use delphor_oracle_aggregator::{check_token_position as check_token_aggregator, GlobalAccount};
 
 #[derive(Accounts)]
+#[instruction(swap_amount: u64, min_amount: u64, bump: u8, position_sell: u8, position_buy: u8)]
 pub struct Swap<'info> {
     #[account(
         seeds = [
@@ -17,7 +18,12 @@ pub struct Swap<'info> {
     #[account(mut)]
     pub user_vault: Box<Account<'info, UserVault>>,
     /// CHECK:
-    #[account(mut)]
+    #[account(
+        seeds = [
+            "store_auth".as_ref()
+        ],
+        bump = bump,
+    )]
     pub token_store_authority: AccountInfo<'info>,
     // token user sends
     pub mint_sell: Account<'info, Mint>,

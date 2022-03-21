@@ -1114,7 +1114,7 @@ describe("super-liquidity", () => {
     );
   });
 
-  xit("Bob swap mockSOL for mockUSDC", async () => {
+  it("Bob swap mockSOL for mockUSDC from LP alice vault", async () => {
     await programCall(
       superLiquidityProgram,
       "swap",
