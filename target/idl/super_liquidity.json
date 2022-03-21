@@ -141,7 +141,7 @@
         },
         {
           "name": "tokenStoreAuthority",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false
         },
         {

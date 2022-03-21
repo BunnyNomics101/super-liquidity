@@ -472,10 +472,11 @@ describe("super-liquidity", () => {
   });
 
   it("Initialize MockSOL token store", async () => {
-    [tokenStoreAuthority, tokenStoreAuthorityBump] = await PublicKey.findProgramAddress(
-      [Buffer.from("store_auth")],
-      superLiquidityProgram.programId
-    );
+    [tokenStoreAuthority, tokenStoreAuthorityBump] =
+      await PublicKey.findProgramAddress(
+        [Buffer.from("store_auth")],
+        superLiquidityProgram.programId
+      );
 
     mockSOLStore = await createAssociatedTokenAccount(
       provider,
@@ -1115,66 +1116,105 @@ describe("super-liquidity", () => {
   });
 
   it("Bob swap mockSOL for mockUSDC from LP alice vault", async () => {
+    const bobMockSOLBeforeBalance = (
+      await getTokenAccount(provider, bobmockSOL)
+    ).amount;
+    const delphorMockSOLBeforeBalance = (
+      await getTokenAccount(provider, mockSOLStore)
+    ).amount;
+    const delphorMockUSDCBeforeBalance = (
+      await getTokenAccount(provider, mockUSDCStore)
+    ).amount;
+    const aliceLPmockSOLBeforeBalance = (
+      await superLiquidityProgram.account.userVault.fetch(aliceLP)
+    ).vaults[positionMockSOL].amount;
+    const bobMockUSDCBeforeBalance = (
+      await getTokenAccount(provider, bobmockUSDC)
+    ).amount;
+    const aliceLPmockUSDCBeforeBalance = (
+      await superLiquidityProgram.account.userVault.fetch(aliceLP)
+    ).vaults[positionMockUSDC].amount;
+
     await programCall(
       superLiquidityProgram,
       "swap",
-      [bobSwapAmountSOLForUSDC, bobSwapUSDCMinAmount, tokenStoreAuthorityBump],
+      [
+        bobSwapAmountSOLForUSDC,
+        bobSwapUSDCMinAmount,
+        tokenStoreAuthorityBump,
+        positionMockSOL,
+        positionMockUSDC,
+      ],
       {
-        getCoinData: delphorMockSOLPDA,
-        sendCoinData: delphorMockUSDCPDA,
-        userVaultFrom: aliceMockUSDCVault,
-        userVaultTo: aliceLP,
+        globalState,
+        delphorAggregatorPrices: aggregatorGlobalAccount,
+        userVault: aliceLP,
         tokenStoreAuthority: tokenStoreAuthority,
-        mintSend: mockSOLMint,
-        mintReceive: mockUSDCMint,
+        mintSell: mockSOLMint,
+        mintBuy: mockUSDCMint,
         getTokenFrom: bobmockSOL,
         getTokenFromAuthority: bob.publicKey,
         sendTokenTo: bobmockUSDC,
         tokenStorePdaFrom: mockUSDCStore,
         tokenStorePdaTo: mockSOLStore,
-        systemProgram,
         tokenProgram: TOKEN_PROGRAM_ID,
       },
       [bob]
     );
 
-    bobMockSOLAccount = await getTokenAccount(provider, bobmockSOL);
-    programMockSOLAccount = await getTokenAccount(provider, mockSOLStore);
-    const aliceLPData = await superLiquidityProgram.account.userVault.fetch(
-      aliceLP
-    );
-    const aliceMockUSDCVaultData =
-      await superLiquidityProgram.account.userVault.fetch(aliceMockUSDCVault);
+    const bobMockSOLCurrentBalance = (
+      await getTokenAccount(provider, bobmockSOL)
+    ).amount;
+    const delphorMockSOLCurrentBalance = (
+      await getTokenAccount(provider, mockSOLStore)
+    ).amount;
+    const delphorMockUSDCCurrentBalance = (
+      await getTokenAccount(provider, mockUSDCStore)
+    ).amount;
+    const aliceLPmockSOLCurrentBalance = (
+      await superLiquidityProgram.account.userVault.fetch(aliceLP)
+    ).vaults[positionMockSOL].amount;
+    const bobMockUSDCCurrentBalance = (
+      await getTokenAccount(provider, bobmockUSDC)
+    ).amount;
+    const aliceLPmockUSDCCurrentBalance = (
+      await superLiquidityProgram.account.userVault.fetch(aliceLP)
+    ).vaults[positionMockUSDC].amount;
 
+    const swapBuyFee = (
+      await superLiquidityProgram.account.userVault.fetch(aliceLP)
+    ).vaults[positionMockSOL].buyFee;
+    const swapSellFee = (
+      await superLiquidityProgram.account.userVault.fetch(aliceLP)
+    ).vaults[positionMockSOL].sellFee;
     finalAmount = new BN(
       (bobSwapAmountSOLForUSDC *
         Math.trunc(
-          ((mockSOL.price * (10000 - aliceLPData.buyFee)) /
+          ((mockSOL.price * (10000 - swapBuyFee)) /
             10000 /
-            ((mockUSDC.price * (10000 + aliceMockUSDCVaultData.sellFee)) /
-              10000)) *
+            ((mockUSDC.price * (10000 + swapSellFee)) / 10000)) *
             10 ** 9
         )) /
         10 ** 9
     );
 
-    bobMockUSDCAccount = await getTokenAccount(provider, bobmockUSDC);
-
     assert.ok(
       checkEqualValues(
         [
-          aliceMockUSDCVaultData.amount,
-          bobMockUSDCAccount.amount,
-          aliceLPData.amount,
-          programMockSOLAccount.amount,
-          bobMockSOLAccount.amount,
+          bobMockSOLCurrentBalance,
+          delphorMockSOLCurrentBalance,
+          delphorMockUSDCCurrentBalance,
+          aliceLPmockSOLCurrentBalance,
+          bobMockUSDCCurrentBalance,
+          aliceLPmockUSDCCurrentBalance,
         ],
         [
-          depositAmountAliceMockUSDC.sub(finalAmount),
-          finalAmount,
-          depositAmountAliceMockSOL.add(bobSwapAmountSOLForUSDC),
-          depositAmountAliceMockSOL.add(bobSwapAmountSOLForUSDC),
-          mintMockSOLAmountToBob.sub(bobSwapAmountSOLForUSDC),
+          bobMockSOLBeforeBalance.sub(bobSwapAmountSOLForUSDC),
+          delphorMockSOLBeforeBalance.add(bobSwapAmountSOLForUSDC),
+          delphorMockUSDCBeforeBalance.sub(finalAmount),
+          aliceLPmockSOLBeforeBalance.add(bobSwapAmountSOLForUSDC),
+          bobMockUSDCBeforeBalance.add(finalAmount),
+          aliceLPmockUSDCBeforeBalance.sub(finalAmount),
         ]
       )
     );
@@ -1305,8 +1345,8 @@ describe("super-liquidity", () => {
           userVaultFrom: aliceMockUSDCVault,
           userVaultTo: aliceLP,
           tokenStoreAuthority: tokenStoreAuthority,
-          mintSend: mockSOLMint,
-          mintReceive: mockUSDCMint,
+          mintSell: mockSOLMint,
+          mintBuy: mockUSDCMint,
           getTokenFrom: bobmockSOL,
           getTokenFromAuthority: bob.publicKey,
           sendTokenTo: bobmockUSDC,
@@ -1337,8 +1377,8 @@ describe("super-liquidity", () => {
           userVaultFrom: aliceMockUSDCVault,
           userVaultTo: aliceLP,
           tokenStoreAuthority: tokenStoreAuthority,
-          mintSend: mockSOLMint,
-          mintReceive: mockUSDCMint,
+          mintSell: mockSOLMint,
+          mintBuy: mockUSDCMint,
           getTokenFrom: bobmockSOL,
           getTokenFromAuthority: bob.publicKey,
           sendTokenTo: bobmockUSDC,

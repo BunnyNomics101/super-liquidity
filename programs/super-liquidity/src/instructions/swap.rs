@@ -85,10 +85,23 @@ impl<'info> Swap<'info> {
             return err!(ErrorCode::ExceedsMaxAmount);
         }
 
-        let token_price: u128 = (sell_coin_price as u128 * (10000 - user_vault_to.buy_fee as u128)
+        let mut buy_fee = 10;
+        let mut sell_fee = 10;
+
+        match self.user_vault.vault_type{
+            VaultType::LiquidityProvider => {
+                buy_fee = user_vault_to.buy_fee;
+                sell_fee = user_vault_from.sell_fee;
+            }
+            VaultType::PortfolioManager {auto_fee: _, tolerance: _}=> {
+
+            }
+        }
+
+        let token_price: u128 = (sell_coin_price as u128 * (10000 - buy_fee as u128)
             / 10000)
             * u128::pow(10, buy_coin_decimals as u32)
-            / (buy_coin_price as u128 * (10000 + user_vault_from.sell_fee as u128) / 10000);
+            / (buy_coin_price as u128 * (10000 + sell_fee as u128) / 10000);
         // Calculate final amount with oracle price and fees
         let amount_to_send: u64 =
             ((swap_amount as u128 * token_price) / u128::pow(10, sell_coin_decimals as u32)) as u64;
