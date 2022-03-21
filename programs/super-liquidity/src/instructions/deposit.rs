@@ -13,6 +13,7 @@ pub struct Deposit<'info> {
     pub global_state: Account<'info, GlobalState>,
     /// CHECK:
     pub user_account: AccountInfo<'info>,
+    #[account(mut)]
     pub user_vault: Account<'info, UserVault>,
     /// CHECK:
     #[account(

@@ -12,6 +12,7 @@ pub struct Withdraw<'info> {
     )]
     pub global_state: Account<'info, GlobalState>,
     pub user_account: Signer<'info>,
+    #[account(mut)]
     pub user_vault: Account<'info, UserVault>,
     /// user account to receive tokens
     #[account(mut)]

@@ -14,6 +14,7 @@ pub struct Swap<'info> {
     )]
     pub global_state: Account<'info, GlobalState>,
     pub delphor_aggregator_prices: Account<'info, GlobalAccount>,
+    #[account(mut)]
     pub user_vault: Box<Account<'info, UserVault>>,
     /// CHECK:
     #[account(mut)]
