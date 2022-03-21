@@ -18,7 +18,12 @@ pub struct Withdraw<'info> {
     #[account(mut)]
     pub send_token_to: Account<'info, TokenAccount>,
     /// CHECK:
-    #[account(mut)]
+    #[account(
+        seeds = [
+            "store_auth".as_ref()
+        ],
+        bump,
+    )]
     pub token_store_authority: AccountInfo<'info>,
     pub mint: Account<'info, Mint>,
     /// store to withdraw tokens from

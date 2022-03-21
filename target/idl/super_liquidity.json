@@ -77,7 +77,7 @@
         },
         {
           "name": "userVault",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -87,7 +87,7 @@
         },
         {
           "name": "tokenStoreAuthority",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -136,7 +136,7 @@
         },
         {
           "name": "userVault",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
