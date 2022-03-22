@@ -14,7 +14,7 @@
   },
   "devDependencies": {
     "@orca-so/sdk": "^1.2.22",
-    "@project-serum/anchor-cli": "0.22.0",
+    "@project-serum/anchor-cli": "^0.22.0",
     "@solana/spl-token": "^0.1.8",
     "@solana/web3.js": "^1.31.0",
     "@types/chai": "^4.3.0",

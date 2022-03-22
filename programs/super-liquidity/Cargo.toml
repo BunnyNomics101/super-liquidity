@@ -16,8 +16,8 @@ default = ["anchor-debug"]
 anchor-debug = []
 
 [dependencies]
-anchor-lang = "0.22.0"
-anchor-spl = "0.22.0"
+anchor-lang = "0.23.0"
+anchor-spl = "0.23.0"
 solana-program = "1.8.11"
 delphor-oracle-aggregator = { path = "../delphor-oracle-aggregator", features = ["cpi"] }
 
