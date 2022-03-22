@@ -56,10 +56,10 @@ pub struct AddToken<'info> {
 impl<'info> AddToken<'info> {
     #[access_control(only_owner(&self.admin_account.key))]
     pub fn process(&mut self) -> Result<()> {
-        if self.global_state.tokens.contains(&self.mint.key()) {
-            return err!(ErrorCode::TokenAlreadyAdded);
-        }
-
+        require!(
+            !self.global_state.tokens.contains(&self.mint.key()),
+            ErrorCode::TokenAlreadyAdded
+        );
         self.global_state.tokens.push(self.mint.key());
         Ok(())
     }

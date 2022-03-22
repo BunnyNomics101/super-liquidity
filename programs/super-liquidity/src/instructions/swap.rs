@@ -69,21 +69,13 @@ impl<'info> Swap<'info> {
         let user_vault_from = &self.user_vault.vaults[position_buy as usize];
         let user_vault_to = &self.user_vault.vaults[position_sell as usize];
 
-        if !user_vault_from.provide_status {
-            return err!(ErrorCode::VaultProvideOff);
-        }
+        require!(user_vault_from.provide_status, ErrorCode::VaultProvideOff);
+        require!(user_vault_to.receive_status, ErrorCode::VaultRecieveOff);
+        if user_vault_from.limit_price_status {
+            require!(user_vault_from.limit_price < buy_coin_price, ErrorCode::PriceUnderLimitPrice);
 
-        if !user_vault_to.receive_status {
-            return err!(ErrorCode::VaultRecieveOff);
         }
-
-        if user_vault_from.limit_price_status && user_vault_from.limit_price > buy_coin_price {
-            return err!(ErrorCode::PriceUnderLimitPrice);
-        }
-
-        if user_vault_to.amount + swap_amount > user_vault_to.max {
-            return err!(ErrorCode::ExceedsMaxAmount);
-        }
+        require!(user_vault_to.amount + swap_amount <= user_vault_to.max, ErrorCode::ExceedsMaxAmount);
 
         let mut buy_fee = 10;
         let mut sell_fee = 10;
@@ -106,17 +98,9 @@ impl<'info> Swap<'info> {
         let amount_to_send: u64 =
             ((swap_amount as u128 * token_price) / u128::pow(10, sell_coin_decimals as u32)) as u64;
 
-        if amount_to_send < min_amount {
-            return err!(ErrorCode::InsufficientAmount);
-        }
-
-        if user_vault_from.amount < amount_to_send {
-            return err!(ErrorCode::VaultInsufficientAmount);
-        }
-
-        if user_vault_from.amount - amount_to_send < user_vault_from.min {
-            return err!(ErrorCode::ExceedsMinAmount);
-        }
+        require!(amount_to_send >= min_amount, ErrorCode::InsufficientAmount);    
+        require!(user_vault_from.amount >= amount_to_send, ErrorCode::VaultInsufficientAmount);
+        require!(user_vault_from.amount - amount_to_send >= user_vault_from.min, ErrorCode::ExceedsMinAmount);
 
         anchor_spl::token::transfer(
             CpiContext::new(
