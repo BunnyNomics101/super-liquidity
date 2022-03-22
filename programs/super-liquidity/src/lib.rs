@@ -75,8 +75,6 @@ pub mod super_liquidity {
         position: u8,
         min: u64,
         max: u64,
-        receive_status: bool,
-        provide_status: bool,
         limit_price_status: bool,
         limit_price: u64,
     ) -> Result<()> {
@@ -84,8 +82,6 @@ pub mod super_liquidity {
             position,
             min,
             max,
-            receive_status,
-            provide_status,
             limit_price_status,
             limit_price,
         )

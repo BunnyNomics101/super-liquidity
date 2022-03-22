@@ -810,12 +810,6 @@ describe("super-liquidity", () => {
       alicePM
     );
 
-    alicePMData.vaults.forEach((vault) => {
-      Object.values(vault).forEach((propertie) => {
-        assert.ok(Number(propertie) == 0);
-      });
-    });
-
     assert.ok(
       checkEqualValues(
         [bump, alice.publicKey, "portfolioManager", 50, true, 1000],
@@ -852,12 +846,6 @@ describe("super-liquidity", () => {
 
     let bobPMData = await superLiquidityProgram.account.userVault.fetch(bobPM);
 
-    bobPMData.vaults.forEach((vault) => {
-      Object.values(vault).forEach((propertie) => {
-        assert.ok(Number(propertie) == 0);
-      });
-    });
-
     assert.ok(
       checkEqualValues(
         [bump, bob.publicKey, "portfolioManager", 50, true, 1000],
@@ -877,7 +865,7 @@ describe("super-liquidity", () => {
     await programCall(
       superLiquidityProgram,
       "updateUserPortfolio",
-      [positionMockSOL, min, max, true, true, true, new BN(0)],
+      [positionMockSOL, min, max, true, new BN(0)],
       {
         globalState,
         userAccount: alice.publicKey,
@@ -910,7 +898,7 @@ describe("super-liquidity", () => {
     await programCall(
       superLiquidityProgram,
       "updateUserPortfolio",
-      [positionMockUSDC, min, max, true, true, true, new BN(0)],
+      [positionMockUSDC, min, max, true, new BN(0)],
       {
         globalState,
         userAccount: alice.publicKey,
@@ -943,7 +931,7 @@ describe("super-liquidity", () => {
     await programCall(
       superLiquidityProgram,
       "updateUserPortfolio",
-      [positionMockSOL, min, max, true, true, true, new BN(0)],
+      [positionMockSOL, min, max, true, new BN(0)],
       {
         globalState,
         userAccount: bob.publicKey,
@@ -976,7 +964,7 @@ describe("super-liquidity", () => {
     await programCall(
       superLiquidityProgram,
       "updateUserPortfolio",
-      [positionMockUSDC, min, max, true, true, true, new BN(0)],
+      [positionMockUSDC, min, max, true, new BN(0)],
       {
         globalState,
         userAccount: bob.publicKey,

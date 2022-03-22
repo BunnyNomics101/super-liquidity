@@ -351,14 +351,6 @@
           "type": "u64"
         },
         {
-          "name": "receiveStatus",
-          "type": "bool"
-        },
-        {
-          "name": "provideStatus",
-          "type": "bool"
-        },
-        {
           "name": "limitPriceStatus",
           "type": "bool"
         },

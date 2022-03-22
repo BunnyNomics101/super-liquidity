@@ -121,8 +121,8 @@ impl<'info> InitUserPortfolio<'info> {
                 buy_fee: 0,
                 sell_fee: 0,
                 timestamp: 0,
-                receive_status: false,
-                provide_status: false,
+                receive_status: true,
+                provide_status: true,
                 limit_price_status: false,
                 limit_price: 0,
             }; 50],
@@ -159,8 +159,6 @@ impl<'info> UpdateUserPortfolio<'info> {
         position: u8,
         min: u64,
         max: u64,
-        receive_status: bool,
-        provide_status: bool,
         limit_price_status: bool,
         limit_price: u64,
     ) -> Result<()> {
@@ -168,8 +166,6 @@ impl<'info> UpdateUserPortfolio<'info> {
         vault.min = min;
         vault.max = max;
         vault.timestamp = Clock::get().unwrap().unix_timestamp as u32;
-        vault.receive_status = receive_status;
-        vault.provide_status = provide_status;
         vault.limit_price_status = limit_price_status;
         vault.limit_price = limit_price;
         Ok(())

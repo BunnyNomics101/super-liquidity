@@ -52,8 +52,8 @@ pub struct UserCoinVault {
     pub buy_fee: u16,  // 0 for portfolio
     pub sell_fee: u16, // 0 for portfolio
     pub timestamp: u32,
-    pub receive_status: bool,
-    pub provide_status: bool,
+    pub receive_status: bool, // always true for portfolio manager
+    pub provide_status: bool, // always true for portfolio manager
     pub limit_price_status: bool,
     pub limit_price: u64,
 }
