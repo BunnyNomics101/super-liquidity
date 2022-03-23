@@ -2,20 +2,20 @@ anchor_version = "0.22.0"
 
 #TODO: user .secret file to address
 [programs.localnet]
-super_liquidity = "4FCQYxXVaK1aWE7gTLhTB5CwyjZGRFPFJstJdcNsoqck"
-delphor_oracle_aggregator = "HbyTY89Se2c8Je7KDKHVjUEGN2sAruFAw3S3NwubzeyU"
-delphor_oracle = "3xzPckGW3b771JsrcfQyRYzdPmsYgHjNohupSKHqjEV3"
+super_liquidity = "GSnS4NcAuCKP8KEcmNS17B3eFuwN2CrqeFuqdQahYDBP"
+delphor_oracle_aggregator = "H38QYhex16zHXSWGArKbdib58CKEtJLUkggdUCfoNy4i"
+delphor_oracle = "23mW7EPidjjBANkHTvvjcCQEyez5GETkPZ6x9CgEA2Pc"
 
 [programs.devnet]
-super_liquidity = "4FCQYxXVaK1aWE7gTLhTB5CwyjZGRFPFJstJdcNsoqck"
-delphor_oracle_aggregator = "HbyTY89Se2c8Je7KDKHVjUEGN2sAruFAw3S3NwubzeyU"
-delphor_oracle = "3xzPckGW3b771JsrcfQyRYzdPmsYgHjNohupSKHqjEV3"
+super_liquidity = "GSnS4NcAuCKP8KEcmNS17B3eFuwN2CrqeFuqdQahYDBP"
+delphor_oracle_aggregator = "H38QYhex16zHXSWGArKbdib58CKEtJLUkggdUCfoNy4i"
+delphor_oracle = "23mW7EPidjjBANkHTvvjcCQEyez5GETkPZ6x9CgEA2Pc"
 
 [registry]
 url = "https://anchor.projectserum.com"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

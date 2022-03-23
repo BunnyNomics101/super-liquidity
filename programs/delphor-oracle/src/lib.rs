@@ -1,7 +1,7 @@
 // #region code
 use anchor_lang::prelude::*;
 
-declare_id!("3xzPckGW3b771JsrcfQyRYzdPmsYgHjNohupSKHqjEV3");
+declare_id!("23mW7EPidjjBANkHTvvjcCQEyez5GETkPZ6x9CgEA2Pc");
 
 const MAX_SYMBOL_LEN: usize = 36;
 
@@ -99,7 +99,7 @@ pub mod delphor_oracle {
 pub struct CreateCoin<'info> {
     #[account(init,payer=payer,seeds=[symbol.as_bytes().as_ref()],bump,space=32+64+64+64+64+64+MAX_SYMBOL_LEN+128)]
     coin: Account<'info, CoinInfo>,
-    /// CHECK: 
+    /// CHECK:
     authority: AccountInfo<'info>,
     #[account(mut)]
     payer: Signer<'info>,
