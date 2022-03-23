@@ -41,7 +41,7 @@ describe("delphor-oracle", () => {
       await programCall(
         program,
         "createCoin",
-        [tempCoin.price, tempCoin.price, tempCoin.symbol],
+        [tempCoin.price, tempCoin.price, tempCoin.price, tempCoin.symbol],
         {
           coin: coinPDA,
           authority,
@@ -91,7 +91,7 @@ describe("delphor-oracle", () => {
       await programCall(
         program,
         "updateCoin",
-        [tempCoin.price, tempCoin.price],
+        [tempCoin.price, tempCoin.price, tempCoin.price],
         {
           coin: coinPDA,
           authority,
@@ -138,7 +138,7 @@ describe("delphor-oracle", () => {
       await expectProgramCallRevert(
         program,
         "updateCoin",
-        [new BN(5368), new BN(5368)],
+        [new BN(5368), new BN(5368), new BN(5368)],
         {
           coin: coinPDA,
           authority: aRandomKey.publicKey,

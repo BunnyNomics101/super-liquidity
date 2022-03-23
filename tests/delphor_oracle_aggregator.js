@@ -59,7 +59,7 @@ describe("delphor-oracle-aggregator", () => {
     await programCall(
       delphorOracleProgram,
       "createCoin",
-      [mockSOL.price, mockSOL.price, mockSOL.symbol],
+      [mockSOL.price, mockSOL.price, mockSOL.price, mockSOL.symbol],
       {
         coin: delphorOracleMockSOLPDA,
         authority: adminAccount,
@@ -89,7 +89,7 @@ describe("delphor-oracle-aggregator", () => {
     await programCall(
       delphorOracleProgram,
       "createCoin",
-      [mockUSDC.price, mockUSDC.price, mockUSDC.symbol],
+      [mockUSDC.price, mockUSDC.price, mockUSDC.price, mockUSDC.symbol],
       {
         coin: delphorOracleMockUSDCPDA,
         authority: adminAccount,
