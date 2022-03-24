@@ -1,5 +1,6 @@
 {
   "coinGeckoIds": [
+    "solana",
     "msol",
     "usd-coin",
     "tether",
@@ -14,6 +15,7 @@
     "marinade"
   ],
   "symbols": [
+    "SOL",
     "MSOL",
     "USDC",
     "USDT",
@@ -28,6 +30,7 @@
     "MNDE"
   ],
   "mintDevnetAccounts": [
+    "So11111111111111111111111111111111111111112",
     "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So",
     "9jmqFtPacNXA5v8fs3CbPo3zMcFvNw8qA69tPyVKG8bY",
     "A4Hw6igTmXgsNRhBpF57ZG2rT8hRb8FdimNCZkWDhj9B",
@@ -42,6 +45,7 @@
     "5tn1xGx6KdqjjCaFMA9YP3Hf9sfps83Quo6HYjkKScKA"
   ],
   "pythDevnetPriceAccounts": [
+    "J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix",
     "9a6RNx3tCu1TSs6TBSfV2XRXEPEZXQ6WB7jRojZRvyeZ",
     "5SSkXsEKQepHHAewytPVwdej4epN1nxgLVM84L4KXgy7",
     "38xoQ4oeJCBrcVvca2cGk7iV1dAfrmTR1kmhSCJQ8Jto",
@@ -56,6 +60,7 @@
     "11111111111111111111111111111111"
   ],
   "pythDevnetProductAccounts": [
+    "3Mnn2fX6rQyUsyELYms1sBJyChWofzSNRoqYzvgMVz5E",
     "os3is9HtWPHW4EXpGAkdr2prdWVs2pS8qKtf2ZYJdBw",
     "6NpdXrQEpmDZ3jZKmM2rhdmkd3H6QAk23j2x8bkXcHKA",
     "C5wDxND9E61RZ1wZhaSTWkoA8udumaHnoQY6BBsiaVpn",
@@ -70,6 +75,7 @@
     "11111111111111111111111111111111"
   ],
   "switchboardDevnetOptimizedFeedAccounts": [
+    "DpoK8Zz69APV9ntjuY9C4LZCxANYMV56M2cbXEdkjxME",
     "GvvC8SKcr9yrVMsFToU3E29TWtBFHcasPddaLYQqaYFw",
     "B5QWpE2msH4C2K4HLLtgrw6yYCX6CaoKVWtkdeQjbNxb",
     "CGs3b88XgTvGT6Dh8DVmsF6Cozsy5kF95fujeicFjkcr",
@@ -98,6 +104,7 @@
     "11111111111111111111111111111111"
   ],
   "orcaPoolAccounts": [
+    "APDFRM3HMr8CAGXwKHiu2f5ePSpaiEJhaURwhsRrUUt9",
     "8PSfyiTVwPb6Rr2iZ8F3kNpbg65BCfJM9v8LfB916r44",
     "H2uzgruPvonVpCRhwwdukcpXK8TG17swFNzYFr2rtPxy",
     "H2uzgruPvonVpCRhwwdukcpXK8TG17swFNzYFr2rtPxy",
