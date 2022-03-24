@@ -1,7 +1,7 @@
 // #region code
 use anchor_lang::prelude::*;
 
-declare_id!("23mW7EPidjjBANkHTvvjcCQEyez5GETkPZ6x9CgEA2Pc");
+declare_id!("orcGZ2qdQPdF2CpwP6kHD6AJHA5oSZiFFDBmNEHyyS4");
 
 const MAX_SYMBOL_LEN: usize = 36;
 
