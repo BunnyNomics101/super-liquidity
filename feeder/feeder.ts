@@ -34,14 +34,18 @@ function getProgramData(
   return [programId, program];
 }
 
-const [delphorAggregatorId, delphorAggregatorProgram] = getProgramData(
-  "../target/idl/delphor_oracle_aggregator.json",
-  "HbyTY89Se2c8Je7KDKHVjUEGN2sAruFAw3S3NwubzeyU"
+const ADMIN_ACCOUNT = new PublicKey(
+  "2kKx9xZB85wAbpvXLBui78jVZhPBuY3BxZ5Mad9d94h5"
 );
 
-const [delphorOracleId, delphorOracleProgram] = getProgramData(
+const [delphorAggregatorId, aggregatorProgram] = getProgramData(
+  "../target/idl/delphor_oracle_aggregator.json",
+  "Ev8Q73RFWaDPTc1YBaa6Zu7J2XmQMQy3aQcdyb3Z64Qd"
+);
+
+const [delphorOracleId, oracleProgram] = getProgramData(
   "../target/idl/delphor_oracle.json",
-  "3xzPckGW3b771JsrcfQyRYzdPmsYgHjNohupSKHqjEV3"
+  "orcGZ2qdQPdF2CpwP6kHD6AJHA5oSZiFFDBmNEHyyS4"
 );
 
 const connection = new Connection(
@@ -66,98 +70,81 @@ async function programCall(
   });
 }
 
-async function delphorInitCoin(
+async function aggregatorAddToken(
   mint: PublicKey,
   symbol: string,
-  coinData: PublicKey,
+  globalAccount: PublicKey,
   pythProductAccount: PublicKey,
   switchboardOptimizedFeedAccount: PublicKey
 ) {
   let params = [DECIMALS, symbol];
   let accounts = {
-    switchboardOptimizedFeedAccount,
-    pythProductAccount,
-    coinData,
+    globalAccount,
     mint,
     authority,
-    payer,
-    systemProgram,
+    switchboardOptimizedFeedAccount,
+    pythProductAccount,
   };
-  const tx = await programCall(
-    delphorAggregatorProgram,
-    "initCoin",
-    params,
-    accounts
-  );
-  console.log("Delphor coin initialized: ", tx);
+  const tx = await programCall(aggregatorProgram, "addToken", params, accounts);
+  console.log("Aggregator token added: ", tx);
 }
 
-async function delphorUpdatePrice(
-  coinData: PublicKey,
-  coinOracle3: PublicKey,
+async function aggregatorUpdatePrice(
+  position: number,
+  globalAccount: PublicKey,
+  mint: PublicKey,
+  delphorOracle: PublicKey,
   pythPriceAccount: PublicKey,
   switchboardOptimizedFeedAccount: PublicKey
 ) {
-  let params = [];
+  let params = [position];
   let accounts = {
     switchboardOptimizedFeedAccount,
     pythPriceAccount,
-    coinOracle3,
-    coinData,
-    payer,
-    systemProgram,
+    delphorOracle,
+    globalAccount,
+    authority,
+    mint,
   };
   const tx = await programCall(
-    delphorAggregatorProgram,
-    "updateCoinPrice",
+    aggregatorProgram,
+    "updateTokenPrice",
     params,
     accounts
   );
-  console.log("Delphor price updated: ", tx);
+  console.log("Aggregator price updated: ", tx);
 }
 
-async function createCoin(
+async function oracleCreateCoin(
   coinGeckoPrice: BN,
   orcaPrice: BN,
   coin: PublicKey,
-  symbol: string,
+  symbol: string
 ) {
-  let params = [coinGeckoPrice, orcaPrice, symbol];
+  let params = [coinGeckoPrice, orcaPrice, orcaPrice, symbol];
   let accounts = {
     authority,
     coin,
     payer,
     systemProgram,
   };
-  const tx = await programCall(
-    delphorOracleProgram,
-    "createCoin",
-    params,
-    accounts
-  );
-  console.log("Created:", tx);
+  const tx = await programCall(oracleProgram, "createCoin", params, accounts);
+  console.log("Oracle token PDA created:", tx);
 }
 
-async function updateCoin(
+async function oracleUpdateCoin(
   coinGeckoPrice: BN,
   symbol: string,
   orcaPrice: BN,
   coin: PublicKey
 ) {
-  let params = [coinGeckoPrice, orcaPrice];
+  let params = [coinGeckoPrice, orcaPrice, orcaPrice];
   let accounts = {
     authority,
     coin,
-    payer,
-    systemProgram,
   };
-  const tx = await programCall(
-    delphorOracleProgram,
-    "updateCoin",
-    params,
-    accounts
-  );
-  console.log("Update", symbol, ":", tx);
+  const tx = await programCall(oracleProgram, "updateCoin", params, accounts);
+  console.log("Oracle token PDA update", symbol, ":", tx);
 }
 
 async function getOrcaPrice(orcaPoolAccount: OrcaPoolConfig): Promise<BN> {
@@ -190,79 +177,107 @@ async function getCoingeckoPrice(tokenId: string): Promise<BN> {
   return new BN(0);
 }
 
-async function getOraclePDAs(): Promise<[PublicKey[], number[]]> {
+async function getOraclePDAs(): Promise<PublicKey[]> {
   let symbolsLength = SYMBOLS.length;
   let pdas = new Array<PublicKey>(symbolsLength);
-  let bumps = new Array<number>(symbolsLength);
   for (let i = 0; i < symbolsLength; i++) {
-    [pdas[i], bumps[i]] = await PublicKey.findProgramAddress(
+    [pdas[i]] = await PublicKey.findProgramAddress(
       [Buffer.from(SYMBOLS[i])],
       delphorOracleId
     );
   }
-  return [pdas, bumps];
+  return pdas;
 }
 
-async function getDelphorPDAs(): Promise<[PublicKey[], number[]]> {
-  let mintAccountsLength = MINT_DEVNET_ACCOUNTS.length;
-  let pdas = new Array<PublicKey>(mintAccountsLength);
-  let bumps = new Array<number>(mintAccountsLength);
-  for (let i = 0; i < mintAccountsLength; i++) {
-    [pdas[i], bumps[i]] = await PublicKey.findProgramAddress(
-      [new PublicKey(MINT_DEVNET_ACCOUNTS[i]).toBuffer()],
-      delphorAggregatorId
+async function createAggregatorGlobalAccount(): Promise<PublicKey> {
+  let [aggregatorGlobalAccount] = await PublicKey.findProgramAddress(
+    [ADMIN_ACCOUNT.toBuffer()],
+    aggregatorProgram.programId
+  );
+
+  try {
+    await aggregatorProgram.account.globalAccount.fetch(
+      aggregatorGlobalAccount.toBase58()
     );
+  } catch (err) {
+    await programCall(aggregatorProgram, "initGlobalAccount", [ADMIN_ACCOUNT], {
+      globalAccount: aggregatorGlobalAccount,
+      payer,
+      systemProgram,
+    });
   }
-  return [pdas, bumps];
+  return aggregatorGlobalAccount;
 }
 
 async function main() {
   let updatingPrices = false;
-  const [coinPDAs, bumps] = await getOraclePDAs();
-  const [delphorOraclePDAs, delphorOracleBumps] = await getDelphorPDAs();
+  const coinPDAs = await getOraclePDAs();
+  const aggregatorGlobalAccount = await createAggregatorGlobalAccount();
   let task = cron.schedule("*/" + INTERVAL_UPDATE + " * * * * *", async () => {
     if (updatingPrices) return;
     updatingPrices = true;
+    /*
+    for (let x = 0; x < SYMBOLS.length; x++) {
+      try{
+        await aggregatorAddToken(
+          MINT_DEVNET_ACCOUNTS[x],
+          SYMBOLS[x],
+          aggregatorGlobalAccount,
+          PYTH_DEVNET_PRODUCT_ACCOUNTS[x],
+          SWITCHBOARD_DEVNET_OPTIMIZED_FEED_ACCOUNTS[x]
+        );
+      }catch(err){
+        console.log(err);
+        return
+      }
+    }
+*/
     for (let x = 0; x < SYMBOLS.length; x++) {
       let symbol = SYMBOLS[x];
       try {
         let coinGeckoPrice = await getCoingeckoPrice(COIN_GECKO_IDS[x]);
         let orcaPrice = await getOrcaPrice(ORCA_POOL_ACCOUNTS[x]);
         try {
-          await delphorOracleProgram.account.coinInfo.fetch(
-            coinPDAs[x].toBase58()
+          await oracleProgram.account.coinInfo.fetch(coinPDAs[x].toBase58());
+          await oracleUpdateCoin(
+            coinGeckoPrice,
+            symbol,
+            orcaPrice,
+            coinPDAs[x]
           );
-          await updateCoin(coinGeckoPrice, symbol, orcaPrice, coinPDAs[x]);
         } catch (err) {
-          await createCoin(
+          await oracleCreateCoin(
             coinGeckoPrice,
             orcaPrice,
             coinPDAs[x],
             symbol
           );
         }
-        try {
-          await delphorAggregatorProgram.account.coinData.fetch(
-            delphorOraclePDAs[x].toBase58()
+        let aggregatorGlobalAccountData =
+          await aggregatorProgram.account.globalAccount.fetch(
+            aggregatorGlobalAccount.toBase58()
           );
-          await delphorUpdatePrice(
-            delphorOraclePDAs[x],
+        let tokenExist = false;
+        aggregatorGlobalAccountData.tokens.forEach((element) => {
+          if (element.mint == MINT_DEVNET_ACCOUNTS[x]) {
+            tokenExist = true;
+          }
+        });
+        if (tokenExist) {
+          await aggregatorUpdatePrice(
+            x,
+            aggregatorGlobalAccount,
+            MINT_DEVNET_ACCOUNTS[x],
             coinPDAs[x],
             PYTH_DEVNET_PRICE_ACCOUNTS[x],
             SWITCHBOARD_DEVNET_OPTIMIZED_FEED_ACCOUNTS[x]
           );
-        } catch (err) {
-          await delphorInitCoin(
+        } else {
+          await aggregatorAddToken(
             MINT_DEVNET_ACCOUNTS[x],
             symbol,
-            delphorOraclePDAs[x],
+            aggregatorGlobalAccount,
             PYTH_DEVNET_PRODUCT_ACCOUNTS[x],
-            SWITCHBOARD_DEVNET_OPTIMIZED_FEED_ACCOUNTS[x]
-          );
-          await delphorUpdatePrice(
-            delphorOraclePDAs[x],
-            coinPDAs[x],
-            PYTH_DEVNET_PRICE_ACCOUNTS[x],
             SWITCHBOARD_DEVNET_OPTIMIZED_FEED_ACCOUNTS[x]
           );
         }
