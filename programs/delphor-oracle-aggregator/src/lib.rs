@@ -1,9 +1,10 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
 use delphor_oracle::CoinInfo;
+use num::integer::Roots;
 use pyth_client::{load_price, load_product, Price, PriceConf, PriceStatus, Product};
 use std::{cmp, str};
-use switchboard_program::{FastRoundResultAccountData, SwitchboardAccountType};
+use switchboard_program::{FastRoundResultAccountData, SwitchboardAccountType}; // 0.4.0
 
 declare_id!("Ev8Q73RFWaDPTc1YBaa6Zu7J2XmQMQy3aQcdyb3Z64Qd");
 // const MAX_SYMBOL_LEN: usize = 36;
@@ -95,11 +96,18 @@ pub mod delphor_oracle_aggregator {
             }
         }
 
-        token_data.price = calculate_price(
-            &delphor_oracle.coin_gecko_price,
-            &pyth_price,
-            &switchboard_price,
+        let calculate_price_result = calculate_price(
+            delphor_oracle.coin_gecko_price,
+            delphor_oracle.orca_price,
+            delphor_oracle.serum_price,
+            pyth_price,
+            switchboard_price,
         );
+        match calculate_price_result {
+            Ok(price) => token_data.price = price,
+            Err(error) => return Err(error),
+        }
+
         token_data.last_update_timestamp = Clock::get().unwrap().unix_timestamp as u64;
 
         Ok(())
@@ -151,22 +159,75 @@ fn get_pyth_price(pyth_account: &AccountInfo<'_>, decimals: u8) -> Result<u64> {
     Ok(pyth_price)
 }
 
-fn calculate_price(price_a: &u64, price_b: &u64, price_c: &u64) -> u64 {
-    let low = cmp::min(price_b, cmp::min(price_c, price_a));
-    let max = cmp::max(price_b, cmp::max(price_c, price_a));
-    let mid = price_b + price_c + price_a - low - max;
-    // Exclude furthest price and average the other two
-    let ab: u64 = max - mid;
-    let bc: u64 = mid - low;
-    let ca: u64 = max - low;
+fn calculate_price(v1: u64, v2: u64, v3: u64, v4: u64, v5: u64) -> Result<u64> {
+    let mut values = vec![v1, v2, v3, v4, v5];
+    insertion_sort(&mut values);
 
-    if ab < bc && ab < ca {
-        return (max + mid) / 2;
-    } else if bc < ab && bc < ca {
-        return (mid + low) / 2;
-    } else {
-        return (low + max) / 2;
+    let min_set = vec![values[0], values[1], values[2]];
+    let mid_set = vec![values[1], values[2], values[3]];
+    let max_set = vec![values[2], values[3], values[4]];
+
+    let vc_lower_salues = variation_coefficient(&min_set);
+    let vc_mid_values = variation_coefficient(&mid_set);
+    let vc_upper_values = variation_coefficient(&max_set);
+
+    let min_vc = cmp::min(vc_lower_salues, cmp::min(vc_mid_values, vc_upper_values));
+    if min_vc > 5 {
+        msg!("{}", min_vc);
+        return Err(error!(ErrorCode::PriceUpdateError));
     }
+    if min_vc == vc_lower_salues {
+        return Ok(average(&min_set));
+    } else if min_vc == vc_mid_values {
+        return Ok(average(&mid_set));
+    } else if min_vc == vc_upper_values {
+        return Ok(average(&max_set));
+    } else {
+        // This should never happen
+        return Err(error!(ErrorCode::UnexpectedError));
+    }
+}
+
+fn insertion_sort(arr: &mut Vec<u64>) {
+    for i in 1..arr.len() {
+        let mut j = i;
+        while j > 0 && arr[j - 1] > arr[j] {
+            arr.swap(j - 1, j);
+            j -= 1;
+        }
+    }
+}
+
+fn average(arr: &Vec<u64>) -> u64 {
+    // TODO should I put a validation for length?
+    let mut sum = 0;
+    for x in arr {
+        sum += x;
+    }
+    return sum / (arr.len() as u64);
+}
+
+fn std_dev(arr: &Vec<u64>) -> u64 {
+    // TODO should I put a validation for length?
+    let average = average(arr);
+    let mut sum = 0;
+    for x in arr {
+        let low = *cmp::min(x, &average) as u128;
+        let high = *cmp::max(x, &average) as u128;
+        sum += (high - low).pow(2);
+    }
+    let std_dev_squared = sum / ((arr.len() - 1) as u128);
+    return std_dev_squared.sqrt() as u64;
+}
+
+// The expected value is 0.5%. Mutiply by 100 to remove the percentage and by 1000 to also avoid 0 values
+// since in u64, 0.5==0
+fn variation_coefficient(arr: &Vec<u64>) -> u64 {
+    let average = average(arr);
+    let std_dev = std_dev(arr);
+    msg!("Average: {}", average);
+    msg!("Std dev: {}", std_dev);
+    return std_dev * 1000 / average;
 }
 
 pub static ADMIN_ADDRESS: &str = "2kKx9xZB85wAbpvXLBui78jVZhPBuY3BxZ5Mad9d94h5";
@@ -261,4 +322,8 @@ pub enum ErrorCode {
     PythProductAccountError,
     #[msg("Switchboard accounts don't match.")]
     SwitchboardAccountError,
+    #[msg("The variation of prices is too high")]
+    PriceUpdateError,
+    #[msg("An unexpected error has ocurred")]
+    UnexpectedError,
 }
