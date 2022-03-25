@@ -3,6 +3,42 @@
   "name": "delphor_oracle_aggregator",
   "instructions": [
     {
+      "name": "updateCoinPriceNew",
+      "accounts": [
+        {
+          "name": "switchboardOptimizedFeedAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "pythPriceAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "delphorOracle",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "coinData",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "updateCoinPrice",
       "accounts": [
         {
@@ -146,6 +182,16 @@
       "code": 6002,
       "name": "SwitchboardAccountError",
       "msg": "Switchboard accounts don't match."
+    },
+    {
+      "code": 6003,
+      "name": "PriceUpdateError",
+      "msg": "The variation of prices is too high"
+    },
+    {
+      "code": 6004,
+      "name": "UnexpectedError",
+      "msg": "An unexpected error has ocurred"
     }
   ],
   "metadata": {

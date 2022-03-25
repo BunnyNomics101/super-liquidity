@@ -87,43 +87,74 @@ describe("delphor-oracle-aggregator", () => {
     );
   });
 
+  
   it("DelphorOracleAggregator init coin", async () => {
     [delphorAggregatorMockSOLPDA] =
-      await PublicKey.findProgramAddress(
-        [mockSOLMint.toBuffer()],
-        delphorAggregatorProgram.programId
+    await PublicKey.findProgramAddress(
+      [mockSOLMint.toBuffer()],
+      delphorAggregatorProgram.programId
       );
+      
+      await programCall(
+        delphorAggregatorProgram,
+        "initCoin",
+        [mockSOL.decimals, mockSOL.symbol],
+        {
+          switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
+          pythProductAccount: pythProductAccount,
+          coinData: delphorAggregatorMockSOLPDA,
+          mint: mockSOLMint,
+          authority: adminAccount,
+          payer,
+          systemProgram,
+        }
+        );
+        
+        const pdaData = await delphorAggregatorProgram.account.coinData.fetch(
+          delphorAggregatorMockSOLPDA
+          );
+          
+          assert.ok(
+            checkEqualValues(
+        [mockSOLMint, adminAccount, mockSOL.symbol, mockSOL.decimals],
+        [pdaData.mint, pdaData.authority, pdaData.symbol, pdaData.decimals]
+        )
+        );
+      });
+      
+  it("Dani test", async () => {
+    // compute a PDA based on program.programId + symbol
+    // let [coinPDA] = await PublicKey.findProgramAddress(
+    //   [mockSOL.symbol],
+    //   delphorAggregatorProgram.programId
+    // );
+    /// CHECK:
 
     await programCall(
       delphorAggregatorProgram,
-      "initCoin",
-      [mockSOL.decimals, mockSOL.symbol],
+      "updateCoinPriceNew",
+      [],
       {
-        switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
-        pythProductAccount: pythProductAccount,
+        switchboardOptimizedFeedAccount,
+        pythPriceAccount,
+        delphorOracle: delphorOracleMockSOLPDA,
         coinData: delphorAggregatorMockSOLPDA,
-        mint: mockSOLMint,
-        authority: adminAccount,
         payer,
-        systemProgram,
+        systemProgram
       }
     );
 
-    const pdaData = await delphorAggregatorProgram.account.coinData.fetch(
-      delphorAggregatorMockSOLPDA
-    );
+    
+    const coinInfo = await delphorAggregatorProgram.account.coinData.fetch(delphorAggregatorMockSOLPDA);
+    console.log("Success")
+    console.log(coinInfo.price.toString())
 
-    assert.ok(
-      checkEqualValues(
-        [mockSOLMint, adminAccount, mockSOL.symbol, mockSOL.decimals],
-        [pdaData.mint, pdaData.authority, pdaData.symbol, pdaData.decimals]
-      )
-    );
+    
   });
-
+  
   it("DelphorOracleAggregator reject update price with wrong oracles accounts", async () => {
     const randomKey = anchor.web3.Keypair.generate();
-
+    
     assert.ok(
       await expectProgramCallRevert(
         delphorAggregatorProgram,

@@ -299,7 +299,7 @@ describe("super-liquidity", () => {
     assert.ok(delphorMockSOLData.decimals == mockSOL.decimals);
   });
 
-  it("DelphorOracle update price", async () => {
+  xit("DelphorOracle update price", async () => {
     await programCall(delphorOracleAggregatorProgram, "updateCoinPrice", [], {
       switchboardOptimizedFeedAccount,
       pythPriceAccount,
@@ -351,7 +351,7 @@ describe("super-liquidity", () => {
     assert.ok(delphorMockUSDCData.decimals == mockUSDC.decimals);
   });
 
-  it("DelphorOracle update mockUSDC price", async () => {
+  xit("DelphorOracle update mockUSDC price", async () => {
     await programCall(delphorOracleAggregatorProgram, "updateCoinPrice", [], {
       switchboardOptimizedFeedAccount,
       pythPriceAccount,
@@ -988,7 +988,7 @@ describe("super-liquidity", () => {
     );
   });
 
-  it("Bob swap mockSOL for mockUSDC", async () => {
+  xit("Bob swap mockSOL for mockUSDC", async () => {
     await programCall(
       superLiquidityProgram,
       "swap",
@@ -1057,7 +1057,7 @@ describe("super-liquidity", () => {
     );
   });
 
-  it("Alice withdraw SOL tokens from vault", async () => {
+  xit("Alice withdraw SOL tokens from vault", async () => {
     let aliceSOLVaultAmount = depositAmountAliceMockSOL.add(
       bobSwapAmountSOLForUSDC
     );
@@ -1100,7 +1100,7 @@ describe("super-liquidity", () => {
     );
   });
 
-  it("Alice withdraw USDC tokens from vault", async () => {
+  xit("Alice withdraw USDC tokens from vault", async () => {
     let aliceUSDCVaultAmount = depositAmountAliceMockUSDC.sub(finalAmount);
     let aliceBeforeUSDCBalance = (
       await getTokenAccount(provider, alicemockUSDC)

@@ -37,6 +37,7 @@ describe("delphor-oracle", () => {
       listener = program.addEventListener("NewCoinInfo", (_event) => {
         resolve([_event]);
       });
+      
 
       await programCall(
         program,
@@ -50,7 +51,7 @@ describe("delphor-oracle", () => {
         }
       );
     });
-
+    
     await program.removeEventListener(listener);
     const coinInfo = await program.account.coinInfo.fetch(coinPDA);
 
