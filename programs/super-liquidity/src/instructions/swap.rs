@@ -66,24 +66,27 @@ impl<'info> Swap<'info> {
         let sell_coin_decimals = self.delphor_aggregator_prices.tokens[position_sell as usize].decimals;
         let buy_coin_price = self.delphor_aggregator_prices.tokens[position_buy as usize].price;
         let buy_coin_decimals = self.delphor_aggregator_prices.tokens[position_buy as usize].decimals;
-        let user_vault_from = &self.user_vault.vaults[position_buy as usize];
-        let user_vault_to = &self.user_vault.vaults[position_sell as usize];
+        let user_vault_buy = &self.user_vault.vaults[position_buy as usize];
+        let user_vault_sell = &self.user_vault.vaults[position_sell as usize];
 
-        require!(user_vault_from.provide_status, ErrorCode::VaultProvideOff);
-        require!(user_vault_to.receive_status, ErrorCode::VaultRecieveOff);
-        if user_vault_from.limit_price_status {
-            require!(user_vault_from.limit_price < buy_coin_price, ErrorCode::PriceUnderLimitPrice);
+        require!(user_vault_buy.provide_status, ErrorCode::VaultProvideOff);
+        require!(user_vault_sell.receive_status, ErrorCode::VaultRecieveOff);
+        require!
+        (
+            !user_vault_buy.limit_price_status  || 
+            user_vault_buy.limit_price < buy_coin_price, 
+            ErrorCode::PriceUnderLimitPrice
+        );
 
-        }
-        require!(user_vault_to.amount + swap_amount <= user_vault_to.max, ErrorCode::ExceedsMaxAmount);
+        require!(user_vault_sell.amount + swap_amount <= user_vault_sell.max, ErrorCode::ExceedsMaxAmount);
 
         let mut buy_fee = 10;
         let mut sell_fee = 10;
 
         match self.user_vault.vault_type{
             VaultType::LiquidityProvider => {
-                buy_fee = user_vault_to.buy_fee;
-                sell_fee = user_vault_from.sell_fee;
+                buy_fee = user_vault_sell.buy_fee;
+                sell_fee = user_vault_buy.sell_fee;
             }
             VaultType::PortfolioManager {auto_fee: _, tolerance: _}=> {
 
@@ -99,8 +102,8 @@ impl<'info> Swap<'info> {
             ((swap_amount as u128 * token_price) / u128::pow(10, sell_coin_decimals as u32)) as u64;
 
         require!(amount_to_send >= min_amount, ErrorCode::InsufficientAmount);    
-        require!(user_vault_from.amount >= amount_to_send, ErrorCode::VaultInsufficientAmount);
-        require!(user_vault_from.amount - amount_to_send >= user_vault_from.min, ErrorCode::ExceedsMinAmount);
+        require!(user_vault_buy.amount >= amount_to_send, ErrorCode::VaultInsufficientAmount);
+        require!(user_vault_buy.amount - amount_to_send >= user_vault_buy.min, ErrorCode::ExceedsMinAmount);
 
         anchor_spl::token::transfer(
             CpiContext::new(
@@ -148,9 +151,9 @@ pub enum ErrorCode {
     InsufficientAmount,
     #[msg("Vault insufficient balance.")]
     VaultInsufficientAmount,
-    #[msg("Operation exceeds max balance to user_vault_to")]
+    #[msg("Operation exceeds max balance to user_vault_sell")]
     ExceedsMaxAmount,
-    #[msg("Operation exceeds min balance to user_vault_from")]
+    #[msg("Operation exceeds min balance to user_vault_buy")]
     ExceedsMinAmount,
     #[msg("Vault from paused.")]
     VaultProvideOff,
