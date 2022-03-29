@@ -108,14 +108,6 @@ describe("super-liquidity", () => {
     assert.ok(balance == anchor.web3.LAMPORTS_PER_SOL * 10);
   });
 
-  it("Create mockSOL mint", async () => {
-    mockSOLMint = await createMint(provider, adminAccount);
-  });
-
-  it("Create mockUSDC mint", async () => {
-    mockUSDCMint = await createMint(provider, adminAccount);
-  });
-
   it("Create MockSOL and mint test tokens", async () => {
     mockSOLMint = await createMint(provider, adminAccount);
 

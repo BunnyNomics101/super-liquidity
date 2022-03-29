@@ -4,6 +4,7 @@ const anchor = require("@project-serum/anchor");
 const serumCmn = require("@project-serum/common");
 const TokenInstructions = require("@project-serum/serum").TokenInstructions;
 const { Connection } = require("@solana/web3.js");
+const { expect } = require("chai");
 const {
   TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -285,12 +286,13 @@ async function getBalance(publicKey) {
   return connection.getBalance(publicKey);
 }
 
-async function airdropLamports(publicKey) {
-  let airdropTx = await connection.requestAirdrop(
-    publicKey,
-    anchor.web3.LAMPORTS_PER_SOL * 10
+async function airdropLamports(publicKey, amount) {
+  let balanceBefore = await getBalance(publicKey);
+  await connection.confirmTransaction(
+    await connection.requestAirdrop(publicKey, amount)
   );
-  await connection.confirmTransaction(airdropTx);
+  let balanceAfter = await getBalance(publicKey);
+  expect(balanceAfter - balanceBefore).to.be.eq(amount);
 }
 
 module.exports = {
