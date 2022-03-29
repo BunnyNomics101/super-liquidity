@@ -4,9 +4,10 @@ const PublicKey = require("@solana/web3.js").PublicKey;
 const {
   programCall,
   checkEqualValues,
-  expectProgramCallRevert,
 } = require("./utils");
 const assert = require("assert");
+
+const { selectSwappers } = require("./utils/swap");
 
 const {
   TOKEN_PROGRAM_ID,
@@ -71,7 +72,7 @@ describe("super-liquidity", () => {
   let mintMockSOLAmountToAlice = Lamport(100);
   let mintMockSOLAmountToBob = Lamport(50);
   let mintMockUSDCAmountToAlice = Lamport(17500);
-  let depositAmountAliceMockSOL = Lamport(8);
+  let depositAmountAliceMockSOL = Lamport(7);
   let depositAmountAliceMockUSDC = Lamport(500);
   let bobSwapAmountSOLForUSDC = Lamport(2);
   let bobSwapUSDCMinAmount = Lamport(250);
@@ -1111,6 +1112,20 @@ describe("super-liquidity", () => {
       await superLiquidityProgram.account.userVault.fetch(aliceLP)
     ).vaults[positionMockUSDC].amount;
 
+    const vaults = await selectSwappers(
+      superLiquidityProgram,
+      positionMockUSDC,
+      positionMockSOL,
+      mockUSDC.price,
+      bobSwapAmountSOLForUSDC,
+      bobSwapUSDCMinAmount
+    );
+
+    vaults.map((e) => {
+      console.log(e.toBase58());
+    });
+    console.log(aliceLP.toBase58());
+
     await programCall(
       superLiquidityProgram,
       "swap",
@@ -1303,70 +1318,4 @@ describe("super-liquidity", () => {
       )
     );
   });
-
-  /*
-  it("Reject swap with error exceeds max balance", async () => {
-    assert.ok(
-      await expectProgramCallRevert(
-        superLiquidityProgram,
-        "swap",
-        [
-          bobSwapAmountSOLForUSDC,
-          bobSwapUSDCMinAmount,
-          tokenStoreAuthorityBump,
-        ],
-        {
-          getCoinData: delphorMockSOLPDA,
-          sendCoinData: delphorMockUSDCPDA,
-          userVaultFrom: aliceMockUSDCVault,
-          userVaultTo: aliceLP,
-          tokenStoreAuthority: tokenStoreAuthority,
-          mintSell: mockSOLMint,
-          mintBuy: mockUSDCMint,
-          getTokenFrom: bobmockSOL,
-          getTokenFromAuthority: bob.publicKey,
-          sendTokenTo: bobmockUSDC,
-          tokenStorePdaFrom: mockUSDCStore,
-          tokenStorePdaTo: mockSOLStore,
-          systemProgram,
-          tokenProgram: TOKEN_PROGRAM_ID,
-        },
-        "Operation exceeds max balance to user_vault_to",
-        [bob]
-      )
-    );
-  });
-
-  it("Reject swap with error vault to paused", async () => {
-    assert.ok(
-      await expectProgramCallRevert(
-        superLiquidityProgram,
-        "swap",
-        [
-          bobSwapAmountSOLForUSDC,
-          bobSwapUSDCMinAmount,
-          tokenStoreAuthorityBump,
-        ],
-        {
-          getCoinData: delphorMockSOLPDA,
-          sendCoinData: delphorMockUSDCPDA,
-          userVaultFrom: aliceMockUSDCVault,
-          userVaultTo: aliceLP,
-          tokenStoreAuthority: tokenStoreAuthority,
-          mintSell: mockSOLMint,
-          mintBuy: mockUSDCMint,
-          getTokenFrom: bobmockSOL,
-          getTokenFromAuthority: bob.publicKey,
-          sendTokenTo: bobmockUSDC,
-          tokenStorePdaFrom: mockUSDCStore,
-          tokenStorePdaTo: mockSOLStore,
-          systemProgram,
-          tokenProgram: TOKEN_PROGRAM_ID,
-        },
-        "Vault to paused.",
-        [bob]
-      )
-    );
-  });
-  */
 });
