@@ -18,7 +18,6 @@ const {
   createMint,
   mintToAccount,
   getBalance,
-  airdropLamports,
 } = require("./utils");
 
 describe("super-liquidity", () => {
@@ -29,31 +28,13 @@ describe("super-liquidity", () => {
   const delphorOracleProgram = anchor.workspace.DelphorOracle;
   const delphorAggregatorProgram = anchor.workspace.DelphorOracleAggregator;
   const adminAccount = provider.wallet.publicKey;
-  const alice = anchor.web3.Keypair.generate();
-  const bob = anchor.web3.Keypair.generate();
   const payer = provider.wallet.publicKey;
   const authority = adminAccount;
   const systemProgram = anchor.web3.SystemProgram.programId;
 
-  let mockSOLMint,
-    alicemockSOL,
-    bobmockSOL,
-    mockSOLStore,
-    mockUSDCMint,
-    alicemockUSDC,
-    bobmockUSDC,
-    mockUSDCStore,
-    tokenStoreAuthorityBump,
+  let tokenStoreAuthorityBump,
     tokenStoreAuthority,
-    aliceLP,
-    bobLP,
-    alicePM,
-    bobPM,
     globalState,
-    aliceMockSOLAccount,
-    bobMockSOLAccount,
-    aliceMockUSDCAccount,
-    bobMockUSDCAccount,
     aggregatorGlobalAccount,
     finalAmount;
 
@@ -66,11 +47,6 @@ describe("super-liquidity", () => {
     return new BN(value * 10 ** 9);
   }
 
-  let mintMockSOLAmountToAlice = Lamport(100);
-  let mintMockSOLAmountToBob = Lamport(50);
-  let mintMockUSDCAmountToAlice = Lamport(17500);
-  let depositAmountAliceMockSOL = Lamport(7);
-  let depositAmountAliceMockUSDC = Lamport(500);
   let bobSwapAmountSOLForUSDC = Lamport(2);
   let bobSwapUSDCMinAmount = Lamport(250);
 
@@ -443,7 +419,7 @@ describe("super-liquidity", () => {
     }
   });
 
-  it("Alice deposit mockSOL in liquidity provider", async () => {
+  it("Users deposit tokens in liquidity provider", async () => {
     for (let i = 0; i < totalUsers; i++) {
       const user = users[i];
       const userLP = usersLP[i];
