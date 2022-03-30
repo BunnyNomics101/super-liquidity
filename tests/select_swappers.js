@@ -8,9 +8,6 @@ const {
 } = require("./utils");
 const assert = require("assert");
 const { expect } = require("chai");
-var chai = require("chai");
-chai.use(require("chai-bignumber")());
-
 const { selectSwappers } = require("./utils/swap");
 
 const {
@@ -90,17 +87,8 @@ describe("super-liquidity", () => {
   );
   const positionMockSOL = 0;
   const positionMockUSDC = 1;
-  const totalTokens = 2;
-  const mints = new Array(totalTokens);
-  const usersTokenAccounts = Array.from(
-    { length: totalUsers },
-    (e) => new Array(totalTokens)
-  );
   const minMint = 1;
   const maxMint = 10000;
-
-  const oracleTokensPDAs = new Array(totalTokens);
-  const tokenStores = new Array(totalTokens);
   const tokens = [
     { price: Lamport(150), symbol: "SOL", decimals: 9 },
     {
@@ -109,6 +97,14 @@ describe("super-liquidity", () => {
       decimals: 9,
     },
   ];
+  const totalTokens = tokens.length;
+  const mints = new Array(totalTokens);
+  const oracleTokensPDAs = new Array(totalTokens);
+  const tokenStores = new Array(totalTokens);
+  const usersTokenAccounts = Array.from(
+    { length: totalUsers },
+    (e) => new Array(totalTokens)
+  );
   const usersLP = new Array(totalUsers);
 
   it("Create mints accounts and mint tokens", async () => {
@@ -234,17 +230,17 @@ describe("super-liquidity", () => {
           aggregatorGlobalAccount
         );
 
-      let mockSOLData = globalAccount.tokens[i];
+      let tokenAggData = globalAccount.tokens[i];
       expect(globalAccount.tokens.length).eq(i + 1);
-      expect(Number(mockSOLData.price)).eq(0);
-      expect(mockSOLData.symbol).eq(token.symbol);
-      expect(Number(mockSOLData.lastUpdateTimestamp)).eq(0);
-      expect(mockSOLData.mint.toBase58()).eq(mint.toBase58());
-      expect(mockSOLData.decimals).eq(token.decimals);
-      expect(mockSOLData.pythPriceAccount.toBase58()).eq(
+      expect(Number(tokenAggData.price)).eq(0);
+      expect(tokenAggData.symbol).eq(token.symbol);
+      expect(Number(tokenAggData.lastUpdateTimestamp)).eq(0);
+      expect(tokenAggData.mint.toBase58()).eq(mint.toBase58());
+      expect(tokenAggData.decimals).eq(token.decimals);
+      expect(tokenAggData.pythPriceAccount.toBase58()).eq(
         pythProductAccount.toBase58()
       );
-      expect(mockSOLData.switchboardOptimizedFeedAccount.toBase58()).eq(
+      expect(tokenAggData.switchboardOptimizedFeedAccount.toBase58()).eq(
         switchboardOptimizedFeedAccount.toBase58()
       );
     }
@@ -377,9 +373,8 @@ describe("super-liquidity", () => {
   });
 
   it("Initialize and update liquidity provider vaults", async () => {
-    for (let i = 0; i < totalTokens; i++) {
+    for (let i = 0; i < totalUsers; i++) {
       const user = users[i];
-      const mint = mints[i];
       let bump;
 
       [usersLP[i], bump] = await PublicKey.findProgramAddress(
@@ -416,31 +411,94 @@ describe("super-liquidity", () => {
       );
       expect(userLPData.vaults.length).eq(50);
 
-      await programCall(
-        superLiquidityProgram,
-        "updateUserLiquidityProvider",
-        [i, buyFee, sellFee, min, max, true, true, true, new BN(0)],
-        {
-          globalState,
-          userAccount: user.publicKey,
-          mint,
-          userVault: usersLP[i],
-        },
-        [user]
-      );
+      for (let j = 0; j < totalTokens; j++) {
+        const mint = mints[j];
 
-      userLPData = (
-        await superLiquidityProgram.account.userVault.fetch(usersLP[i])
-      ).vaults[i];
+        await programCall(
+          superLiquidityProgram,
+          "updateUserLiquidityProvider",
+          [j, buyFee, sellFee, min, max, true, true, true, new BN(0)],
+          {
+            globalState,
+            userAccount: user.publicKey,
+            mint,
+            userVault: usersLP[i],
+          },
+          [user]
+        );
 
-      expect(userLPData.buyFee).eq(buyFee);
-      expect(userLPData.sellFee).eq(sellFee);
-      expect(userLPData.min.toString()).eq(min.toString());
-      expect(userLPData.max.toString()).eq(max.toString());
-      expect(userLPData.receiveStatus).eq(true);
-      expect(userLPData.provideStatus).eq(true);
-      expect(userLPData.limitPriceStatus).eq(true);
-      expect(Number(userLPData.limitPrice)).eq(0);
+        userLPData = (
+          await superLiquidityProgram.account.userVault.fetch(usersLP[i])
+        ).vaults[j];
+
+        expect(userLPData.buyFee).eq(buyFee);
+        expect(userLPData.sellFee).eq(sellFee);
+        expect(userLPData.min.toString()).eq(min.toString());
+        expect(userLPData.max.toString()).eq(max.toString());
+        expect(userLPData.receiveStatus).eq(true);
+        expect(userLPData.provideStatus).eq(true);
+        expect(userLPData.limitPriceStatus).eq(true);
+        expect(Number(userLPData.limitPrice)).eq(0);
+      }
+    }
+  });
+
+  it("Alice deposit mockSOL in liquidity provider", async () => {
+    for (let i = 0; i < totalUsers; i++) {
+      const user = users[i];
+      const userLP = usersLP[i];
+
+      for (let j = 0; j < totalTokens; j++) {
+        const mint = mints[j];
+        const userTokenAccount = usersTokenAccounts[i][j];
+        const tokenStore = tokenStores[j];
+
+        const userBeforeBalance = (
+          await getTokenAccount(provider, userTokenAccount)
+        ).amount;
+        const delphorBeforeBalance = (
+          await getTokenAccount(provider, tokenStore)
+        ).amount;
+        const userLPBeforeBalance = (
+          await superLiquidityProgram.account.userVault.fetch(userLP)
+        ).vaults[j].amount;
+
+        await programCall(
+          superLiquidityProgram,
+          "deposit",
+          [userBeforeBalance, j],
+          {
+            globalState,
+            userAccount: user.publicKey,
+            userVault: userLP,
+            tokenStoreAuthority: tokenStoreAuthority,
+            mint,
+            getTokenFrom: userTokenAccount,
+            getTokenFromAuthority: user.publicKey,
+            tokenStorePda: tokenStore,
+            tokenProgram: TOKEN_PROGRAM_ID,
+          },
+          [user]
+        );
+
+        const userCurrentBalance = (
+          await getTokenAccount(provider, userTokenAccount)
+        ).amount;
+        const delphorCurrentBalance = (
+          await getTokenAccount(provider, tokenStore)
+        ).amount;
+        const userLPCurrentBalance = (
+          await superLiquidityProgram.account.userVault.fetch(userLP)
+        ).vaults[j].amount;
+
+        expect(Number(userCurrentBalance)).eq(0);
+        expect(userLPCurrentBalance.toString()).eq(
+          userLPBeforeBalance.add(userBeforeBalance).toString()
+        );
+        expect(delphorCurrentBalance.toString()).eq(
+          delphorBeforeBalance.add(userBeforeBalance).toString()
+        );
+      }
     }
   });
 
@@ -513,116 +571,6 @@ describe("super-liquidity", () => {
           alicePMData.limitPrice,
         ],
         [min, max, true, true, true, new BN(0)]
-      )
-    );
-  });
-
-  it("Alice deposit mockSOL in liquidity provider", async () => {
-    const aliceMockSOLBeforeBalance = (
-      await getTokenAccount(provider, alicemockSOL)
-    ).amount;
-    const delphorMockSOLBeforeBalance = (
-      await getTokenAccount(provider, mockSOLStore)
-    ).amount;
-    const aliceLPBeforeBalance = (
-      await superLiquidityProgram.account.userVault.fetch(aliceLP)
-    ).vaults[positionMockSOL].amount;
-
-    await programCall(
-      superLiquidityProgram,
-      "deposit",
-      [depositAmountAliceMockSOL, positionMockSOL],
-      {
-        globalState,
-        userAccount: alice.publicKey,
-        userVault: aliceLP,
-        tokenStoreAuthority: tokenStoreAuthority,
-        mint: mockSOLMint,
-        getTokenFrom: alicemockSOL,
-        getTokenFromAuthority: alice.publicKey,
-        tokenStorePda: mockSOLStore,
-        tokenProgram: TOKEN_PROGRAM_ID,
-      },
-      [alice]
-    );
-
-    const aliceMockSOLCurrentBalance = (
-      await getTokenAccount(provider, alicemockSOL)
-    ).amount;
-    const delphorMockSOLCurrentBalance = (
-      await getTokenAccount(provider, mockSOLStore)
-    ).amount;
-    const aliceLPCurrentBalance = (
-      await superLiquidityProgram.account.userVault.fetch(aliceLP)
-    ).vaults[positionMockSOL].amount;
-
-    assert.ok(
-      checkEqualValues(
-        [
-          aliceLPCurrentBalance,
-          aliceMockSOLCurrentBalance,
-          delphorMockSOLCurrentBalance,
-        ],
-        [
-          aliceLPBeforeBalance.add(depositAmountAliceMockSOL),
-          aliceMockSOLBeforeBalance.sub(depositAmountAliceMockSOL),
-          delphorMockSOLBeforeBalance.add(depositAmountAliceMockSOL),
-        ]
-      )
-    );
-  });
-
-  it("Alice deposit mockUSDC in liquidity provider", async () => {
-    const aliceMockUSDCBeforeBalance = (
-      await getTokenAccount(provider, alicemockUSDC)
-    ).amount;
-    const delphorMockUSDCBeforeBalance = (
-      await getTokenAccount(provider, mockUSDCStore)
-    ).amount;
-    const aliceLPBeforeBalance = (
-      await superLiquidityProgram.account.userVault.fetch(aliceLP)
-    ).vaults[positionMockUSDC].amount;
-
-    await programCall(
-      superLiquidityProgram,
-      "deposit",
-      [depositAmountAliceMockUSDC, positionMockUSDC],
-      {
-        globalState,
-        userAccount: alice.publicKey,
-        userVault: aliceLP,
-        tokenStoreAuthority: tokenStoreAuthority,
-        mint: mockUSDCMint,
-        getTokenFrom: alicemockUSDC,
-        getTokenFromAuthority: alice.publicKey,
-        tokenStorePda: mockUSDCStore,
-        tokenProgram: TOKEN_PROGRAM_ID,
-      },
-      [alice]
-    );
-
-    const aliceMockUSDCCurrentBalance = (
-      await getTokenAccount(provider, alicemockUSDC)
-    ).amount;
-    const delphorMockUSDCCurrentBalance = (
-      await getTokenAccount(provider, mockUSDCStore)
-    ).amount;
-    const aliceLPCurrentBalance = (
-      await superLiquidityProgram.account.userVault.fetch(aliceLP)
-    ).vaults[positionMockUSDC].amount;
-
-    assert.ok(
-      checkEqualValues(
-        [
-          aliceLPCurrentBalance,
-          aliceMockUSDCCurrentBalance,
-          delphorMockUSDCCurrentBalance,
-        ],
-        [
-          aliceLPBeforeBalance.add(depositAmountAliceMockUSDC),
-          aliceMockUSDCBeforeBalance.sub(depositAmountAliceMockUSDC),
-          delphorMockUSDCBeforeBalance.add(depositAmountAliceMockUSDC),
-        ]
       )
     );
   });
@@ -795,60 +743,6 @@ describe("super-liquidity", () => {
           new BN(0),
           aliceMockSOLBeforeBalance.add(aliceLPBeforeBalance),
           delphorMockSOLBeforeBalance.sub(aliceLPBeforeBalance),
-        ]
-      )
-    );
-  });
-
-  it("Alice withdraw mockUSDC tokens from vault", async () => {
-    const aliceMockUSDCBeforeBalance = (
-      await getTokenAccount(provider, alicemockUSDC)
-    ).amount;
-    const delphorMockUSDCBeforeBalance = (
-      await getTokenAccount(provider, mockUSDCStore)
-    ).amount;
-    const aliceLPBeforeBalance = (
-      await superLiquidityProgram.account.userVault.fetch(aliceLP)
-    ).vaults[positionMockUSDC].amount;
-
-    await programCall(
-      superLiquidityProgram,
-      "withdraw",
-      [tokenStoreAuthorityBump, aliceLPBeforeBalance, positionMockUSDC],
-      {
-        globalState,
-        userAccount: alice.publicKey,
-        userVault: aliceLP,
-        sendTokenTo: alicemockUSDC,
-        tokenStoreAuthority: tokenStoreAuthority,
-        mint: mockUSDCMint,
-        tokenStorePda: mockUSDCStore,
-        tokenProgram: TOKEN_PROGRAM_ID,
-      },
-      [alice]
-    );
-
-    const aliceMockUSDCCurrentBalance = (
-      await getTokenAccount(provider, alicemockUSDC)
-    ).amount;
-    const delphorMockUSDCCurrentBalance = (
-      await getTokenAccount(provider, mockUSDCStore)
-    ).amount;
-    const aliceLPCurrentBalance = (
-      await superLiquidityProgram.account.userVault.fetch(aliceLP)
-    ).vaults[positionMockUSDC].amount;
-
-    assert.ok(
-      checkEqualValues(
-        [
-          aliceLPCurrentBalance,
-          aliceMockUSDCCurrentBalance,
-          delphorMockUSDCCurrentBalance,
-        ],
-        [
-          new BN(0),
-          aliceMockUSDCBeforeBalance.add(aliceLPBeforeBalance),
-          delphorMockUSDCBeforeBalance.sub(aliceLPBeforeBalance),
         ]
       )
     );
