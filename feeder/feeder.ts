@@ -92,7 +92,6 @@ async function aggregatorAddToken(
 async function aggregatorUpdatePrice(
   position: number,
   globalAccount: PublicKey,
-  mint: PublicKey,
   delphorOracle: PublicKey,
   pythPriceAccount: PublicKey,
   switchboardOptimizedFeedAccount: PublicKey
@@ -104,7 +103,6 @@ async function aggregatorUpdatePrice(
     delphorOracle,
     globalAccount,
     authority,
-    mint,
   };
   const tx = await programCall(
     aggregatorProgram,
@@ -267,7 +265,6 @@ async function main() {
           await aggregatorUpdatePrice(
             x,
             aggregatorGlobalAccount,
-            MINT_DEVNET_ACCOUNTS[x],
             coinPDAs[x],
             PYTH_DEVNET_PRICE_ACCOUNTS[x],
             SWITCHBOARD_DEVNET_OPTIMIZED_FEED_ACCOUNTS[x]

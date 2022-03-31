@@ -95,7 +95,7 @@ describe("super-liquidity", () => {
   it("Airdrop lamports to alice", async function () {
     let balance = await getBalance(alice.publicKey);
     assert.ok(balance == 0);
-    await airdropLamports(alice.publicKey);
+    await airdropLamports(alice.publicKey, anchor.web3.LAMPORTS_PER_SOL * 10);
     balance = await getBalance(alice.publicKey);
     assert.ok(balance == anchor.web3.LAMPORTS_PER_SOL * 10);
   });
@@ -103,7 +103,7 @@ describe("super-liquidity", () => {
   it("Airdrop lamports to bob", async function () {
     let balance = await getBalance(bob.publicKey);
     assert.ok(balance == 0);
-    await airdropLamports(bob.publicKey);
+    await airdropLamports(bob.publicKey, anchor.web3.LAMPORTS_PER_SOL * 10);
     balance = await getBalance(bob.publicKey);
     assert.ok(balance == anchor.web3.LAMPORTS_PER_SOL * 10);
   });
@@ -393,7 +393,6 @@ describe("super-liquidity", () => {
       delphorOracle: delphorOracleMockSOLPDA,
       globalAccount: aggregatorGlobalAccount,
       authority,
-      mint: mockSOLMint,
     });
 
     const globalAccount =
@@ -411,7 +410,6 @@ describe("super-liquidity", () => {
       delphorOracle: delphorOracleMockUSDCPDA,
       globalAccount: aggregatorGlobalAccount,
       authority,
-      mint: mockUSDCMint,
     });
 
     const globalAccount =
@@ -615,7 +613,6 @@ describe("super-liquidity", () => {
       {
         globalState,
         userAccount: alice.publicKey,
-        mint: mockSOLMint,
         userVault: aliceLP,
       },
       [alice]
@@ -660,7 +657,6 @@ describe("super-liquidity", () => {
       {
         globalState,
         userAccount: alice.publicKey,
-        mint: mockUSDCMint,
         userVault: aliceLP,
       },
       [alice]
@@ -695,7 +691,6 @@ describe("super-liquidity", () => {
       {
         globalState,
         userAccount: bob.publicKey,
-        mint: mockSOLMint,
         userVault: bobLP,
       },
       [bob]
@@ -740,7 +735,6 @@ describe("super-liquidity", () => {
       {
         globalState,
         userAccount: bob.publicKey,
-        mint: mockUSDCMint,
         userVault: bobLP,
       },
       [bob]
@@ -849,7 +843,6 @@ describe("super-liquidity", () => {
       {
         globalState,
         userAccount: alice.publicKey,
-        mint: mockSOLMint,
         userVault: alicePM,
       },
       [alice]
@@ -882,7 +875,6 @@ describe("super-liquidity", () => {
       {
         globalState,
         userAccount: alice.publicKey,
-        mint: mockUSDCMint,
         userVault: alicePM,
       },
       [alice]
@@ -915,7 +907,6 @@ describe("super-liquidity", () => {
       {
         globalState,
         userAccount: bob.publicKey,
-        mint: mockSOLMint,
         userVault: bobPM,
       },
       [bob]
@@ -948,7 +939,6 @@ describe("super-liquidity", () => {
       {
         globalState,
         userAccount: bob.publicKey,
-        mint: mockUSDCMint,
         userVault: bobPM,
       },
       [bob]
@@ -992,7 +982,6 @@ describe("super-liquidity", () => {
         globalState,
         userVault: aliceLP,
         tokenStoreAuthority: tokenStoreAuthority,
-        mint: mockSOLMint,
         getTokenFrom: alicemockSOL,
         getTokenFromAuthority: alice.publicKey,
         tokenStorePda: mockSOLStore,
@@ -1046,7 +1035,6 @@ describe("super-liquidity", () => {
         globalState,
         userVault: aliceLP,
         tokenStoreAuthority: tokenStoreAuthority,
-        mint: mockUSDCMint,
         getTokenFrom: alicemockUSDC,
         getTokenFromAuthority: alice.publicKey,
         tokenStorePda: mockUSDCStore,
@@ -1116,8 +1104,6 @@ describe("super-liquidity", () => {
         delphorAggregatorPrices: aggregatorGlobalAccount,
         userVault: aliceLP,
         tokenStoreAuthority: tokenStoreAuthority,
-        mintSell: mockSOLMint,
-        mintBuy: mockUSDCMint,
         getTokenFrom: bobmockSOL,
         getTokenFromAuthority: bob.publicKey,
         sendTokenTo: bobmockUSDC,

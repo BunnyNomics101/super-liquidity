@@ -1,6 +1,5 @@
 use crate::states::*;
 use anchor_lang::prelude::*;
-use anchor_spl::token::Mint;
 
 #[derive(Accounts)]
 pub struct InitUserLiquidityProvider<'info> {
@@ -52,7 +51,6 @@ pub struct UpdateUserLiquidityProvider<'info> {
     )]
     pub global_state: Account<'info, GlobalState>,
     pub user_account: Signer<'info>,
-    pub mint: Account<'info, Mint>,
     #[account(
         mut, 
         seeds = [
@@ -64,7 +62,6 @@ pub struct UpdateUserLiquidityProvider<'info> {
     pub user_vault: Account<'info, UserVault>,
 }
 impl<'info> UpdateUserLiquidityProvider<'info> {
-    #[access_control(check_token_position(&self.global_state, &self.mint, position))]
     pub fn process(
         &mut self,
         position: u8,
@@ -141,7 +138,6 @@ pub struct UpdateUserPortfolio<'info> {
     )]
     pub global_state: Account<'info, GlobalState>,
     pub user_account: Signer<'info>,
-    pub mint: Account<'info, Mint>,
     #[account(
         mut, 
         seeds = [
@@ -153,7 +149,6 @@ pub struct UpdateUserPortfolio<'info> {
     pub user_vault: Account<'info, UserVault>,
 }
 impl<'info> UpdateUserPortfolio<'info> {
-    #[access_control(check_token_position(&self.global_state, &self.mint, position))]
     pub fn process(
         &mut self,
         position: u8,

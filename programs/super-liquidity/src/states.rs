@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::Mint;
 
 //-----------------------------------------------------
 pub fn get_admin() -> Pubkey {
@@ -61,12 +60,8 @@ impl UserCoinVault {}
 
 //-----------------------------------------------------
 
-pub fn check_token_position(
-    global_state: &GlobalState,
-    mint: &Account<Mint>,
-    position: u8,
-) -> Result<()> {
-    if global_state.tokens[position as usize] != mint.key() {
+pub fn check_token_position(global_state: &GlobalState, mint: &Pubkey, position: u8) -> Result<()> {
+    if global_state.tokens[position as usize] != *mint {
         return err!(ErrorCode::InvalidTokenPosition);
     }
     Ok(())

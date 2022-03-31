@@ -95,11 +95,6 @@
           "name": "authority",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
         }
       ],
       "args": [

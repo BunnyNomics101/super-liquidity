@@ -288,7 +288,6 @@ describe("super-liquidity", () => {
         delphorOracle: oracleTokensPDAs[i],
         globalAccount: aggregatorGlobalAccount,
         authority,
-        mint,
       });
 
       const globalAccount =
@@ -477,7 +476,6 @@ describe("super-liquidity", () => {
               accounts: {
                 globalState,
                 userAccount: user.publicKey,
-                mint,
                 userVault: usersLP[i],
               },
             }
@@ -542,7 +540,6 @@ describe("super-liquidity", () => {
               globalState,
               userVault: userLP,
               tokenStoreAuthority: tokenStoreAuthority,
-              mint,
               getTokenFrom: userTokenAccount,
               getTokenFromAuthority: user.publicKey,
               tokenStorePda: tokenStore,

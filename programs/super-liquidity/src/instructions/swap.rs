@@ -1,6 +1,5 @@
 use crate::states::*;
 use anchor_lang::prelude::*;
-use anchor_spl::token::Mint;
 use anchor_spl::token::{Token, TokenAccount, Transfer};
 use delphor_oracle_aggregator::{check_token_position as check_token_aggregator, GlobalAccount};
 
@@ -25,34 +24,29 @@ pub struct Swap<'info> {
         bump = bump,
     )]
     pub token_store_authority: AccountInfo<'info>,
-    // token user sends
-    pub mint_sell: Account<'info, Mint>,
-    // token user wants, validates the tokens being swapped are differents
-    #[account(constraint = mint_buy.key() != mint_sell.key())]
-    pub mint_buy: Account<'info, Mint>,
     // Account where user have tokens
-    #[account(mut, associated_token::mint = mint_sell, associated_token::authority = get_token_from_authority)]
+    #[account(mut, constraint = get_token_from.mint == token_store_pda_to.mint, constraint = get_token_from.owner == get_token_from_authority.key())]
     pub get_token_from: Box<Account<'info, TokenAccount>>,
     // owner or delegate_authority
     pub get_token_from_authority: Signer<'info>,
     // User account to send tokens
-    #[account(mut)]
+    #[account(mut, constraint = send_token_to.mint == token_store_pda_from.mint)]
     pub send_token_to: Box<Account<'info, TokenAccount>>,
     // PDA to withdraw tokens
-    #[account(mut, associated_token::mint = mint_buy, associated_token::authority = token_store_authority)]
+    #[account(mut, constraint = token_store_pda_from.owner == token_store_authority.key())]
     pub token_store_pda_from: Box<Account<'info, TokenAccount>>,
     // PDA to deposit tokens
-    #[account(mut, associated_token::mint = mint_sell, associated_token::authority = token_store_authority)]
+    #[account(mut, constraint = token_store_pda_to.owner == token_store_authority.key(), constraint = token_store_pda_to.mint != token_store_pda_from.mint)]
     pub token_store_pda_to: Box<Account<'info, TokenAccount>>,
     pub token_program: Program<'info, Token>,
 }
 impl<'info> Swap<'info> {
     #[access_control(
         check_vault(&self.user_vault.user, &self.user_vault) &&
-        check_token_aggregator(&self.delphor_aggregator_prices, &self.mint_sell, position_sell) &&
-        check_token_aggregator(&self.delphor_aggregator_prices, &self.mint_buy, position_buy) &&
-        check_token_position(&self.global_state, &self.mint_sell, position_sell) &&
-        check_token_position(&self.global_state, &self.mint_buy, position_buy)
+        check_token_aggregator(&self.delphor_aggregator_prices, &self.token_store_pda_to.mint, position_sell) &&
+        check_token_aggregator(&self.delphor_aggregator_prices, &self.token_store_pda_from.mint, position_buy) &&
+        check_token_position(&self.global_state, &self.token_store_pda_to.mint, position_sell) &&
+        check_token_position(&self.global_state, &self.token_store_pda_from.mint, position_buy)
     )]
     pub fn process(
         &mut self,

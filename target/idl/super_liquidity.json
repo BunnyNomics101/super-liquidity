@@ -21,11 +21,6 @@
           "isSigner": false
         },
         {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "getTokenFrom",
           "isMut": true,
           "isSigner": false
@@ -86,11 +81,6 @@
           "isSigner": false
         },
         {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "tokenStorePda",
           "isMut": true,
           "isSigner": false
@@ -136,16 +126,6 @@
         },
         {
           "name": "tokenStoreAuthority",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "mintSell",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "mintBuy",
           "isMut": false,
           "isSigner": false
         },
@@ -238,11 +218,6 @@
           "isSigner": true
         },
         {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "userVault",
           "isMut": true,
           "isSigner": false
@@ -320,11 +295,6 @@
           "name": "userAccount",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
         },
         {
           "name": "userVault",

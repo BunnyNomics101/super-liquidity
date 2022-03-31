@@ -241,7 +241,6 @@ describe("delphor-oracle-aggregator", () => {
       delphorOracle: delphorOracleMockSOLPDA,
       globalAccount: aggregatorGlobalAccount,
       authority: adminAccount,
-      mint: mockSOLMint,
     });
 
     const globalAccount =
@@ -259,7 +258,6 @@ describe("delphor-oracle-aggregator", () => {
       delphorOracle: delphorOracleMockUSDCPDA,
       globalAccount: aggregatorGlobalAccount,
       authority: adminAccount,
-      mint: mockUSDCMint,
     });
 
     const globalAccount =

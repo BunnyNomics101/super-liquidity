@@ -1,6 +1,6 @@
 use crate::states::*;
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Token, TokenAccount, Transfer, Mint};
+use anchor_spl::token::{Token, TokenAccount, Transfer};
 
 #[derive(Accounts)]
 #[instruction(bump: u8, amount: u64, position: u8)]
@@ -26,15 +26,14 @@ pub struct Withdraw<'info> {
         bump = bump,
     )]
     pub token_store_authority: AccountInfo<'info>,
-    pub mint: Account<'info, Mint>,
     /// store to withdraw tokens from
-    #[account(mut, associated_token::mint = mint, associated_token::authority = token_store_authority, constraint = token_store_pda.mint == send_token_to.mint)]
+    #[account(mut, constraint = token_store_pda.owner == token_store_authority.key(), constraint = token_store_pda.mint == send_token_to.mint)]
     pub token_store_pda: Account<'info, TokenAccount>,
     pub token_program: Program<'info, Token>,
 }
 impl<'info> Withdraw<'info> {
     #[access_control(
-        check_token_position(&self.global_state, &self.mint, position) && 
+        check_token_position(&self.global_state, &self.token_store_pda.mint, position) && 
         check_vault(&self.user_account.key, &self.user_vault)
     )]
     pub fn process(&mut self, bump: u8, amount: u64, position: u8) -> Result<()> {

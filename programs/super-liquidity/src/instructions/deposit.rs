@@ -1,6 +1,6 @@
 use crate::states::*;
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
+use anchor_spl::token::{Token, TokenAccount, Transfer};
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {
@@ -21,23 +21,25 @@ pub struct Deposit<'info> {
         bump,
     )]
     pub token_store_authority: AccountInfo<'info>,
-    pub mint: Account<'info, Mint>,
     // Account where user has the tokens
-    #[account(mut, associated_token::mint = mint, associated_token::authority = get_token_from_authority)]
+    #[account(
+        mut, 
+        constraint = get_token_from.mint == token_store_pda.mint, 
+        constraint = get_token_from.owner == get_token_from_authority.key()
+    )]
     pub get_token_from: Account<'info, TokenAccount>,
     // Owner or delegate_authority. Must be also the owner of the vault
     pub get_token_from_authority: Signer<'info>,
     // Account where the program will store the tokens
     #[account(mut,
-        associated_token::mint = mint, 
-        associated_token::authority = token_store_authority
+        constraint = token_store_pda.owner == token_store_authority.key()
     )]
     pub token_store_pda: Account<'info, TokenAccount>,
     pub token_program: Program<'info, Token>,
 }
 impl<'info> Deposit<'info> {
     #[access_control(
-        check_token_position(&self.global_state, &self.mint, position) && 
+        check_token_position(&self.global_state, &self.token_store_pda.mint, position) && 
         check_vault(&self.get_token_from_authority.key, &self.user_vault)
     )]
     pub fn process(&mut self, amount: u64, position: u8) -> Result<()> {

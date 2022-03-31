@@ -67,10 +67,7 @@ pub mod delphor_oracle_aggregator {
         });
         Ok(())
     }
-
-    #[access_control(
-        check_token_position(&ctx.accounts.global_account, &ctx.accounts.mint, position)
-    )]
+    
     pub fn update_token_price(ctx: Context<UpdateCoinPrice>, position: u8) -> Result<()> {
         let token_data = &mut ctx.accounts.global_account.tokens[position as usize];
         let delphor_oracle = &mut ctx.accounts.delphor_oracle;
@@ -116,10 +113,10 @@ pub mod delphor_oracle_aggregator {
 
 pub fn check_token_position(
     global_state: &GlobalAccount,
-    mint: &Account<Mint>,
+    mint: &Pubkey,
     position: u8,
 ) -> Result<()> {
-    if global_state.tokens[position as usize].mint != mint.key() {
+    if global_state.tokens[position as usize].mint != *mint {
         return err!(ErrorCode::InvalidTokenPosition);
     }
     Ok(())
@@ -254,7 +251,6 @@ pub struct UpdateCoinPrice<'info> {
     )]
     global_account: Account<'info, GlobalAccount>,
     authority: Signer<'info>,
-    mint: Account<'info, Mint>,
 }
 
 #[derive(Accounts)]
