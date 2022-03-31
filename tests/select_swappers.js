@@ -1,24 +1,53 @@
 const anchor = require("@project-serum/anchor");
 const BN = require("@project-serum/anchor").BN;
 const PublicKey = require("@solana/web3.js").PublicKey;
-const {
-  programCall,
-  checkEqualValues,
-  expectProgramCallRevert,
-} = require("./utils");
+const { programCall, checkEqualValues } = require("./utils");
 const assert = require("assert");
 const { expect } = require("chai");
 const { selectSwappers } = require("./utils/swap");
-
 const {
   TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+} = require("@solana/spl-token");
+
+const {
   createAssociatedTokenAccount,
+  createAssociatedTokenAccountInstruction,
   getTokenAccount,
   getAssociatedTokenAccount,
   createMint,
-  mintToAccount,
+  createMintToAccountInstrs,
   getBalance,
 } = require("./utils");
+
+async function sendTxs(txs, provider) {
+  let sigs = [];
+  for (let tx of txs) {
+    let signature = undefined;
+    while (signature == undefined) {
+      try {
+        signature = await provider.send(tx.tx, tx.signers);
+      } catch (err) {
+        console.log(err )
+      }
+    }
+    sigs.push(signature);
+  }
+  return sigs;
+}
+
+async function sendAndConfirmTransactions(txs, provider) {
+  const sigs = await sendTxs(txs, provider);
+
+  for (let signature of sigs) {
+    while (
+      (await provider.connection.getConfirmedTransaction(
+        signature,
+        "finalized"
+      )) == null
+    ) {}
+  }
+}
 
 describe("super-liquidity", () => {
   const provider = anchor.Provider.env();
@@ -41,23 +70,28 @@ describe("super-liquidity", () => {
   let sellFee = 100,
     buyFee = 300,
     min = new anchor.BN(1 * 10 ** 9),
-    max = new anchor.BN(10 * 10 ** 9);
+    max = new anchor.BN(5000 * 10 ** 9);
+
+  let bobSwapAmountSOLForUSDC = Lamport(2);
+  let bobSwapUSDCMinAmount = Lamport(250);
 
   function Lamport(value) {
     return new BN(value * 10 ** 9);
   }
 
-  let bobSwapAmountSOLForUSDC = Lamport(2);
-  let bobSwapUSDCMinAmount = Lamport(250);
-
   let pythProductAccount = systemProgram;
   let pythPriceAccount = systemProgram;
   let switchboardOptimizedFeedAccount = systemProgram;
 
-  const minUSers = 1;
-  const maxUSers = 20;
+  const minUSers = 11;
+  const maxUSers = 200;
   const totalUsers = Math.floor(Math.random() * maxUSers + minUSers);
+  console.log("Total users:", totalUsers);
   const maxTransferTransactions = 20;
+  const maxMintTokenAccountsTransactions = 6;
+  const maxSetVaultsTransactions = 2;
+  const maxInitVaultTransactions = 2;
+  const maxDepositTransactions = 1;
   const users = Array.from({ length: totalUsers }, (e) =>
     anchor.web3.Keypair.generate()
   );
@@ -87,33 +121,53 @@ describe("super-liquidity", () => {
     for (let i = 0; i < totalTokens; i++) {
       mints[i] = await createMint(provider, adminAccount);
       const mint = mints[i];
+      let transaction = new anchor.web3.Transaction();
       for (let j = 0; j < totalUsers; j++) {
         let user = users[j].publicKey;
 
-        usersTokenAccounts[j][i] = await createAssociatedTokenAccount(
-          provider,
-          mint,
-          user
+        usersTokenAccounts[j][i] = await getAssociatedTokenAccount(mint, user);
+        let userTokenAccount = usersTokenAccounts[j][i];
+
+        transaction.add(
+          await createAssociatedTokenAccountInstruction(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            mint,
+            userTokenAccount,
+            user,
+            provider.wallet.publicKey
+          )
         );
 
+        const amount = Lamport(Math.floor(Math.random() * maxMint + minMint));
+
+        transaction.add(
+          ...(await createMintToAccountInstrs(
+            mint,
+            userTokenAccount,
+            amount,
+            adminAccount
+          ))
+        );
+
+        if (
+          j == totalUsers - 1 ||
+          (j % maxMintTokenAccountsTransactions == 0 && j != 0)
+        ) {
+          await provider.send(transaction, []);
+          transaction = new anchor.web3.Transaction();
+        }
+      }
+
+      for (let j = 0; j < totalUsers; j++) {
+        let user = users[j].publicKey;
         let userTokenAccount = usersTokenAccounts[j][i];
 
         expect(userTokenAccount.toBase58()).eq(
           (await getAssociatedTokenAccount(mint, user)).toBase58()
         );
-
-        const amount = Lamport(Math.floor(Math.random() * maxMint + minMint));
-
-        await mintToAccount(
-          provider,
-          mint,
-          userTokenAccount,
-          amount,
-          adminAccount
-        );
-
-        let userTokenData = await getTokenAccount(provider, userTokenAccount);
-        expect(userTokenData.amount.toString()).equal(amount.toString());
+        // let userTokenData = await getTokenAccount(provider, userTokenAccount);
+        // expect(userTokenData.amount.toString()).equal(amount.toString());
       }
     }
   });
@@ -318,6 +372,7 @@ describe("super-liquidity", () => {
 
   it("Transfer lamport to users", async () => {
     let len = totalUsers;
+    let txs = [];
     let transaction = new anchor.web3.Transaction();
     while (len--) {
       transaction.add(
@@ -327,60 +382,110 @@ describe("super-liquidity", () => {
           lamports: anchor.web3.LAMPORTS_PER_SOL,
         })
       );
-      if (len == 0 || len % maxTransferTransactions == 0) {
-        transaction.feePayer = adminAccount;
-        let blockhashObj = await provider.connection.getRecentBlockhash();
-        transaction.recentBlockhash = blockhashObj.blockhash;
-        let signed = await provider.wallet.signTransaction(transaction);
-        let signature = await provider.connection.sendRawTransaction(
-          signed.serialize()
-        );
 
-        await provider.connection.confirmTransaction(signature, "finalized");
+      if (len == 0 || len % maxTransferTransactions == 0) {
+        txs.push({
+          tx: transaction,
+          signers: [provider.wallet.payer],
+        });
         transaction = new anchor.web3.Transaction();
       }
     }
+    await sendAndConfirmTransactions(txs, provider);
 
-    len = totalUsers;
-    while (len--) {
-      let balance = await getBalance(users[len].publicKey);
+    for (let user of users) {
+      let balance = await getBalance(user.publicKey);
       expect(balance).to.eq(anchor.web3.LAMPORTS_PER_SOL);
     }
   });
 
   it("Initialize and update liquidity provider vaults", async () => {
+    let txs = [];
+    let signers = [];
+    let transaction = new anchor.web3.Transaction();
+
     for (let i = 0; i < totalUsers; i++) {
       const user = users[i];
-      let bump;
 
-      [usersLP[i], bump] = await PublicKey.findProgramAddress(
+      [usersLP[i]] = await PublicKey.findProgramAddress(
         [user.publicKey.toBuffer(), Buffer.from("liquidity_provider")],
         superLiquidityProgram.programId
       );
 
-      await programCall(
-        superLiquidityProgram,
-        "initUserLiquidityProvider",
-        [],
-        {
-          userAccount: user.publicKey,
-          userVault: usersLP[i],
-          systemProgram,
-        },
-        [user]
+      transaction.add(
+        superLiquidityProgram.instruction.initUserLiquidityProvider({
+          accounts: {
+            userAccount: user.publicKey,
+            userVault: usersLP[i],
+            systemProgram,
+          },
+          signers: [user],
+        })
       );
+      signers.push(user);
+
+      if (i + 1 == totalUsers || (i + 1) % maxInitVaultTransactions == 0) {
+        txs.push({
+          tx: transaction,
+          signers,
+        });
+        transaction = new anchor.web3.Transaction();
+        signers = [];
+      }
+    }
+
+    let count = 0;
+    for (let i = 0; i < totalUsers; i++) {
+      const user = users[i];
+      for (let j = 0; j < totalTokens; j++) {
+        const mint = mints[j];
+
+        transaction.add(
+          superLiquidityProgram.instruction.updateUserLiquidityProvider(
+            j,
+            buyFee,
+            sellFee,
+            min,
+            max,
+            true,
+            true,
+            true,
+            new BN(0),
+            {
+              accounts: {
+                globalState,
+                userAccount: user.publicKey,
+                mint,
+                userVault: usersLP[i],
+              },
+              signers: [user],
+            }
+          )
+        );
+        signers.push(user);
+        count++;
+      }
+      if (
+        count == totalUsers * totalTokens ||
+        count % maxSetVaultsTransactions == 0
+      ) {
+        txs.push({
+          tx: transaction,
+          signers,
+        });
+        transaction = new anchor.web3.Transaction();
+        signers = [];
+      }
+    }
+    await sendAndConfirmTransactions(txs, provider);
+
+    for (let i = 0; i < totalUsers; i++) {
+      const user = users[i];
 
       let userLPData = await superLiquidityProgram.account.userVault.fetch(
         usersLP[i]
       );
 
-      userLPData.vaults.forEach((vault) => {
-        Object.values(vault).forEach((propertie) => {
-          expect(Number(propertie)).eq(0);
-        });
-      });
-
-      expect(userLPData.bump).eq(bump);
       expect(userLPData.user.toBase58()).eq(user.publicKey.toBase58());
       expect(Object.getOwnPropertyNames(userLPData.vaultType).toString()).eq(
         "liquidityProvider"
@@ -388,21 +493,6 @@ describe("super-liquidity", () => {
       expect(userLPData.vaults.length).eq(50);
 
       for (let j = 0; j < totalTokens; j++) {
-        const mint = mints[j];
-
-        await programCall(
-          superLiquidityProgram,
-          "updateUserLiquidityProvider",
-          [j, buyFee, sellFee, min, max, true, true, true, new BN(0)],
-          {
-            globalState,
-            userAccount: user.publicKey,
-            mint,
-            userVault: usersLP[i],
-          },
-          [user]
-        );
-
         userLPData = (
           await superLiquidityProgram.account.userVault.fetch(usersLP[i])
         ).vaults[j];
@@ -420,6 +510,10 @@ describe("super-liquidity", () => {
   });
 
   it("Users deposit tokens in liquidity provider", async () => {
+    let count = 0;
+    let txs = [];
+    let signers = [];
+    let transaction = new anchor.web3.Transaction();
     for (let i = 0; i < totalUsers; i++) {
       const user = users[i];
       const userLP = usersLP[i];
@@ -432,34 +526,52 @@ describe("super-liquidity", () => {
         const userBeforeBalance = (
           await getTokenAccount(provider, userTokenAccount)
         ).amount;
-        const delphorBeforeBalance = (
-          await getTokenAccount(provider, tokenStore)
-        ).amount;
-        const userLPBeforeBalance = (
-          await superLiquidityProgram.account.userVault.fetch(userLP)
-        ).vaults[j].amount;
 
-        await programCall(
-          superLiquidityProgram,
-          "deposit",
-          [userBeforeBalance, j],
-          {
-            globalState,
-            userAccount: user.publicKey,
-            userVault: userLP,
-            tokenStoreAuthority: tokenStoreAuthority,
-            mint,
-            getTokenFrom: userTokenAccount,
-            getTokenFromAuthority: user.publicKey,
-            tokenStorePda: tokenStore,
-            tokenProgram: TOKEN_PROGRAM_ID,
-          },
-          [user]
+        transaction.add(
+          superLiquidityProgram.instruction.deposit(userBeforeBalance, j, {
+            accounts: {
+              globalState,
+              userAccount: user.publicKey,
+              userVault: userLP,
+              tokenStoreAuthority: tokenStoreAuthority,
+              mint,
+              getTokenFrom: userTokenAccount,
+              getTokenFromAuthority: user.publicKey,
+              tokenStorePda: tokenStore,
+              tokenProgram: TOKEN_PROGRAM_ID,
+            },
+            signers: [user],
+          })
         );
+        signers.push(user);
+        count++;
+
+        if (
+          count == totalUsers * totalTokens ||
+          count % maxDepositTransactions == 0
+        ) {
+          txs.push({
+            tx: transaction,
+            signers,
+          });
+          transaction = new anchor.web3.Transaction();
+          signers = [];
+        }
+      }
+    }
+    await sendAndConfirmTransactions(txs, provider);
+
+    for (let i = 0; i < totalUsers; i++) {
+      const userLP = usersLP[i];
+
+      for (let j = 0; j < totalTokens; j++) {
+        const userTokenAccount = usersTokenAccounts[i][j];
+        const tokenStore = tokenStores[j];
 
         const userCurrentBalance = (
           await getTokenAccount(provider, userTokenAccount)
         ).amount;
+
         const delphorCurrentBalance = (
           await getTokenAccount(provider, tokenStore)
         ).amount;
@@ -468,90 +580,30 @@ describe("super-liquidity", () => {
         ).vaults[j].amount;
 
         expect(Number(userCurrentBalance)).eq(0);
-        expect(userLPCurrentBalance.toString()).eq(
-          userLPBeforeBalance.add(userBeforeBalance).toString()
-        );
-        expect(delphorCurrentBalance.toString()).eq(
-          delphorBeforeBalance.add(userBeforeBalance).toString()
-        );
+        expect(Number(userLPCurrentBalance)).not.eq(0);
+        expect(Number(delphorCurrentBalance)).not.eq(0);
       }
     }
   });
 
   return;
 
-  xit("Initialize alice portfolio manager vault", async () => {
-    let bump;
-    [alicePM, bump] = await PublicKey.findProgramAddress(
-      [alice.publicKey.toBuffer(), Buffer.from("portfolio_manager")],
-      superLiquidityProgram.programId
-    );
-
-    await programCall(
-      superLiquidityProgram,
-      "initUserPortfolio",
-      [],
-      {
-        userAccount: alice.publicKey,
-        userVault: alicePM,
-        systemProgram,
-      },
-      [alice]
-    );
-
-    let alicePMData = await superLiquidityProgram.account.userVault.fetch(
-      alicePM
-    );
-
-    assert.ok(
-      checkEqualValues(
-        [bump, alice.publicKey, "portfolioManager", 50, true, 1000],
-        [
-          alicePMData.bump,
-          alicePMData.user,
-          Object.getOwnPropertyNames(alicePMData.vaultType),
-          alicePMData.vaults.length,
-          alicePMData.vaultType.portfolioManager.autoFee,
-          alicePMData.vaultType.portfolioManager.tolerance,
-        ]
-      )
-    );
-  });
-
-  xit("Alice update mockSOL portfolio manager vault", async () => {
-    await programCall(
-      superLiquidityProgram,
-      "updateUserPortfolio",
-      [positionMockSOL, min, max, true, new BN(0)],
-      {
-        globalState,
-        userAccount: alice.publicKey,
-        mint: mockSOLMint,
-        userVault: alicePM,
-      },
-      [alice]
-    );
-
-    const alicePMData = (
-      await superLiquidityProgram.account.userVault.fetch(alicePM)
-    ).vaults[positionMockSOL];
-
-    assert.ok(
-      checkEqualValues(
-        [
-          alicePMData.min,
-          alicePMData.max,
-          alicePMData.receiveStatus,
-          alicePMData.provideStatus,
-          alicePMData.limitPriceStatus,
-          alicePMData.limitPrice,
-        ],
-        [min, max, true, true, true, new BN(0)]
-      )
-    );
-  });
-
   it("Bob swap mockSOL for mockUSDC from LP alice vault", async () => {
+    const vaults = await selectSwappers(
+      superLiquidityProgram,
+      positionMockUSDC,
+      positionMockSOL,
+      tokens[positionMockUSDC].price,
+      bobSwapAmountSOLForUSDC,
+      bobSwapUSDCMinAmount
+    );
+
+    vaults.map((e) => {
+      console.log(e.toBase58());
+    });
+
+    return;
+
     const bobMockSOLBeforeBalance = (
       await getTokenAccount(provider, bobmockSOL)
     ).amount;
@@ -570,20 +622,6 @@ describe("super-liquidity", () => {
     const aliceLPmockUSDCBeforeBalance = (
       await superLiquidityProgram.account.userVault.fetch(aliceLP)
     ).vaults[positionMockUSDC].amount;
-
-    const vaults = await selectSwappers(
-      superLiquidityProgram,
-      positionMockUSDC,
-      positionMockSOL,
-      mockUSDC.price,
-      bobSwapAmountSOLForUSDC,
-      bobSwapUSDCMinAmount
-    );
-
-    vaults.map((e) => {
-      console.log(e.toBase58());
-    });
-    console.log(aliceLP.toBase58());
 
     await programCall(
       superLiquidityProgram,
@@ -666,6 +704,77 @@ describe("super-liquidity", () => {
           bobMockUSDCBeforeBalance.add(finalAmount),
           aliceLPmockUSDCBeforeBalance.sub(finalAmount),
         ]
+      )
+    );
+  });
+
+  xit("Initialize alice portfolio manager vault", async () => {
+    let bump;
+    [alicePM, bump] = await PublicKey.findProgramAddress(
+      [alice.publicKey.toBuffer(), Buffer.from("portfolio_manager")],
+      superLiquidityProgram.programId
+    );
+
+    await programCall(
+      superLiquidityProgram,
+      "initUserPortfolio",
+      [],
+      {
+        userAccount: alice.publicKey,
+        userVault: alicePM,
+        systemProgram,
+      },
+      [alice]
+    );
+
+    let alicePMData = await superLiquidityProgram.account.userVault.fetch(
+      alicePM
+    );
+
+    assert.ok(
+      checkEqualValues(
+        [bump, alice.publicKey, "portfolioManager", 50, true, 1000],
+        [
+          alicePMData.bump,
+          alicePMData.user,
+          Object.getOwnPropertyNames(alicePMData.vaultType),
+          alicePMData.vaults.length,
+          alicePMData.vaultType.portfolioManager.autoFee,
+          alicePMData.vaultType.portfolioManager.tolerance,
+        ]
+      )
+    );
+  });
+
+  xit("Alice update mockSOL portfolio manager vault", async () => {
+    await programCall(
+      superLiquidityProgram,
+      "updateUserPortfolio",
+      [positionMockSOL, min, max, true, new BN(0)],
+      {
+        globalState,
+        userAccount: alice.publicKey,
+        mint: mockSOLMint,
+        userVault: alicePM,
+      },
+      [alice]
+    );
+
+    const alicePMData = (
+      await superLiquidityProgram.account.userVault.fetch(alicePM)
+    ).vaults[positionMockSOL];
+
+    assert.ok(
+      checkEqualValues(
+        [
+          alicePMData.min,
+          alicePMData.max,
+          alicePMData.receiveStatus,
+          alicePMData.provideStatus,
+          alicePMData.limitPriceStatus,
+          alicePMData.limitPrice,
+        ],
+        [min, max, true, true, true, new BN(0)]
       )
     );
   });

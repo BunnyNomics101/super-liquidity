@@ -301,6 +301,8 @@ module.exports = {
   createMint,
   mintToAccount,
   createAssociatedTokenAccount,
+  createAssociatedTokenAccountInstruction,
+  createMintToAccountInstrs,
   getBalance,
   airdropLamports,
   getAssociatedTokenAccount,

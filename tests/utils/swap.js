@@ -208,11 +208,24 @@ async function selectSwappers(
   desiredAmount
 ) {
   let mintVaults = await superLiquidityProgram.account.userVault.all();
+  // console.log("desiredAmount: ", desiredAmount / 10 ** 9);
 
   console.log("1.", mintVaults.length);
   mintVaults = mintVaults.filter((vault, index) => {
     let mintBuyVault = vault.account.vaults[mintBuyPosition];
     let mintSellVault = vault.account.vaults[mintSellPosition];
+
+    // console.log("mintBuyVault.amount: ", mintBuyVault.amount / 10 ** 9);
+    // console.log("mintSellVault.amount: ", mintSellVault.amount / 10 ** 9);
+    // console.log(mintSellVault.receiveStatus);
+    // console.log(mintBuyVault.provideStatus);
+    // console.log(
+    //   !mintBuyVault.limitPriceStatus ||
+    //     tokenBuyPrice.gt(mintBuyVault.limitPrice)
+    // );
+    // console.log(mintSellVault.amount.add(amount).lte(mintSellVault.max));
+    // console.log(mintBuyVault.amount.gte(desiredAmount));
+    // console.log(mintBuyVault.amount.sub(desiredAmount).gte(mintBuyVault.min));
 
     return (
       mintSellVault.receiveStatus &&
