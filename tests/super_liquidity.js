@@ -990,7 +990,6 @@ describe("super-liquidity", () => {
       [depositAmountAliceMockSOL, positionMockSOL],
       {
         globalState,
-        userAccount: alice.publicKey,
         userVault: aliceLP,
         tokenStoreAuthority: tokenStoreAuthority,
         mint: mockSOLMint,
@@ -1045,7 +1044,6 @@ describe("super-liquidity", () => {
       [depositAmountAliceMockUSDC, positionMockUSDC],
       {
         globalState,
-        userAccount: alice.publicKey,
         userVault: aliceLP,
         tokenStoreAuthority: tokenStoreAuthority,
         mint: mockUSDCMint,

@@ -1,3 +1,4 @@
+const BufferLayout = require("buffer-layout");
 const anchor = require("@project-serum/anchor");
 const BN = require("@project-serum/anchor").BN;
 const PublicKey = require("@solana/web3.js").PublicKey;
@@ -28,7 +29,7 @@ async function sendTxs(txs, provider) {
       try {
         signature = await provider.send(tx.tx, tx.signers);
       } catch (err) {
-        console.log(err )
+        console.log(err);
       }
     }
     sigs.push(signature);
@@ -84,13 +85,13 @@ describe("super-liquidity", () => {
   let switchboardOptimizedFeedAccount = systemProgram;
 
   const minUSers = 11;
-  const maxUSers = 200;
+  const maxUSers = 20;
   const totalUsers = Math.floor(Math.random() * maxUSers + minUSers);
   console.log("Total users:", totalUsers);
   const maxTransferTransactions = 20;
   const maxMintTokenAccountsTransactions = 6;
   const maxSetVaultsTransactions = 2;
-  const maxInitVaultTransactions = 2;
+  const maxInitVaultTransactions = 3;
   const maxDepositTransactions = 1;
   const users = Array.from({ length: totalUsers }, (e) =>
     anchor.web3.Keypair.generate()
@@ -399,7 +400,7 @@ describe("super-liquidity", () => {
     }
   });
 
-  it("Initialize and update liquidity provider vaults", async () => {
+  it("Initialize liquidity providers vaults", async () => {
     let txs = [];
     let signers = [];
     let transaction = new anchor.web3.Transaction();
@@ -419,7 +420,6 @@ describe("super-liquidity", () => {
             userVault: usersLP[i],
             systemProgram,
           },
-          signers: [user],
         })
       );
       signers.push(user);
@@ -433,6 +433,28 @@ describe("super-liquidity", () => {
         signers = [];
       }
     }
+
+    await sendAndConfirmTransactions(txs, provider);
+
+    for (let i = 0; i < totalUsers; i++) {
+      const user = users[i];
+
+      let userLPData = await superLiquidityProgram.account.userVault.fetch(
+        usersLP[i]
+      );
+
+      expect(userLPData.user.toBase58()).eq(user.publicKey.toBase58());
+      expect(Object.getOwnPropertyNames(userLPData.vaultType).toString()).eq(
+        "liquidityProvider"
+      );
+      expect(userLPData.vaults.length).eq(50);
+    }
+  });
+
+  it("Update liquidity provider vaults", async () => {
+    let txs = [];
+    let signers = [];
+    let transaction = new anchor.web3.Transaction();
 
     let count = 0;
     for (let i = 0; i < totalUsers; i++) {
@@ -458,7 +480,6 @@ describe("super-liquidity", () => {
                 mint,
                 userVault: usersLP[i],
               },
-              signers: [user],
             }
           )
         );
@@ -480,20 +501,8 @@ describe("super-liquidity", () => {
     await sendAndConfirmTransactions(txs, provider);
 
     for (let i = 0; i < totalUsers; i++) {
-      const user = users[i];
-
-      let userLPData = await superLiquidityProgram.account.userVault.fetch(
-        usersLP[i]
-      );
-
-      expect(userLPData.user.toBase58()).eq(user.publicKey.toBase58());
-      expect(Object.getOwnPropertyNames(userLPData.vaultType).toString()).eq(
-        "liquidityProvider"
-      );
-      expect(userLPData.vaults.length).eq(50);
-
       for (let j = 0; j < totalTokens; j++) {
-        userLPData = (
+        let userLPData = (
           await superLiquidityProgram.account.userVault.fetch(usersLP[i])
         ).vaults[j];
 
@@ -531,7 +540,6 @@ describe("super-liquidity", () => {
           superLiquidityProgram.instruction.deposit(userBeforeBalance, j, {
             accounts: {
               globalState,
-              userAccount: user.publicKey,
               userVault: userLP,
               tokenStoreAuthority: tokenStoreAuthority,
               mint,
@@ -540,7 +548,6 @@ describe("super-liquidity", () => {
               tokenStorePda: tokenStore,
               tokenProgram: TOKEN_PROGRAM_ID,
             },
-            signers: [user],
           })
         );
         signers.push(user);
@@ -585,8 +592,6 @@ describe("super-liquidity", () => {
       }
     }
   });
-
-  return;
 
   it("Bob swap mockSOL for mockUSDC from LP alice vault", async () => {
     const vaults = await selectSwappers(
@@ -707,6 +712,8 @@ describe("super-liquidity", () => {
       )
     );
   });
+
+  return;
 
   xit("Initialize alice portfolio manager vault", async () => {
     let bump;

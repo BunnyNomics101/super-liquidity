@@ -11,8 +11,6 @@ pub struct Deposit<'info> {
         bump = global_state.bump
     )]
     pub global_state: Account<'info, GlobalState>,
-    /// CHECK:
-    pub user_account: AccountInfo<'info>,
     #[account(mut)]
     pub user_vault: Account<'info, UserVault>,
     /// CHECK:
@@ -27,7 +25,7 @@ pub struct Deposit<'info> {
     // Account where user has the tokens
     #[account(mut, associated_token::mint = mint, associated_token::authority = get_token_from_authority)]
     pub get_token_from: Account<'info, TokenAccount>,
-    // owner or delegate_authority
+    // Owner or delegate_authority. Must be also the owner of the vault
     pub get_token_from_authority: Signer<'info>,
     // Account where the program will store the tokens
     #[account(mut,
@@ -40,11 +38,10 @@ pub struct Deposit<'info> {
 impl<'info> Deposit<'info> {
     #[access_control(
         check_token_position(&self.global_state, &self.mint, position) && 
-        check_vault(&self.user_account.key, &self.user_vault)
+        check_vault(&self.get_token_from_authority.key, &self.user_vault)
     )]
     pub fn process(&mut self, amount: u64, position: u8) -> Result<()> {
         let vault = &mut self.user_vault.vaults[position as usize];
-
         if self.get_token_from.amount < amount {
             msg!(
                 "Requested to deposit {} but you have only {}",

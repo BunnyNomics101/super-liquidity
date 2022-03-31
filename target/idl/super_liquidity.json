@@ -11,11 +11,6 @@
           "isSigner": false
         },
         {
-          "name": "userAccount",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "userVault",
           "isMut": true,
           "isSigner": false
