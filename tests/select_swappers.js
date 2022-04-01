@@ -96,10 +96,7 @@ describe("super-liquidity", () => {
   const users = Array.from({ length: totalUsers }, (e) =>
     anchor.web3.Keypair.generate()
   );
-  const positionMockSOL = 0;
-  const positionMockUSDC = 1;
-  const minMint = 1;
-  const maxMint = 10000;
+
   const tokens = [
     { price: Lamport(150), symbol: "SOL", decimals: 9 },
     {
@@ -112,6 +109,16 @@ describe("super-liquidity", () => {
   const mints = new Array(totalTokens);
   const oracleTokensPDAs = new Array(totalTokens);
   const tokenStores = new Array(totalTokens);
+  const positionMockSOL = 0;
+  const positionMockUSDC = 1;
+  const minMint = 1;
+  const maxMint = 10000;
+  const amounts = Array.from({ length: totalUsers }, (user) =>
+    Array.from({ length: totalTokens }, (token) =>
+      Lamport(Math.floor(Math.random() * maxMint + minMint))
+    )
+  );
+
   const usersTokenAccounts = Array.from(
     { length: totalUsers },
     (e) => new Array(totalTokens)
@@ -140,13 +147,11 @@ describe("super-liquidity", () => {
           )
         );
 
-        const amount = Lamport(Math.floor(Math.random() * maxMint + minMint));
-
         transaction.add(
           ...(await createMintToAccountInstrs(
             mint,
             userTokenAccount,
-            amount,
+            amounts[j][i],
             adminAccount
           ))
         );
@@ -167,8 +172,8 @@ describe("super-liquidity", () => {
         expect(userTokenAccount.toBase58()).eq(
           (await getAssociatedTokenAccount(mint, user)).toBase58()
         );
-        // let userTokenData = await getTokenAccount(provider, userTokenAccount);
-        // expect(userTokenData.amount.toString()).equal(amount.toString());
+        let userTokenData = await getTokenAccount(provider, userTokenAccount);
+        expect(userTokenData.amount.toString()).equal(amounts[j][i].toString());
       }
     }
   });
