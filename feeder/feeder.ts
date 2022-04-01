@@ -70,81 +70,6 @@ async function programCall(
   });
 }
 
-async function aggregatorAddToken(
-  mint: PublicKey,
-  symbol: string,
-  globalAccount: PublicKey,
-  pythProductAccount: PublicKey,
-  switchboardOptimizedFeedAccount: PublicKey
-) {
-  let params = [DECIMALS, symbol];
-  let accounts = {
-    globalAccount,
-    mint,
-    authority,
-    switchboardOptimizedFeedAccount,
-    pythProductAccount,
-  };
-  const tx = await programCall(aggregatorProgram, "addToken", params, accounts);
-  console.log("Aggregator token added: ", tx);
-}
-
-async function aggregatorUpdatePrice(
-  position: number,
-  globalAccount: PublicKey,
-  delphorOracle: PublicKey,
-  pythPriceAccount: PublicKey,
-  switchboardOptimizedFeedAccount: PublicKey
-) {
-  let params = [position];
-  let accounts = {
-    switchboardOptimizedFeedAccount,
-    pythPriceAccount,
-    delphorOracle,
-    globalAccount,
-    authority,
-  };
-  const tx = await programCall(
-    aggregatorProgram,
-    "updateTokenPrice",
-    params,
-    accounts
-  );
-  console.log("Aggregator price updated: ", tx);
-}
-
-async function oracleCreateCoin(
-  coinGeckoPrice: BN,
-  orcaPrice: BN,
-  coin: PublicKey,
-  symbol: string
-) {
-  let params = [coinGeckoPrice, orcaPrice, orcaPrice, symbol];
-  let accounts = {
-    authority,
-    coin,
-    payer,
-    systemProgram,
-  };
-  const tx = await programCall(oracleProgram, "createCoin", params, accounts);
-  console.log("Oracle token PDA created:", tx);
-}
-
-async function oracleUpdateCoin(
-  coinGeckoPrice: BN,
-  symbol: string,
-  orcaPrice: BN,
-  coin: PublicKey
-) {
-  let params = [coinGeckoPrice, orcaPrice, orcaPrice];
-  let accounts = {
-    authority,
-    coin,
-  };
-  const tx = await programCall(oracleProgram, "updateCoin", params, accounts);
-  console.log("Oracle token PDA update", symbol, ":", tx);
-}
-
 async function getOrcaPrice(orcaPoolAccount: OrcaPoolConfig): Promise<BN> {
   if ((orcaPoolAccount as string) == "11111111111111111111111111111111") {
     return new BN(0);
@@ -203,6 +128,29 @@ async function createAggregatorGlobalAccount(): Promise<PublicKey> {
       payer,
       systemProgram,
     });
+
+    for (let x = 0; x < SYMBOLS.length; x++) {
+      try {
+        const tx = await programCall(
+          aggregatorProgram,
+          "addToken",
+          [DECIMALS, SYMBOLS[x]],
+          {
+            globalAccount: aggregatorGlobalAccount,
+            mint: MINT_DEVNET_ACCOUNTS[x],
+            authority,
+            switchboardOptimizedFeedAccount:
+              SWITCHBOARD_DEVNET_OPTIMIZED_FEED_ACCOUNTS[x],
+            pythProductAccount: PYTH_DEVNET_PRODUCT_ACCOUNTS[x],
+          }
+        );
+
+        console.log("Aggregator token added: ", tx);
+      } catch (e) {
+        console.log(e);
+        return;
+      }
+    }
   }
   return aggregatorGlobalAccount;
 }
@@ -214,22 +162,6 @@ async function main() {
   let task = cron.schedule("*/" + INTERVAL_UPDATE + " * * * * *", async () => {
     if (updatingPrices) return;
     updatingPrices = true;
-    /*
-    for (let x = 0; x < SYMBOLS.length; x++) {
-      try{
-        await aggregatorAddToken(
-          MINT_DEVNET_ACCOUNTS[x],
-          SYMBOLS[x],
-          aggregatorGlobalAccount,
-          PYTH_DEVNET_PRODUCT_ACCOUNTS[x],
-          SWITCHBOARD_DEVNET_OPTIMIZED_FEED_ACCOUNTS[x]
-        );
-      }catch(err){
-        console.log(err);
-        return
-      }
-    }
-*/
     for (let x = 0; x < SYMBOLS.length; x++) {
       let symbol = SYMBOLS[x];
       try {
@@ -237,19 +169,29 @@ async function main() {
         let orcaPrice = await getOrcaPrice(ORCA_POOL_ACCOUNTS[x]);
         try {
           await oracleProgram.account.coinInfo.fetch(coinPDAs[x].toBase58());
-          await oracleUpdateCoin(
-            coinGeckoPrice,
-            symbol,
-            orcaPrice,
-            coinPDAs[x]
+          const tx = await programCall(
+            oracleProgram,
+            "updateCoin",
+            [coinGeckoPrice, orcaPrice, orcaPrice],
+            {
+              authority,
+              coin: coinPDAs[x],
+            }
           );
+          console.log("Oracle token PDA updated", symbol, ":", tx);
         } catch (err) {
-          await oracleCreateCoin(
-            coinGeckoPrice,
-            orcaPrice,
-            coinPDAs[x],
-            symbol
+          const tx = await programCall(
+            oracleProgram,
+            "createCoin",
+            [coinGeckoPrice, orcaPrice, orcaPrice, symbol],
+            {
+              authority,
+              coin: coinPDAs[x],
+              payer,
+              systemProgram,
+            }
           );
+          console.log("Oracle token PDA created:", tx);
         }
         let aggregatorGlobalAccountData =
           await aggregatorProgram.account.globalAccount.fetch(
@@ -262,20 +204,25 @@ async function main() {
           }
         });
         if (tokenExist) {
-          await aggregatorUpdatePrice(
-            x,
-            aggregatorGlobalAccount,
-            coinPDAs[x],
-            PYTH_DEVNET_PRICE_ACCOUNTS[x],
-            SWITCHBOARD_DEVNET_OPTIMIZED_FEED_ACCOUNTS[x]
+          const tx = await programCall(
+            aggregatorProgram,
+            "updateTokenPrice",
+            [x],
+            {
+              switchboardOptimizedFeedAccount:
+                SWITCHBOARD_DEVNET_OPTIMIZED_FEED_ACCOUNTS[x],
+              pythPriceAccount: PYTH_DEVNET_PRICE_ACCOUNTS[x],
+              delphorOracle: coinPDAs[x],
+              globalAccount: aggregatorGlobalAccount,
+              authority,
+            }
           );
+          console.log("Aggregator price updated: ", tx);
         } else {
-          await aggregatorAddToken(
+          console.log(
+            "Mint ",
             MINT_DEVNET_ACCOUNTS[x],
-            symbol,
-            aggregatorGlobalAccount,
-            PYTH_DEVNET_PRODUCT_ACCOUNTS[x],
-            SWITCHBOARD_DEVNET_OPTIMIZED_FEED_ACCOUNTS[x]
+            " don't exists on agg."
           );
         }
       } catch (err) {
