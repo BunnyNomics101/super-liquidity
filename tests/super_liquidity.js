@@ -981,7 +981,6 @@ describe("super-liquidity", () => {
       {
         globalState,
         userVault: aliceLP,
-        tokenStoreAuthority: tokenStoreAuthority,
         getTokenFrom: alicemockSOL,
         getTokenFromAuthority: alice.publicKey,
         tokenStorePda: mockSOLStore,
@@ -1034,7 +1033,6 @@ describe("super-liquidity", () => {
       {
         globalState,
         userVault: aliceLP,
-        tokenStoreAuthority: tokenStoreAuthority,
         getTokenFrom: alicemockUSDC,
         getTokenFromAuthority: alice.publicKey,
         tokenStorePda: mockUSDCStore,

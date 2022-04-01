@@ -91,7 +91,7 @@ describe("super-liquidity", () => {
   const maxTransferTransactions = 20;
   const maxMintTokenAccountsTransactions = 6;
   const maxSetVaultsTransactions = 2;
-  const maxInitVaultTransactions = 3;
+  const maxInitVaultTransactions = 2;
   const maxDepositTransactions = 1;
   const users = Array.from({ length: totalUsers }, (e) =>
     anchor.web3.Keypair.generate()
@@ -539,7 +539,6 @@ describe("super-liquidity", () => {
             accounts: {
               globalState,
               userVault: userLP,
-              tokenStoreAuthority: tokenStoreAuthority,
               getTokenFrom: userTokenAccount,
               getTokenFromAuthority: user.publicKey,
               tokenStorePda: tokenStore,

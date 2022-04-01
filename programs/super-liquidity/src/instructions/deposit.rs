@@ -13,14 +13,6 @@ pub struct Deposit<'info> {
     pub global_state: Account<'info, GlobalState>,
     #[account(mut)]
     pub user_vault: Account<'info, UserVault>,
-    /// CHECK:
-    #[account(
-        seeds = [
-            "store_auth".as_ref()
-        ],
-        bump,
-    )]
-    pub token_store_authority: AccountInfo<'info>,
     // Account where user has the tokens
     #[account(
         mut, 
@@ -32,7 +24,7 @@ pub struct Deposit<'info> {
     pub get_token_from_authority: Signer<'info>,
     // Account where the program will store the tokens
     #[account(mut,
-        constraint = token_store_pda.owner == token_store_authority.key()
+        constraint = token_store_pda.owner == Pubkey::find_program_address(&["store_auth".as_ref()], &crate::ID).0
     )]
     pub token_store_pda: Account<'info, TokenAccount>,
     pub token_program: Program<'info, Token>,
