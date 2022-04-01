@@ -54,6 +54,12 @@ describe("super-liquidity", () => {
   const provider = anchor.Provider.env();
   anchor.setProvider(provider);
 
+  const maxTransferTransactions = 20;
+  const maxMintTokenAccountsTransactions = 6;
+  const maxSetVaultsTransactions = 2;
+  const maxInitVaultTransactions = 2;
+  const maxDepositTransactions = 1;
+
   const superLiquidityProgram = anchor.workspace.SuperLiquidity;
   const delphorOracleProgram = anchor.workspace.DelphorOracle;
   const delphorAggregatorProgram = anchor.workspace.DelphorOracleAggregator;
@@ -68,14 +74,6 @@ describe("super-liquidity", () => {
     aggregatorGlobalAccount,
     finalAmount;
 
-  let sellFee = 100,
-    buyFee = 300,
-    min = new anchor.BN(1 * 10 ** 9),
-    max = new anchor.BN(5000 * 10 ** 9);
-
-  let bobSwapAmountSOLForUSDC = Lamport(2);
-  let bobSwapUSDCMinAmount = Lamport(250);
-
   function Lamport(value) {
     return new BN(value * 10 ** 9);
   }
@@ -84,15 +82,33 @@ describe("super-liquidity", () => {
   let pythPriceAccount = systemProgram;
   let switchboardOptimizedFeedAccount = systemProgram;
 
+  const swapAmount = Lamport(2);
+  const minToReceive = Lamport(250);
+
   const minUSers = 11;
   const maxUSers = 20;
   const totalUsers = Math.floor(Math.random() * maxUSers + minUSers);
   console.log("Total users:", totalUsers);
-  const maxTransferTransactions = 20;
-  const maxMintTokenAccountsTransactions = 6;
-  const maxSetVaultsTransactions = 2;
-  const maxInitVaultTransactions = 2;
-  const maxDepositTransactions = 1;
+
+  const minFee = 10;
+  const maxFee = 300;
+  const sellFee = Array.from({ length: totalUsers }, (e) =>
+    Math.floor(Math.random() * maxFee + minFee)
+  );
+  const buyFee = Array.from({ length: totalUsers }, (e) =>
+    Math.floor(Math.random() * maxFee + minFee)
+  );
+
+  const minMin = 0;
+  const maxMin = 100;
+  const maxMax = 5000;
+  const min = Array.from({ length: totalUsers }, (e) =>
+    Lamport(Math.floor(Math.random() * maxMin + minMin))
+  );
+  const max = Array.from({ length: totalUsers }, (e) =>
+    Lamport(Math.floor(Math.random() * maxMax + maxMin))
+  );
+
   const users = Array.from({ length: totalUsers }, (e) =>
     anchor.web3.Keypair.generate()
   );
@@ -284,7 +300,6 @@ describe("super-liquidity", () => {
 
   it("DelphorAggregator update prices", async () => {
     for (let i = 0; i < totalTokens; i++) {
-      const mint = mints[i];
       const token = tokens[i];
 
       await programCall(delphorAggregatorProgram, "updateTokenPrice", [i], {
@@ -464,15 +479,13 @@ describe("super-liquidity", () => {
     for (let i = 0; i < totalUsers; i++) {
       const user = users[i];
       for (let j = 0; j < totalTokens; j++) {
-        const mint = mints[j];
-
         transaction.add(
           superLiquidityProgram.instruction.updateUserLiquidityProvider(
             j,
-            buyFee,
-            sellFee,
-            min,
-            max,
+            buyFee[i],
+            sellFee[i],
+            min[i],
+            max[i],
             true,
             true,
             true,
@@ -509,10 +522,10 @@ describe("super-liquidity", () => {
           await superLiquidityProgram.account.userVault.fetch(usersLP[i])
         ).vaults[j];
 
-        expect(userLPData.buyFee).eq(buyFee);
-        expect(userLPData.sellFee).eq(sellFee);
-        expect(userLPData.min.toString()).eq(min.toString());
-        expect(userLPData.max.toString()).eq(max.toString());
+        expect(userLPData.buyFee).eq(buyFee[i]);
+        expect(userLPData.sellFee).eq(sellFee[i]);
+        expect(userLPData.min.toString()).eq(min[i].toString());
+        expect(userLPData.max.toString()).eq(max[i].toString());
         expect(userLPData.receiveStatus).eq(true);
         expect(userLPData.provideStatus).eq(true);
         expect(userLPData.limitPriceStatus).eq(true);
@@ -531,7 +544,6 @@ describe("super-liquidity", () => {
       const userLP = usersLP[i];
 
       for (let j = 0; j < totalTokens; j++) {
-        const mint = mints[j];
         const userTokenAccount = usersTokenAccounts[i][j];
         const tokenStore = tokenStores[j];
 
@@ -600,8 +612,8 @@ describe("super-liquidity", () => {
       positionMockUSDC,
       positionMockSOL,
       tokens[positionMockUSDC].price,
-      bobSwapAmountSOLForUSDC,
-      bobSwapUSDCMinAmount
+      swapAmount,
+      minToReceive
     );
 
     vaults.map((e) => {
@@ -633,8 +645,8 @@ describe("super-liquidity", () => {
       superLiquidityProgram,
       "swap",
       [
-        bobSwapAmountSOLForUSDC,
-        bobSwapUSDCMinAmount,
+        swapAmount,
+        minToReceive,
         tokenStoreAuthorityBump,
         positionMockSOL,
         positionMockUSDC,
@@ -682,7 +694,7 @@ describe("super-liquidity", () => {
       await superLiquidityProgram.account.userVault.fetch(aliceLP)
     ).vaults[positionMockSOL].sellFee;
     finalAmount = new BN(
-      (bobSwapAmountSOLForUSDC *
+      (swapAmount *
         Math.trunc(
           ((mockSOL.price * (10000 - swapBuyFee)) /
             10000 /
@@ -703,10 +715,10 @@ describe("super-liquidity", () => {
           aliceLPmockUSDCCurrentBalance,
         ],
         [
-          bobMockSOLBeforeBalance.sub(bobSwapAmountSOLForUSDC),
-          delphorMockSOLBeforeBalance.add(bobSwapAmountSOLForUSDC),
+          bobMockSOLBeforeBalance.sub(swapAmount),
+          delphorMockSOLBeforeBalance.add(swapAmount),
           delphorMockUSDCBeforeBalance.sub(finalAmount),
-          aliceLPmockSOLBeforeBalance.add(bobSwapAmountSOLForUSDC),
+          aliceLPmockSOLBeforeBalance.add(swapAmount),
           bobMockUSDCBeforeBalance.add(finalAmount),
           aliceLPmockUSDCBeforeBalance.sub(finalAmount),
         ]
