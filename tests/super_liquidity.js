@@ -7,6 +7,7 @@ const {
   expectProgramCallRevert,
 } = require("./utils");
 const assert = require("assert");
+const { expect } = require("chai");
 
 const {
   TOKEN_PROGRAM_ID,
@@ -92,20 +93,25 @@ describe("super-liquidity", () => {
   let pythPriceAccount = systemProgram;
   let switchboardOptimizedFeedAccount = systemProgram;
 
-  it("Airdrop lamports to alice", async function () {
-    let balance = await getBalance(alice.publicKey);
-    assert.ok(balance == 0);
-    await airdropLamports(alice.publicKey, anchor.web3.LAMPORTS_PER_SOL * 10);
-    balance = await getBalance(alice.publicKey);
-    assert.ok(balance == anchor.web3.LAMPORTS_PER_SOL * 10);
-  });
+  let transaction = new anchor.web3.Transaction();
+  it("Transfer lamports to alice and bob", async function () {
+    transaction.add(
+      anchor.web3.SystemProgram.transfer({
+        fromPubkey: adminAccount,
+        toPubkey: alice.publicKey,
+        lamports: anchor.web3.LAMPORTS_PER_SOL * 10,
+      })
+    );
 
-  it("Airdrop lamports to bob", async function () {
-    let balance = await getBalance(bob.publicKey);
-    assert.ok(balance == 0);
-    await airdropLamports(bob.publicKey, anchor.web3.LAMPORTS_PER_SOL * 10);
-    balance = await getBalance(bob.publicKey);
-    assert.ok(balance == anchor.web3.LAMPORTS_PER_SOL * 10);
+    transaction.add(
+      anchor.web3.SystemProgram.transfer({
+        fromPubkey: adminAccount,
+        toPubkey: bob.publicKey,
+        lamports: anchor.web3.LAMPORTS_PER_SOL * 10,
+      })
+    );
+
+    await provider.send(transaction, []);
   });
 
   it("Create MockSOL and mint test tokens", async () => {

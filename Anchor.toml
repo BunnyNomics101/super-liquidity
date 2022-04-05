@@ -19,4 +19,4 @@ cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
-test = "mocha -r ts-node/register --verbose -t 1000000 tests/select_swappers.js"
+test = "mocha -r ts-node/register --verbose -t 1000000 tests/super_liquidity.js"

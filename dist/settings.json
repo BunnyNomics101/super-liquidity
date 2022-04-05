@@ -8,11 +8,9 @@
     "ethereum",
     "orca",
     "star-atlas",
-    "genesysgo-shadow",
     "serum",
     "raydium",
-    "saber",
-    "marinade"
+    "saber"
   ],
   "symbols": [
     "SOL",
@@ -23,11 +21,9 @@
     "ETH",
     "ORCA",
     "ATLAS",
-    "SHDW",
     "SRM",
     "RAY",
-    "SBR",
-    "MNDE"
+    "SBR"
   ],
   "mintDevnetAccounts": [
     "So11111111111111111111111111111111111111112",
@@ -38,11 +34,9 @@
     "6sKghM3AsGbe6xieLfvv4oU6efdLMnY5DYsULKyHKC12",
     "GiT9cpah71cbyXkTJAK2irryKvK95pm6EBLNHmJoqzPy",
     "F9XzLUE9C79wSdoebMbrtexxC9Fkm2X1wZ7q43ozw9ur",
-    "43obuzPzsQof7T5sGGtj7AK7M3X16vrarUwpAhbhTo6T",
     "5Sp5kcSA6TTUvKZL3TyLjG2LYebJ5635qT2VHFAW2Lxs",
     "7yzfvd2CUwBinJi5Q2rAGRPkkcw8ZtNUFphdGVsrLANt",
-    "xSoogZ2Sa9LZ7365ZV4JG8P4njjwpbKH3wxC7B8eUaL",
-    "5tn1xGx6KdqjjCaFMA9YP3Hf9sfps83Quo6HYjkKScKA"
+    "xSoogZ2Sa9LZ7365ZV4JG8P4njjwpbKH3wxC7B8eUaL"
   ],
   "pythDevnetPriceAccounts": [
     "J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix",
@@ -53,11 +47,9 @@
     "EdVCmQ9FSPcVe5YySXDPCRmc8aDQLKJ9xvYBMZPie1Vw",
     "A1WttWF7X3Rg6ZRpB2YQUFHCRh1kiXV8sKKLV3S9neJV",
     "11111111111111111111111111111111",
-    "11111111111111111111111111111111",
     "992moaMQKs32GKZ9dxi8keyM2bUmbrwBZpK4p2K6X5Vs",
     "EhgAdTrgxi4ZoVZLQx1n93vULucPpiFi2BQtz9RJr1y6",
-    "4WSN3XDSTfBX9A1YXGg8HJ7n2GtWMDNbtz1ab6aGGXfG",
-    "11111111111111111111111111111111"
+    "4WSN3XDSTfBX9A1YXGg8HJ7n2GtWMDNbtz1ab6aGGXfG"
   ],
   "pythDevnetProductAccounts": [
     "3Mnn2fX6rQyUsyELYms1sBJyChWofzSNRoqYzvgMVz5E",
@@ -68,11 +60,9 @@
     "2ciUuGZiee5macAMeQ7bHGTJtwcYTgnt6jdmQnnKZrfu",
     "A8Q4MoqpiEp4zU36XoVB3c9q6XkeqM5uaM9LQv4p9vQy",
     "11111111111111111111111111111111",
-    "11111111111111111111111111111111",
     "6MEwdxe4g1NeAF9u6KDG14anJpFsVEa2cvr5H6iriFZ8",
     "3BtxtRxitVDcsd7pPUWUnFm9KvmNDy9usS4gE6pUFhpH",
-    "APY6HpicQTabn46sZPt2pAqunFpkws9ySdujj5BHcZAK",
-    "11111111111111111111111111111111"
+    "APY6HpicQTabn46sZPt2pAqunFpkws9ySdujj5BHcZAK"
   ],
   "switchboardDevnetOptimizedFeedAccounts": [
     "DpoK8Zz69APV9ntjuY9C4LZCxANYMV56M2cbXEdkjxME",
@@ -83,11 +73,9 @@
     "45qhBcmMt2mBpGiKtjDJFXNj5MNV2op4AsMHucYWVqsJ",
     "BjfVCncSQP4Cou62YjwR2oVgHURhNW4SxeQEEzVLHbmP",
     "6kNaUTKdN6QbxzZumKhWBUtxZbtgYZLaGQTvpjs3Liua",
-    "11111111111111111111111111111111",
     "HhnA7ffw7By3qC3FS9jmg4fhRjfdnST9n4QXzUBuDrak",
     "Hk4wQt8oXt6rMCaCHTuLPmYVXZ9BdtXj1N8ko6anktFp",
-    "8ogEmvxdAQP7tvepCMoPVSh8EnF6W9eVVDcL6EEATPND",
-    "11111111111111111111111111111111"
+    "8ogEmvxdAQP7tvepCMoPVSh8EnF6W9eVVDcL6EEATPND"
   ],
   "serumMarketAccounts": [
     "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT",
@@ -98,11 +86,9 @@
     "4tSvZvnbyzHXLMTiFonMyxZoHmFqau1XArcRCVHLZ5gX",
     "11111111111111111111111111111111",
     "Di66GTLsV64JgCCYGVcY21RZ173BHkjJVgPyezNN7P1K",
-    "11111111111111111111111111111111",
     "ByRys5tuUWDgL73G8JBAEfkdFf8JWBzPBDHsBVQ5vbQA",
     "teE55QrL4a4QSfydR9dnHF97jgCfptpuigbb53Lo95g",
-    "HXBi8YBwbh4TXF6PjVw81m8Z3Cc4WBofvauj5SBFdgUs",
-    "11111111111111111111111111111111"
+    "HXBi8YBwbh4TXF6PjVw81m8Z3Cc4WBofvauj5SBFdgUs"
   ],
   "orcaPoolAccounts": [
     "APDFRM3HMr8CAGXwKHiu2f5ePSpaiEJhaURwhsRrUUt9",
@@ -113,11 +99,9 @@
     "3e1W6Aqcbuk2DfHUwRiRcyzpyYRRjg6yhZZcyEARydUX",
     "n8Mpu28RjeYD7oUX3LG1tPxzhRZh3YYLRSHcHRdS3Zx",
     "FZ8x1LCRSPDeHBDoAc3Gc6Y7ETCynuHEr5q5YWV7uRCJ",
-    "DJqqvzSuPaWThfzwMjXx7H2ZmHDdwxza6NtFudtuXcpc",
     "11111111111111111111111111111111",
     "4cXw2MYj94TFBXLL73fEpMCr8DPrW68JvrV8mzWgktbD",
-    "CS7fA5n4c2D82dUoHrYzS3gAqgqaoVSfgsr18kitp2xo",
-    "12Uj74zgUUoBe4yeackwQ4qYtFMr9fk1xL6q5Nha6t2N"
+    "CS7fA5n4c2D82dUoHrYzS3gAqgqaoVSfgsr18kitp2xo"
   ],
   "intervalUpdate": 30
 }
