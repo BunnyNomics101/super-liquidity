@@ -94,18 +94,18 @@ impl<'info> Swap<'info> {
 
         match self.user_vault.vault_type{
             VaultType::PortfolioManager {auto_fee: _, tolerance: _}=> {
-                let mut usd_value = 0;
-                for (i, vault) in self.user_vault.vaults.iter().enumerate() {
+                let mut usd_value: u64 = 0;
+                for (i, token) in self.global_state.tokens.iter().enumerate() {
                     if i == position_sell as usize {
-                        usd_value += self.delphor_aggregator_prices.tokens[i as usize].price * (vault.amount + amount_to_send);
+                        usd_value += (sell_coin_price as u128 * (self.user_vault.vaults[i].amount + swap_amount) as u128 / u128::pow(10, sell_coin_decimals as u32)) as u64;
                     } else if i == position_buy as usize {
-                        usd_value += self.delphor_aggregator_prices.tokens[i as usize].price * (vault.amount - swap_amount);
+                        usd_value += (buy_coin_price as u128 * (self.user_vault.vaults[i].amount - amount_to_send) as u128 / u128::pow(10, buy_coin_decimals as u32)) as u64;
                     }else {
-                        usd_value += self.delphor_aggregator_prices.tokens[i as usize].price * vault.amount;
+                        usd_value += (self.delphor_aggregator_prices.tokens[i as usize].price as u128 * self.user_vault.vaults[i].amount as u128 / u128::pow(10, self.delphor_aggregator_prices.tokens[i as usize].decimals as u32)) as u64;
                     }
                 }
-                require!(((user_vault_buy.amount - amount_to_send) * buy_coin_price * 10000) / usd_value >= user_vault_buy.min, ErrorCode::ExceedsMinAmount);
-                require!(((user_vault_sell.amount + swap_amount) * sell_coin_price * 10000) / usd_value <= user_vault_buy.max, ErrorCode::ExceedsMaxAmount);
+                require!((((user_vault_buy.amount - amount_to_send) as u128 * buy_coin_price as u128 / u128::pow(10, buy_coin_decimals as u32) * 10000) / usd_value as u128) as u64 >= user_vault_buy.min, ErrorCode::ExceedsMinAmount);
+                require!((((user_vault_sell.amount + swap_amount) as u128  * sell_coin_price as u128  / u128::pow(10, sell_coin_decimals as u32) * 10000) / usd_value as u128) as u64  <= user_vault_sell.max, ErrorCode::ExceedsMaxAmount);
             },
             VaultType::LiquidityProvider => {
                 require!(user_vault_buy.amount - amount_to_send >= user_vault_buy.min, ErrorCode::ExceedsMinAmount);
