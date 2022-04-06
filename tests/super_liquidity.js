@@ -571,46 +571,6 @@ describe("super-liquidity", () => {
     );
   });
 
-  it("Initialize bob liquidity provider vault", async () => {
-    let bump;
-    [bobLP, bump] = await PublicKey.findProgramAddress(
-      [bob.publicKey.toBuffer(), Buffer.from("liquidity_provider")],
-      superLiquidityProgram.programId
-    );
-
-    await programCall(
-      superLiquidityProgram,
-      "initUserLiquidityProvider",
-      [],
-      {
-        userAccount: bob.publicKey,
-        userVault: bobLP,
-        systemProgram,
-      },
-      [bob]
-    );
-
-    let bobLPData = await superLiquidityProgram.account.userVault.fetch(bobLP);
-
-    bobLPData.vaults.forEach((vault) => {
-      Object.values(vault).forEach((propertie) => {
-        assert.ok(Number(propertie) == 0);
-      });
-    });
-
-    assert.ok(
-      checkEqualValues(
-        [bump, bob.publicKey, "liquidityProvider", 50],
-        [
-          bobLPData.bump,
-          bobLPData.user,
-          Object.getOwnPropertyNames(bobLPData.vaultType),
-          bobLPData.vaults.length,
-        ]
-      )
-    );
-  });
-
   it("Alice update mockSOL liquidity provider vault", async () => {
     await programCall(
       superLiquidityProgram,
@@ -689,84 +649,6 @@ describe("super-liquidity", () => {
     );
   });
 
-  it("Bob update mockSOL liquidity provider vault", async () => {
-    await programCall(
-      superLiquidityProgram,
-      "updateUserLiquidityProvider",
-      [positionMockSOL, buyFee, sellFee, min, max, true, true, true, new BN(0)],
-      {
-        globalState,
-        userAccount: bob.publicKey,
-        userVault: bobLP,
-      },
-      [bob]
-    );
-
-    const bobLPData = (
-      await superLiquidityProgram.account.userVault.fetch(bobLP)
-    ).vaults[positionMockSOL];
-
-    assert.ok(
-      checkEqualValues(
-        [
-          bobLPData.buyFee,
-          bobLPData.sellFee,
-          bobLPData.min,
-          bobLPData.max,
-          bobLPData.receiveStatus,
-          bobLPData.provideStatus,
-          bobLPData.limitPriceStatus,
-          bobLPData.limitPrice,
-        ],
-        [buyFee, sellFee, min, max, true, true, true, new BN(0)]
-      )
-    );
-  });
-
-  it("Bob update mockUSDC liquidity provider vault", async () => {
-    await programCall(
-      superLiquidityProgram,
-      "updateUserLiquidityProvider",
-      [
-        positionMockUSDC,
-        buyFee,
-        sellFee,
-        min,
-        max,
-        true,
-        true,
-        true,
-        new BN(0),
-      ],
-      {
-        globalState,
-        userAccount: bob.publicKey,
-        userVault: bobLP,
-      },
-      [bob]
-    );
-
-    const bobLPData = (
-      await superLiquidityProgram.account.userVault.fetch(bobLP)
-    ).vaults[positionMockUSDC];
-
-    assert.ok(
-      checkEqualValues(
-        [
-          bobLPData.buyFee,
-          bobLPData.sellFee,
-          bobLPData.min,
-          bobLPData.max,
-          bobLPData.receiveStatus,
-          bobLPData.provideStatus,
-          bobLPData.limitPriceStatus,
-          bobLPData.limitPrice,
-        ],
-        [buyFee, sellFee, min, max, true, true, true, new BN(0)]
-      )
-    );
-  });
-
   it("Initialize alice portfolio manager vault", async () => {
     let bump;
     [alicePM, bump] = await PublicKey.findProgramAddress(
@@ -800,42 +682,6 @@ describe("super-liquidity", () => {
           alicePMData.vaults.length,
           alicePMData.vaultType.portfolioManager.autoFee,
           alicePMData.vaultType.portfolioManager.tolerance,
-        ]
-      )
-    );
-  });
-
-  it("Initialize bob portfolio manager vault", async () => {
-    let bump;
-    [bobPM, bump] = await PublicKey.findProgramAddress(
-      [bob.publicKey.toBuffer(), Buffer.from("portfolio_manager")],
-      superLiquidityProgram.programId
-    );
-
-    await programCall(
-      superLiquidityProgram,
-      "initUserPortfolio",
-      [],
-      {
-        userAccount: bob.publicKey,
-        userVault: bobPM,
-        systemProgram,
-      },
-      [bob]
-    );
-
-    let bobPMData = await superLiquidityProgram.account.userVault.fetch(bobPM);
-
-    assert.ok(
-      checkEqualValues(
-        [bump, bob.publicKey, "portfolioManager", 50, true, 1000],
-        [
-          bobPMData.bump,
-          bobPMData.user,
-          Object.getOwnPropertyNames(bobPMData.vaultType),
-          bobPMData.vaults.length,
-          bobPMData.vaultType.portfolioManager.autoFee,
-          bobPMData.vaultType.portfolioManager.tolerance,
         ]
       )
     );
@@ -899,70 +745,6 @@ describe("super-liquidity", () => {
           alicePMData.provideStatus,
           alicePMData.limitPriceStatus,
           alicePMData.limitPrice,
-        ],
-        [min, max, true, true, true, new BN(0)]
-      )
-    );
-  });
-
-  it("Bob update mockSOL portfolio manager vault", async () => {
-    await programCall(
-      superLiquidityProgram,
-      "updateUserPortfolio",
-      [positionMockSOL, min, max, true, new BN(0)],
-      {
-        globalState,
-        userAccount: bob.publicKey,
-        userVault: bobPM,
-      },
-      [bob]
-    );
-
-    const bobPMData = (
-      await superLiquidityProgram.account.userVault.fetch(bobPM)
-    ).vaults[positionMockSOL];
-
-    assert.ok(
-      checkEqualValues(
-        [
-          bobPMData.min,
-          bobPMData.max,
-          bobPMData.receiveStatus,
-          bobPMData.provideStatus,
-          bobPMData.limitPriceStatus,
-          bobPMData.limitPrice,
-        ],
-        [min, max, true, true, true, new BN(0)]
-      )
-    );
-  });
-
-  it("Bob update mockUSDC portfolio manager vault", async () => {
-    await programCall(
-      superLiquidityProgram,
-      "updateUserPortfolio",
-      [positionMockUSDC, min, max, true, new BN(0)],
-      {
-        globalState,
-        userAccount: bob.publicKey,
-        userVault: bobPM,
-      },
-      [bob]
-    );
-
-    const bobPMData = (
-      await superLiquidityProgram.account.userVault.fetch(bobPM)
-    ).vaults[positionMockUSDC];
-
-    assert.ok(
-      checkEqualValues(
-        [
-          bobPMData.min,
-          bobPMData.max,
-          bobPMData.receiveStatus,
-          bobPMData.provideStatus,
-          bobPMData.limitPriceStatus,
-          bobPMData.limitPrice,
         ],
         [min, max, true, true, true, new BN(0)]
       )

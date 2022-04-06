@@ -63,16 +63,12 @@ impl<'info> Swap<'info> {
         let user_vault_buy = &self.user_vault.vaults[position_buy as usize];
         let user_vault_sell = &self.user_vault.vaults[position_sell as usize];
 
-        require!(user_vault_buy.provide_status, ErrorCode::VaultProvideOff);
-        require!(user_vault_sell.receive_status, ErrorCode::VaultRecieveOff);
         require!
         (
             !user_vault_buy.limit_price_status  || 
             user_vault_buy.limit_price < buy_coin_price, 
             ErrorCode::PriceUnderLimitPrice
         );
-
-        require!(user_vault_sell.amount + swap_amount <= user_vault_sell.max, ErrorCode::ExceedsMaxAmount);
 
         let mut buy_fee = 10;
         let mut sell_fee = 10;
@@ -82,9 +78,7 @@ impl<'info> Swap<'info> {
                 buy_fee = user_vault_sell.buy_fee;
                 sell_fee = user_vault_buy.sell_fee;
             }
-            VaultType::PortfolioManager {auto_fee: _, tolerance: _}=> {
-
-            }
+            _ => ()
         }
 
         let token_price: u128 = (sell_coin_price as u128 * (10000 - buy_fee as u128)
@@ -97,7 +91,29 @@ impl<'info> Swap<'info> {
 
         require!(amount_to_send >= min_amount, ErrorCode::InsufficientAmount);    
         require!(user_vault_buy.amount >= amount_to_send, ErrorCode::VaultInsufficientAmount);
-        require!(user_vault_buy.amount - amount_to_send >= user_vault_buy.min, ErrorCode::ExceedsMinAmount);
+
+        match self.user_vault.vault_type{
+            VaultType::PortfolioManager {auto_fee: _, tolerance: _}=> {
+                let mut usd_value = 0;
+                for (i, vault) in self.user_vault.vaults.iter().enumerate() {
+                    if i == position_sell as usize {
+                        usd_value += self.delphor_aggregator_prices.tokens[i as usize].price * (vault.amount + amount_to_send);
+                    } else if i == position_buy as usize {
+                        usd_value += self.delphor_aggregator_prices.tokens[i as usize].price * (vault.amount - swap_amount);
+                    }else {
+                        usd_value += self.delphor_aggregator_prices.tokens[i as usize].price * vault.amount;
+                    }
+                }
+                require!(((user_vault_buy.amount - amount_to_send) * buy_coin_price * 10000) / usd_value >= user_vault_buy.min, ErrorCode::ExceedsMinAmount);
+                require!(((user_vault_sell.amount + swap_amount) * sell_coin_price * 10000) / usd_value <= user_vault_buy.max, ErrorCode::ExceedsMaxAmount);
+            },
+            VaultType::LiquidityProvider => {
+                require!(user_vault_buy.amount - amount_to_send >= user_vault_buy.min, ErrorCode::ExceedsMinAmount);
+                require!(user_vault_sell.amount + swap_amount <= user_vault_sell.max, ErrorCode::ExceedsMaxAmount);
+                require!(user_vault_buy.provide_status, ErrorCode::VaultProvideOff);
+                require!(user_vault_sell.receive_status, ErrorCode::VaultRecieveOff);
+            }
+        }
 
         anchor_spl::token::transfer(
             CpiContext::new(
