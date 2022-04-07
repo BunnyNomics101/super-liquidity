@@ -50,6 +50,8 @@ impl<'info> Withdraw<'info> {
         let seeds: &[&[u8]] = &[b"store_auth", &[bump]];
         let signer = &[&seeds[..]];
 
+        vault.amount -= amount;
+
         anchor_spl::token::transfer(
             CpiContext::new_with_signer(
                 self.token_program.to_account_info().clone(),
@@ -62,8 +64,6 @@ impl<'info> Withdraw<'info> {
             ),
             amount,
         )?;
-
-        vault.amount -= amount;
 
         Ok(())
     }

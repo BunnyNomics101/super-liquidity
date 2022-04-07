@@ -45,6 +45,8 @@ impl<'info> Deposit<'info> {
             return Err(ProgramError::InsufficientFunds.into());
         }
 
+        vault.amount += amount;
+
         anchor_spl::token::transfer(
             CpiContext::new(
                 self.token_program.to_account_info().clone(),
@@ -57,7 +59,6 @@ impl<'info> Deposit<'info> {
             amount,
         )?;
 
-        vault.amount += amount;
         vault.timestamp = Clock::get().unwrap().unix_timestamp as u32;
         Ok(())
     }

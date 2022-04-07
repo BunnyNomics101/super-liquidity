@@ -116,6 +116,9 @@ impl<'info> Swap<'info> {
             }
         }
 
+        self.user_vault.vaults[position_sell as usize].amount += swap_amount;
+        self.user_vault.vaults[position_buy as usize].amount -= amount_to_send;
+
         anchor_spl::token::transfer(
             CpiContext::new(
                 self.token_program.to_account_info().clone(),
@@ -144,8 +147,6 @@ impl<'info> Swap<'info> {
             amount_to_send,
         )?;
 
-        self.user_vault.vaults[position_sell as usize].amount += swap_amount;
-        self.user_vault.vaults[position_buy as usize].amount -= amount_to_send;
         self.user_vault.vaults[position_buy as usize].timestamp = Clock::get().unwrap().unix_timestamp as u32;
 
         Ok(())
