@@ -15,7 +15,7 @@ pub struct Swap<'info> {
     pub global_state: Account<'info, GlobalState>,
     pub delphor_aggregator_prices: Account<'info, GlobalAccount>,
     #[account(mut)]
-    pub user_vault: Box<Account<'info, UserVault>>,
+    pub user_vault: Account<'info, UserVault>,
     /// CHECK:
     #[account(
         seeds = [
@@ -95,7 +95,8 @@ impl<'info> Swap<'info> {
         match self.user_vault.vault_type{
             VaultType::PortfolioManager {auto_fee: _, tolerance: _}=> {
                 let mut usd_value: u64 = 0;
-                for (i, token) in self.global_state.tokens.iter().enumerate() {
+                let tokens_len = self.global_state.tokens.len();
+                for i in 0..tokens_len {
                     if i == position_sell as usize {
                         usd_value += (sell_coin_price as u128 * (self.user_vault.vaults[i].amount + swap_amount) as u128 / u128::pow(10, sell_coin_decimals as u32)) as u64;
                     } else if i == position_buy as usize {

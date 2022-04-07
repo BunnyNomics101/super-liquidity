@@ -17,7 +17,7 @@ const {
   getTokenAccount,
   getAssociatedTokenAccount,
   createMint,
-  mintToAccount
+  mintToAccount,
 } = require("./utils");
 
 describe("super-liquidity", () => {
@@ -92,6 +92,17 @@ describe("super-liquidity", () => {
     symbol: "usdc",
     decimals: 9,
   };
+
+  let mockToken = {
+    price: Lamport(9999),
+    symbol: "mock",
+    decimals: 9,
+  };
+
+  const totalGenericTokens = 10;
+  const genericMints = new Array(totalGenericTokens);
+  const genericOracleTokensPDAs = new Array(totalGenericTokens);
+  const genericTokenStores = new Array(totalGenericTokens);
 
   let pythProductAccount = systemProgram;
   let pythPriceAccount = systemProgram;
@@ -212,6 +223,12 @@ describe("super-liquidity", () => {
     assert.ok(bobMockUSDCAccount.amount == 0);
   });
 
+  it("Create generic mints", async () => {
+    for (let i = 0; i < totalGenericTokens; i++) {
+      genericMints[i] = await createMint(provider, adminAccount);
+    }
+  });
+
   it("DelphorOracle create mockSOL", async () => {
     [delphorOracleMockSOLPDA] = await PublicKey.findProgramAddress(
       [mockSOL.symbol],
@@ -270,6 +287,43 @@ describe("super-liquidity", () => {
         [pdaData.orcaPrice, pdaData.authority, pdaData.symbol]
       )
     );
+  });
+
+  it("DelphorOracle create generic coins", async () => {
+    for (let i = 0; i < totalGenericTokens; i++) {
+      [genericOracleTokensPDAs[i]] = await PublicKey.findProgramAddress(
+        [mockToken.symbol + i],
+        delphorOracleProgram.programId
+      );
+
+      await programCall(
+        delphorOracleProgram,
+        "createCoin",
+        [
+          mockToken.price,
+          mockToken.price,
+          mockToken.price,
+          mockToken.symbol + i,
+        ],
+        {
+          coin: genericOracleTokensPDAs[i],
+          authority,
+          payer,
+          systemProgram,
+        }
+      );
+
+      const pdaData = await delphorOracleProgram.account.coinInfo.fetch(
+        genericOracleTokensPDAs[i]
+      );
+
+      assert.ok(
+        checkEqualValues(
+          [mockToken.price, adminAccount, mockToken.symbol + i],
+          [pdaData.orcaPrice, pdaData.authority, pdaData.symbol]
+        )
+      );
+    }
   });
 
   it("DelphorAggregator init global account", async () => {
@@ -396,6 +450,44 @@ describe("super-liquidity", () => {
     );
   });
 
+  it("DelphorAggregator add generic tokens", async () => {
+    for (let i = 0; i < totalGenericTokens; i++) {
+      const mint = genericMints[i];
+
+      await programCall(
+        delphorAggregatorProgram,
+        "addToken",
+        [mockToken.decimals, mockToken.symbol + i],
+        {
+          globalAccount: aggregatorGlobalAccount,
+          mint: mint,
+          switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
+          pythProductAccount: pythProductAccount,
+          authority,
+        }
+      );
+
+      const globalAccount =
+        await delphorAggregatorProgram.account.globalAccount.fetch(
+          aggregatorGlobalAccount
+        );
+
+      let tokenAggData = globalAccount.tokens[i + 2];
+      expect(globalAccount.tokens.length).eq(i + 1 + 2);
+      expect(tokenAggData.price).bignumber.eq(new BN(0));
+      expect(tokenAggData.symbol).eq(mockToken.symbol + i);
+      expect(tokenAggData.lastUpdateTimestamp).bignumber.eq(new BN(0));
+      expect(tokenAggData.mint.toBase58()).eq(mint.toBase58());
+      expect(tokenAggData.decimals).eq(mockToken.decimals);
+      expect(tokenAggData.pythPriceAccount.toBase58()).eq(
+        pythProductAccount.toBase58()
+      );
+      expect(tokenAggData.switchboardOptimizedFeedAccount.toBase58()).eq(
+        switchboardOptimizedFeedAccount.toBase58()
+      );
+    }
+  });
+
   it("DelphorAggregator update mockSOL price", async () => {
     await programCall(delphorAggregatorProgram, "updateTokenPrice", [0], {
       switchboardOptimizedFeedAccount,
@@ -428,6 +520,25 @@ describe("super-liquidity", () => {
       );
 
     assert.ok(globalAccount.tokens[1].price.eq(mockUSDC.price));
+  });
+
+  it("DelphorAggregator update generic token prices", async () => {
+    for (let i = 0; i < totalGenericTokens; i++) {
+      await programCall(delphorAggregatorProgram, "updateTokenPrice", [i + 2], {
+        switchboardOptimizedFeedAccount,
+        pythPriceAccount,
+        delphorOracle: genericOracleTokensPDAs[i],
+        globalAccount: aggregatorGlobalAccount,
+        authority,
+      });
+
+      const globalAccount =
+        await delphorAggregatorProgram.account.globalAccount.fetch(
+          aggregatorGlobalAccount
+        );
+
+      expect(globalAccount.tokens[i + 2].price).bignumber.eq(mockToken.price);
+    }
   });
 
   it("Initialize global state", async () => {
@@ -495,6 +606,22 @@ describe("super-liquidity", () => {
     );
   });
 
+  it("Initialize generic token stores", async () => {
+    for (let i = 0; i < totalGenericTokens; i++) {
+      const mint = genericMints[i];
+
+      genericTokenStores[i] = await createAssociatedTokenAccount(
+        provider,
+        mint,
+        tokenStoreAuthority
+      );
+
+      expect(genericTokenStores[i].toBase58()).eq(
+        (await getAssociatedTokenAccount(mint, tokenStoreAuthority)).toBase58()
+      );
+    }
+  });
+
   it("Add mockSOL to globalState", async () => {
     await programCall(superLiquidityProgram, "addToken", [], {
       adminAccount,
@@ -531,6 +658,24 @@ describe("super-liquidity", () => {
         [globalStateData.tokens.length, globalStateData.tokens[1]]
       )
     );
+  });
+
+  it("Add generic tokens to globalState", async () => {
+    for (let i = 0; i < totalGenericTokens; i++) {
+      const mint = genericMints[i];
+
+      await programCall(superLiquidityProgram, "addToken", [], {
+        adminAccount,
+        globalState,
+        mint,
+      });
+
+      let globalStateData =
+        await superLiquidityProgram.account.globalState.fetch(globalState);
+
+      expect(globalStateData.tokens.length).eq(i + 1 + 2);
+      expect(globalStateData.tokens[i + 2].toBase58()).eq(mint.toBase58());
+    }
   });
 
   it("Initialize alice LP", async () => {
