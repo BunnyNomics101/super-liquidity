@@ -158,6 +158,10 @@ impl<'info> UpdateUserPortfolio<'info> {
         limit_price: u64,
     ) -> Result<()> {
         let vault = &mut self.user_vault.vaults[position as usize];
+
+        require!(min <= 10000, ErrorCode::ExceedsBasisPoints);
+        require!(max <= 10000, ErrorCode::ExceedsBasisPoints);
+
         vault.min = min;
         vault.max = max;
         vault.timestamp = Clock::get().unwrap().unix_timestamp as u32;
@@ -165,4 +169,14 @@ impl<'info> UpdateUserPortfolio<'info> {
         vault.limit_price = limit_price;
         Ok(())
     }
+}
+
+// ------------
+// -- Errors --
+// ------------
+
+#[error_code]
+pub enum ErrorCode {
+    #[msg("Value must be in basis points.")]
+    ExceedsBasisPoints,
 }
