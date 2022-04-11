@@ -203,11 +203,6 @@
       "name": "updateUserLiquidityProvider",
       "accounts": [
         {
-          "name": "globalState",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "userAccount",
           "isMut": false,
           "isSigner": true
@@ -281,11 +276,6 @@
     {
       "name": "updateUserPortfolio",
       "accounts": [
-        {
-          "name": "globalState",
-          "isMut": false,
-          "isSigner": false
-        },
         {
           "name": "userAccount",
           "isMut": false,
@@ -514,5 +504,8 @@
       "code": 6001,
       "name": "TokenAlreadyAdded"
     }
-  ]
+  ],
+  "metadata": {
+    "address": "4yD8QCX2WfXMQ6Jmo16o3YvZqYWpTd7KfGUqJ57Bwkpm"
+  }
 }

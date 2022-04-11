@@ -726,7 +726,6 @@ describe("super-liquidity", () => {
       "updateUserLiquidityProvider",
       [positionMockSOL, buyFee, sellFee, min, max, true, true, true, new BN(0)],
       {
-        globalState,
         userAccount: alice.publicKey,
         userVault: aliceLP,
       },
@@ -770,7 +769,6 @@ describe("super-liquidity", () => {
         new BN(0),
       ],
       {
-        globalState,
         userAccount: alice.publicKey,
         userVault: aliceLP,
       },
@@ -1157,7 +1155,6 @@ describe("super-liquidity", () => {
       "updateUserPortfolio",
       [positionMockSOL, minSol, maxSol, true, new BN(0)],
       {
-        globalState,
         userAccount: alice.publicKey,
         userVault: alicePM,
       },
@@ -1189,7 +1186,6 @@ describe("super-liquidity", () => {
       "updateUserPortfolio",
       [positionMockUSDC, minUsdc, maxUsdc, true, new BN(0)],
       {
-        globalState,
         userAccount: alice.publicKey,
         userVault: alicePM,
       },

@@ -43,13 +43,6 @@ impl<'info> InitUserLiquidityProvider<'info> {
 
 #[derive(Accounts)]
 pub struct UpdateUserLiquidityProvider<'info> {
-    #[account(
-        seeds = [
-            get_admin().as_ref(),
-        ], 
-        bump = global_state.bump
-    )]
-    pub global_state: Account<'info, GlobalState>,
     pub user_account: Signer<'info>,
     #[account(
         mut, 
@@ -130,13 +123,6 @@ impl<'info> InitUserPortfolio<'info> {
 
 #[derive(Accounts)]
 pub struct UpdateUserPortfolio<'info> {
-    #[account(
-        seeds = [
-            get_admin().as_ref(),
-        ], 
-        bump = global_state.bump
-    )]
-    pub global_state: Account<'info, GlobalState>,
     pub user_account: Signer<'info>,
     #[account(
         mut, 

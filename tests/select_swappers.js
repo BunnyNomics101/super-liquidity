@@ -492,7 +492,6 @@ describe("super-liquidity", () => {
             new BN(0),
             {
               accounts: {
-                globalState,
                 userAccount: user.publicKey,
                 userVault: usersLP[i],
               },
@@ -772,9 +771,7 @@ describe("super-liquidity", () => {
       "updateUserPortfolio",
       [positionMockSOL, min, max, true, new BN(0)],
       {
-        globalState,
         userAccount: alice.publicKey,
-        mint: mockSOLMint,
         userVault: alicePM,
       },
       [alice]
