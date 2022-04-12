@@ -701,12 +701,6 @@ describe("super-liquidity", () => {
       aliceLP
     );
 
-    aliceLPData.vaults.forEach((vault) => {
-      Object.values(vault).forEach((propertie) => {
-        assert.ok(Number(propertie) == 0);
-      });
-    });
-
     assert.ok(
       checkEqualValues(
         [bump, alice.publicKey, "liquidityProvider", 50],
