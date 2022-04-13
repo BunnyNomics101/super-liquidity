@@ -81,6 +81,8 @@ describe("super-liquidity", () => {
   let pythProductAccount = systemProgram;
   let pythPriceAccount = systemProgram;
   let switchboardOptimizedFeedAccount = systemProgram;
+  let chainlinkFeed = systemProgram;
+  let chainlinkProgram = systemProgram;
 
   const swapAmount = Lamport(2);
   const minToReceive = Lamport(250);
@@ -274,6 +276,8 @@ describe("super-liquidity", () => {
           switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
           pythProductAccount: pythProductAccount,
           authority,
+          chainlinkFeed,
+          chainlinkProgram,
         }
       );
 
@@ -307,6 +311,8 @@ describe("super-liquidity", () => {
         pythPriceAccount,
         delphorOracle: oracleTokensPDAs[i],
         globalAccount: aggregatorGlobalAccount,
+        chainlinkFeed,
+        chainlinkProgram,
         authority,
       });
 
