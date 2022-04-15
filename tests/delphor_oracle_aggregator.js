@@ -40,8 +40,6 @@ describe("delphor-oracle-aggregator", () => {
 
   let pythProductAccount = systemProgram;
   let pythPriceAccount = systemProgram;
-  let chainlinkFeed = systemProgram;
-  let chainlinkProgram = systemProgram;
   let switchboardOptimizedFeedAccount = systemProgram;
 
   it("Create mockSOL", async () => {
@@ -154,8 +152,6 @@ describe("delphor-oracle-aggregator", () => {
         mint: mockSOLMint,
         switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
         pythProductAccount: pythProductAccount,
-        chainlinkFeed,
-        chainlinkProgram,
         authority: adminAccount,
       }
     );
@@ -202,8 +198,6 @@ describe("delphor-oracle-aggregator", () => {
         mint: mockUSDCMint,
         switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
         pythProductAccount: pythProductAccount,
-        chainlinkFeed,
-        chainlinkProgram,
         authority: adminAccount,
       }
     );
@@ -244,8 +238,6 @@ describe("delphor-oracle-aggregator", () => {
     await programCall(delphorAggregatorProgram, "updateTokenPrice", [0], {
       switchboardOptimizedFeedAccount,
       pythPriceAccount,
-      chainlinkFeed,
-      chainlinkProgram,
       delphorOracle: delphorOracleMockSOLPDA,
       globalAccount: aggregatorGlobalAccount,
       authority: adminAccount,
@@ -263,8 +255,6 @@ describe("delphor-oracle-aggregator", () => {
     await programCall(delphorAggregatorProgram, "updateTokenPrice", [1], {
       switchboardOptimizedFeedAccount,
       pythPriceAccount,
-      chainlinkFeed,
-      chainlinkProgram,
       delphorOracle: delphorOracleMockUSDCPDA,
       globalAccount: aggregatorGlobalAccount,
       authority: adminAccount,

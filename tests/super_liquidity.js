@@ -107,8 +107,6 @@ describe("super-liquidity", () => {
   let pythProductAccount = systemProgram;
   let pythPriceAccount = systemProgram;
   let switchboardOptimizedFeedAccount = systemProgram;
-  let chainlinkFeed = systemProgram;
-  let chainlinkProgram = systemProgram;
 
   let transaction = new anchor.web3.Transaction();
   it("Transfer lamports to alice and bob", async function () {
@@ -370,8 +368,6 @@ describe("super-liquidity", () => {
         mint: mockSOLMint,
         switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
         pythProductAccount: pythProductAccount,
-        chainlinkFeed,
-        chainlinkProgram,
         authority,
       }
     );
@@ -418,8 +414,6 @@ describe("super-liquidity", () => {
         mint: mockUSDCMint,
         switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
         pythProductAccount: pythProductAccount,
-        chainlinkFeed,
-        chainlinkProgram,
         authority,
       }
     );
@@ -469,8 +463,6 @@ describe("super-liquidity", () => {
           mint: mint,
           switchboardOptimizedFeedAccount: switchboardOptimizedFeedAccount,
           pythProductAccount: pythProductAccount,
-          chainlinkFeed,
-          chainlinkProgram,
           authority,
         }
       );
@@ -502,8 +494,6 @@ describe("super-liquidity", () => {
       pythPriceAccount,
       delphorOracle: delphorOracleMockSOLPDA,
       globalAccount: aggregatorGlobalAccount,
-      chainlinkFeed,
-      chainlinkProgram,
       authority,
     });
 
@@ -521,8 +511,6 @@ describe("super-liquidity", () => {
       pythPriceAccount,
       delphorOracle: delphorOracleMockUSDCPDA,
       globalAccount: aggregatorGlobalAccount,
-      chainlinkFeed,
-      chainlinkProgram,
       authority,
     });
 
@@ -541,8 +529,6 @@ describe("super-liquidity", () => {
         pythPriceAccount,
         delphorOracle: genericOracleTokensPDAs[i],
         globalAccount: aggregatorGlobalAccount,
-        chainlinkFeed,
-        chainlinkProgram,
         authority,
       });
 

@@ -1,6 +1,5 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
-use chainlink_solana as chainlink;
 use delphor_oracle::CoinInfo;
 use num::integer::Roots;
 use pyth_client::{load_price, load_product, Price, PriceConf, PriceStatus, Product};
@@ -64,12 +63,11 @@ pub mod delphor_oracle_aggregator {
             decimals,
             pyth_price_account,
             switchboard_optimized_feed_account: switchboard_optimized_feed_account.key(),
-            chainlink_feed: ctx.accounts.chainlink_feed.key(),
-            chainlink_program: ctx.accounts.chainlink_program.key(),
             symbol,
         });
         Ok(())
     }
+    
     pub fn update_token_price(ctx: Context<UpdateCoinPrice>, position: u8) -> Result<()> {
         let token_data = &mut ctx.accounts.global_account.tokens[position as usize];
         let delphor_oracle = &mut ctx.accounts.delphor_oracle;
@@ -95,33 +93,12 @@ pub mod delphor_oracle_aggregator {
             }
         }
 
-        let mut chainlink_price: u64 = delphor_oracle.coin_gecko_price;
-        if token_data.chainlink_feed.to_string() != "11111111111111111111111111111111" {
-            let round = chainlink::latest_round_data(
-                ctx.accounts.chainlink_program.to_account_info(),
-                ctx.accounts.chainlink_feed.to_account_info(),
-            )?;
-            let chainlink_decimals = chainlink::decimals(
-                ctx.accounts.chainlink_program.to_account_info(),
-                ctx.accounts.chainlink_feed.to_account_info(),
-            )?;
-            chainlink_price = round.answer as u64;
-            if chainlink_decimals < token_data.decimals {
-                chainlink_price = chainlink_price
-                    * u64::pow(10, (token_data.decimals - chainlink_decimals as u8) as u32);
-            } else if chainlink_decimals > token_data.decimals {
-                chainlink_price = chainlink_price
-                    / u64::pow(10, (chainlink_decimals as u8 - token_data.decimals) as u32);
-            }
-        }
-
         let calculate_price_result = calculate_price(
             delphor_oracle.coin_gecko_price,
             delphor_oracle.orca_price,
             delphor_oracle.serum_price,
             pyth_price,
             switchboard_price,
-            chainlink_price
         );
         match calculate_price_result {
             Ok(price) => token_data.price = price,
@@ -179,33 +156,29 @@ fn get_pyth_price(pyth_account: &AccountInfo<'_>, decimals: u8) -> Result<u64> {
     Ok(pyth_price)
 }
 
-fn calculate_price(v1: u64, v2: u64, v3: u64, v4: u64, v5: u64, v6: u64) -> Result<u64> {
-    let mut values = vec![v1, v2, v3, v4, v5, v6];
+fn calculate_price(v1: u64, v2: u64, v3: u64, v4: u64, v5: u64) -> Result<u64> {
+    let mut values = vec![v1, v2, v3, v4, v5];
     insertion_sort(&mut values);
 
-    let set1 = vec![values[0], values[1], values[2]];
-    let set2 = vec![values[1], values[2], values[3]];
-    let set3 = vec![values[2], values[3], values[4]];
-    let set4 = vec![values[3], values[4], values[5]];
+    let min_set = vec![values[0], values[1], values[2]];
+    let mid_set = vec![values[1], values[2], values[3]];
+    let max_set = vec![values[2], values[3], values[4]];
 
-    let vc_set1 = variation_coefficient(&set1);
-    let vc_set2 = variation_coefficient(&set2);
-    let vc_set3 = variation_coefficient(&set3);
-    let vc_set4 = variation_coefficient(&set4);
+    let vc_lower_salues = variation_coefficient(&min_set);
+    let vc_mid_values = variation_coefficient(&mid_set);
+    let vc_upper_values = variation_coefficient(&max_set);
 
-    let min_vc = cmp::min(vc_set1, cmp::min(vc_set2, cmp::min(vc_set3, vc_set4)));
+    let min_vc = cmp::min(vc_lower_salues, cmp::min(vc_mid_values, vc_upper_values));
     if min_vc > 5 {
         msg!("{}", min_vc);
         return Err(error!(ErrorCode::PriceUpdateError));
     }
-    if min_vc == vc_set1 {
-        return Ok(average(&set1));
-    } else if min_vc == vc_set2 {
-        return Ok(average(&set2));
-    } else if min_vc == vc_set3 {
-        return Ok(average(&set3));
-    } else if min_vc == vc_set4 {
-        return Ok(average(&set4));
+    if min_vc == vc_lower_salues {
+        return Ok(average(&min_set));
+    } else if min_vc == vc_mid_values {
+        return Ok(average(&mid_set));
+    } else if min_vc == vc_upper_values {
+        return Ok(average(&max_set));
     } else {
         // This should never happen
         return Err(error!(ErrorCode::UnexpectedError));
@@ -265,12 +238,6 @@ pub struct UpdateCoinPrice<'info> {
     /// CHECK:
     #[account(constraint = pyth_price_account.key() == global_account.tokens[position as usize].pyth_price_account)]
     pyth_price_account: AccountInfo<'info>,
-    /// CHECK:
-    #[account(constraint = chainlink_feed.key() == global_account.tokens[position as usize].chainlink_feed)]
-    chainlink_feed: AccountInfo<'info>,
-    /// CHECK:
-    #[account(constraint = chainlink_program.key() == global_account.tokens[position as usize].chainlink_program)]
-    chainlink_program: AccountInfo<'info>,
     // struct CoinInfo is imported from delphor-oracle, so the owner MUST be delphor-oracle
     // no need for additional checks
     #[account(constraint = delphor_oracle.symbol == global_account.tokens[position as usize].symbol)]
@@ -302,10 +269,6 @@ pub struct AddToken<'info> {
     switchboard_optimized_feed_account: AccountInfo<'info>,
     /// CHECK:
     pyth_product_account: AccountInfo<'info>,
-    /// CHECK:
-    chainlink_feed: AccountInfo<'info>,
-    /// CHECK:
-    chainlink_program: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
@@ -342,8 +305,6 @@ pub struct TokenData {
     pub decimals: u8,
     pub pyth_price_account: Pubkey,
     pub switchboard_optimized_feed_account: Pubkey,
-    pub chainlink_feed: Pubkey,
-    pub chainlink_program: Pubkey,
     pub symbol: String,
 }
 

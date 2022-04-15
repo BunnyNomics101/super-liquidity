@@ -25,4 +25,3 @@ pyth-client = { version = "0.3.0", features = ["no-entrypoint"] }
 switchboard-program = "=0.2.0"
 lexical = "=6.0.1"
 num = "0.4.0"
-chainlink_solana = "0.1.0"

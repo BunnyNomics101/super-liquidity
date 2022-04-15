@@ -55,16 +55,6 @@
           "name": "pythProductAccount",
           "isMut": false,
           "isSigner": false
-        },
-        {
-          "name": "chainlinkFeed",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "chainlinkProgram",
-          "isMut": false,
-          "isSigner": false
         }
       ],
       "args": [
@@ -88,16 +78,6 @@
         },
         {
           "name": "pythPriceAccount",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "chainlinkFeed",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "chainlinkProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -179,14 +159,6 @@
           },
           {
             "name": "switchboardOptimizedFeedAccount",
-            "type": "publicKey"
-          },
-          {
-            "name": "chainlinkFeed",
-            "type": "publicKey"
-          },
-          {
-            "name": "chainlinkProgram",
             "type": "publicKey"
           },
           {
