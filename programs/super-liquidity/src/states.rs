@@ -47,6 +47,7 @@ impl UserVault {}
 pub struct UserCoinVault {
     pub amount: u64,
     pub min: u64,      // token amount for LP, percentage for portfolio
+    pub mid: u64,
     pub max: u64,      // token amount for LP, percentage for portfolio
     pub buy_fee: u16,  // 0 for portfolio
     pub sell_fee: u16, // 0 for portfolio

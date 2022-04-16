@@ -74,6 +74,7 @@ pub mod super_liquidity {
         ctx: Context<UpdateUserPortfolio>,
         position: u8,
         min: u64,
+        mid: u64,
         max: u64,
         limit_price_status: bool,
         limit_price: u64,
@@ -81,6 +82,7 @@ pub mod super_liquidity {
         ctx.accounts.process(
             position,
             min,
+            mid,
             max,
             limit_price_status,
             limit_price,

@@ -27,6 +27,7 @@ impl<'info> InitUserLiquidityProvider<'info> {
             vaults: vec![UserCoinVault{
                 amount: 0,
                 min: 0,
+                mid: 0,
                 max: u64::MAX,
                 buy_fee: 10,
                 sell_fee: 10,
@@ -107,6 +108,7 @@ impl<'info> InitUserPortfolio<'info> {
             vaults: vec![UserCoinVault{
                 amount: 0,
                 min: 0,
+                mid: 0,
                 max: u64::MAX,
                 buy_fee: 10,
                 sell_fee: 10,
@@ -139,6 +141,7 @@ impl<'info> UpdateUserPortfolio<'info> {
         &mut self,
         position: u8,
         min: u64,
+        mid: u64,
         max: u64,
         limit_price_status: bool,
         limit_price: u64,
@@ -149,6 +152,7 @@ impl<'info> UpdateUserPortfolio<'info> {
         require!(max <= 10000, ErrorCode::ExceedsBasisPoints);
 
         vault.min = min;
+        vault.mid = mid;
         vault.max = max;
         vault.timestamp = Clock::get().unwrap().unix_timestamp as u32;
         vault.limit_price_status = limit_price_status;

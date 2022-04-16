@@ -1147,7 +1147,7 @@ describe("super-liquidity", () => {
     await programCall(
       superLiquidityProgram,
       "updateUserPortfolio",
-      [positionMockSOL, minSol, maxSol, true, new BN(0)],
+      [positionMockSOL, minSol, maxSol.sub(minSol), maxSol, true, new BN(0)],
       {
         userAccount: alice.publicKey,
         userVault: alicePM,
@@ -1163,13 +1163,14 @@ describe("super-liquidity", () => {
       checkEqualValues(
         [
           alicePMData.min,
+          alicePMData.mid,
           alicePMData.max,
           alicePMData.receiveStatus,
           alicePMData.provideStatus,
           alicePMData.limitPriceStatus,
           alicePMData.limitPrice,
         ],
-        [minSol, maxSol, true, true, true, new BN(0)]
+        [minSol, maxSol.sub(minSol), maxSol, true, true, true, new BN(0)]
       )
     );
   });
@@ -1178,7 +1179,7 @@ describe("super-liquidity", () => {
     await programCall(
       superLiquidityProgram,
       "updateUserPortfolio",
-      [positionMockUSDC, minUsdc, maxUsdc, true, new BN(0)],
+      [positionMockUSDC, minUsdc, maxUsdc.sub(minUsdc), maxUsdc, true, new BN(0)],
       {
         userAccount: alice.publicKey,
         userVault: alicePM,
@@ -1194,13 +1195,14 @@ describe("super-liquidity", () => {
       checkEqualValues(
         [
           alicePMData.min,
+          alicePMData.mid,
           alicePMData.max,
           alicePMData.receiveStatus,
           alicePMData.provideStatus,
           alicePMData.limitPriceStatus,
           alicePMData.limitPrice,
         ],
-        [minUsdc, maxUsdc, true, true, true, new BN(0)]
+        [minUsdc, maxUsdc.sub(minUsdc), maxUsdc, true, true, true, new BN(0)]
       )
     );
   });

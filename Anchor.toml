@@ -15,7 +15,7 @@ delphor_oracle = "H36K6GswHmwsiuyyBaRP6RuMy2yj3DuUaHGcGvEdc5S9"
 url = "https://anchor.projectserum.com"
 
 [provider]
-cluster = "devnet"
+cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
