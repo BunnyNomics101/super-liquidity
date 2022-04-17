@@ -1,3 +1,8 @@
+//
+// on.chain storage for prices fed from 3 off-chain, REST API WEB 2.0 sources,
+// (Coingecko, Orca, Serum)
+// stores each coin price (3 sources) on-chain, on a different PDA
+//
 // #region code
 use anchor_lang::prelude::*;
 
