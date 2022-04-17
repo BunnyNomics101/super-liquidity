@@ -40,12 +40,12 @@ const ADMIN_ACCOUNT = new PublicKey(
 
 const [delphorAggregatorId, aggregatorProgram] = getProgramData(
   "../target/idl/delphor_oracle_aggregator.json",
-  "Ev8Q73RFWaDPTc1YBaa6Zu7J2XmQMQy3aQcdyb3Z64Qd"
+  "BSVnZFytqxNN5e9UVN434YRWEFXJdpQyyyB8QmXoXdd3"
 );
 
 const [delphorOracleId, oracleProgram] = getProgramData(
   "../target/idl/delphor_oracle.json",
-  "orcGZ2qdQPdF2CpwP6kHD6AJHA5oSZiFFDBmNEHyyS4"
+  "CSLRinGydCdX4KZs1ngeRQHfdfh1g63g8wwCGUZ4r5j8"
 );
 
 const connection = new Connection(
