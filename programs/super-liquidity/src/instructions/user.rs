@@ -125,6 +125,13 @@ impl<'info> InitUserPortfolio<'info> {
 
 #[derive(Accounts)]
 pub struct UpdateUserPortfolio<'info> {
+    #[account(
+        seeds = [
+            get_admin().as_ref(),
+        ], 
+        bump = global_state.bump
+    )]
+    pub global_state: Account<'info, GlobalState>,
     pub user_account: Signer<'info>,
     #[account(
         mut, 
@@ -140,23 +147,34 @@ impl<'info> UpdateUserPortfolio<'info> {
     pub fn process(
         &mut self,
         position: u8,
-        min: u64,
         mid: u64,
-        max: u64,
         limit_price_status: bool,
         limit_price: u64,
+        tolerance: u16
     ) -> Result<()> {
+        let mut current_tolerance = 0;
+
+        if let VaultType::PortfolioManager{tolerance, ..} = self.user_vault.vault_type{current_tolerance = tolerance};
+        
         let vault = &mut self.user_vault.vaults[position as usize];
 
-        require!(min <= 10000, ErrorCode::ExceedsBasisPoints);
-        require!(max <= 10000, ErrorCode::ExceedsBasisPoints);
+        require!(mid <= 10000, ErrorCode::ExceedsBasisPoints);
 
-        vault.min = min;
         vault.mid = mid;
-        vault.max = max;
         vault.timestamp = Clock::get().unwrap().unix_timestamp as u32;
         vault.limit_price_status = limit_price_status;
         vault.limit_price = limit_price;
+
+        if current_tolerance == tolerance {
+            vault.max = mid + mid * tolerance as u64 / 10000 / 2;
+            vault.min = mid - mid * tolerance as u64 / 10000 / 2;
+        }else{
+            let tokens_len = self.global_state.tokens.len();
+                for i in 0..tokens_len {
+                    self.user_vault.vaults[i].max = self.user_vault.vaults[i].mid + self.user_vault.vaults[i].mid * tolerance as u64 / 10000 / 2;
+                    self.user_vault.vaults[i].min = self.user_vault.vaults[i].mid - self.user_vault.vaults[i].mid * tolerance as u64 / 10000 / 2;
+                }
+        }
         Ok(())
     }
 }

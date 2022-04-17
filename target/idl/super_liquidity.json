@@ -277,6 +277,11 @@
       "name": "updateUserPortfolio",
       "accounts": [
         {
+          "name": "globalState",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "userAccount",
           "isMut": false,
           "isSigner": true
@@ -293,15 +298,7 @@
           "type": "u8"
         },
         {
-          "name": "min",
-          "type": "u64"
-        },
-        {
           "name": "mid",
-          "type": "u64"
-        },
-        {
-          "name": "max",
           "type": "u64"
         },
         {
@@ -311,6 +308,10 @@
         {
           "name": "limitPrice",
           "type": "u64"
+        },
+        {
+          "name": "tolerance",
+          "type": "u16"
         }
       ]
     },

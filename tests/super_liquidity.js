@@ -64,11 +64,17 @@ describe("super-liquidity", () => {
     positionMockUSDC = 1;
 
   const BASIS_POINTS = new BN(10000);
-  let minUsdc = new BN(0),
-    minSol = new BN(0),
-    maxSol = new BN(9500),
-    maxUsdc = BASIS_POINTS.sub(maxSol);
+  const tolerance = 2000;
 
+  let midUsdc = new BN(1000);
+  let midSol = new BN(9000);
+
+  let minUsdc = midUsdc.sub(midUsdc.muln(tolerance).div(BASIS_POINTS).divn(2)),
+    minSol = midSol.sub(midSol.muln(tolerance).div(BASIS_POINTS).divn(2)),
+    maxSol = midSol.add(midSol.muln(tolerance).div(BASIS_POINTS).divn(2)),
+    maxUsdc = midUsdc.add(midUsdc.muln(tolerance).div(BASIS_POINTS).divn(2));
+
+    console.log(Number(minSol))
   function Lamport(value) {
     return new BN(value * 10 ** 9);
   }
@@ -1147,8 +1153,9 @@ describe("super-liquidity", () => {
     await programCall(
       superLiquidityProgram,
       "updateUserPortfolio",
-      [positionMockSOL, minSol, maxSol.sub(minSol), maxSol, true, new BN(0)],
+      [positionMockSOL, midSol, true, new BN(0), tolerance],
       {
+        globalState,
         userAccount: alice.publicKey,
         userVault: alicePM,
       },
@@ -1159,28 +1166,22 @@ describe("super-liquidity", () => {
       await superLiquidityProgram.account.userVault.fetch(alicePM)
     ).vaults[positionMockSOL];
 
-    assert.ok(
-      checkEqualValues(
-        [
-          alicePMData.min,
-          alicePMData.mid,
-          alicePMData.max,
-          alicePMData.receiveStatus,
-          alicePMData.provideStatus,
-          alicePMData.limitPriceStatus,
-          alicePMData.limitPrice,
-        ],
-        [minSol, maxSol.sub(minSol), maxSol, true, true, true, new BN(0)]
-      )
-    );
+    expect(alicePMData.min).bignumber.eq(minSol);
+    expect(alicePMData.mid).bignumber.eq(midSol);
+    expect(alicePMData.max).bignumber.eq(maxSol);
+    expect(alicePMData.receiveStatus).to.be.true;
+    expect(alicePMData.provideStatus).to.be.true;
+    expect(alicePMData.limitPriceStatus).to.be.true;
+    expect(alicePMData.limitPrice).bignumber.eq(new BN(0));
   });
 
   it("Alice update mockUSDC PM", async () => {
     await programCall(
       superLiquidityProgram,
       "updateUserPortfolio",
-      [positionMockUSDC, minUsdc, maxUsdc.sub(minUsdc), maxUsdc, true, new BN(0)],
+      [positionMockUSDC, midUsdc, true, new BN(0), tolerance],
       {
+        globalState,
         userAccount: alice.publicKey,
         userVault: alicePM,
       },
@@ -1202,7 +1203,7 @@ describe("super-liquidity", () => {
           alicePMData.limitPriceStatus,
           alicePMData.limitPrice,
         ],
-        [minUsdc, maxUsdc.sub(minUsdc), maxUsdc, true, true, true, new BN(0)]
+        [minUsdc, midUsdc, maxUsdc, true, true, true, new BN(0)]
       )
     );
   });

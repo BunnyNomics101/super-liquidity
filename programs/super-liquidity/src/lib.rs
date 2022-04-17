@@ -66,27 +66,19 @@ pub mod super_liquidity {
     }
 
     pub fn init_user_portfolio(ctx: Context<InitUserPortfolio>) -> Result<()> {
-        ctx.accounts
-            .process(*ctx.bumps.get("user_vault").unwrap())
+        ctx.accounts.process(*ctx.bumps.get("user_vault").unwrap())
     }
 
     pub fn update_user_portfolio(
         ctx: Context<UpdateUserPortfolio>,
         position: u8,
-        min: u64,
         mid: u64,
-        max: u64,
         limit_price_status: bool,
         limit_price: u64,
+        tolerance: u16,
     ) -> Result<()> {
-        ctx.accounts.process(
-            position,
-            min,
-            mid,
-            max,
-            limit_price_status,
-            limit_price,
-        )
+        ctx.accounts
+            .process(position, mid, limit_price_status, limit_price, tolerance)
     }
 
     // Admin functions
