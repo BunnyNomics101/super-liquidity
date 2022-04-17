@@ -14,7 +14,7 @@ pub mod states;
 pub mod super_liquidity {
     use super::*;
 
-    declare_id!("CX2H6Fonf3yd67JxJNunPKJhVw9DSgLYkzvpaj9o4v47");
+    declare_id!("4GpqkriT3ddFLN7dh9e65P2EZRdetqJR7wpMe9nPTpn6");
 
     pub fn deposit(ctx: Context<Deposit>, amount: u64, position: u8) -> Result<()> {
         ctx.accounts.process(amount, position)

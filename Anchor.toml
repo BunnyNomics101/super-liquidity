@@ -2,14 +2,14 @@ anchor_version = "0.22.0"
 
 #TODO: user .secret file to address
 [programs.localnet]
-super_liquidity = "CX2H6Fonf3yd67JxJNunPKJhVw9DSgLYkzvpaj9o4v47"
-delphor_oracle_aggregator = "7nVaR5QxJf5GudrboYxZXhSfiK5MUnzuakgTozLnNQFi"
-delphor_oracle = "H36K6GswHmwsiuyyBaRP6RuMy2yj3DuUaHGcGvEdc5S9"
+super_liquidity = "4GpqkriT3ddFLN7dh9e65P2EZRdetqJR7wpMe9nPTpn6"
+delphor_oracle_aggregator = "BSVnZFytqxNN5e9UVN434YRWEFXJdpQyyyB8QmXoXdd3"
+delphor_oracle = "CSLRinGydCdX4KZs1ngeRQHfdfh1g63g8wwCGUZ4r5j8"
 
 [programs.devnet]
-super_liquidity = "CX2H6Fonf3yd67JxJNunPKJhVw9DSgLYkzvpaj9o4v47"
-delphor_oracle_aggregator = "7nVaR5QxJf5GudrboYxZXhSfiK5MUnzuakgTozLnNQFi"
-delphor_oracle = "H36K6GswHmwsiuyyBaRP6RuMy2yj3DuUaHGcGvEdc5S9"
+super_liquidity = "4GpqkriT3ddFLN7dh9e65P2EZRdetqJR7wpMe9nPTpn6"
+delphor_oracle_aggregator = "BSVnZFytqxNN5e9UVN434YRWEFXJdpQyyyB8QmXoXdd3"
+delphor_oracle = "CSLRinGydCdX4KZs1ngeRQHfdfh1g63g8wwCGUZ4r5j8"
 
 [registry]
 url = "https://anchor.projectserum.com"
