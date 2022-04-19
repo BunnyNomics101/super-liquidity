@@ -226,8 +226,8 @@ fn std_dev(arr: &Vec<u64>) -> u64 {
 fn variation_coefficient(arr: &Vec<u64>) -> u64 {
     let average = average(arr);
     let std_dev = std_dev(arr);
-    msg!("Average: {}", average);
-    msg!("Std dev: {}", std_dev);
+    // msg!("Average: {}", average);
+    // msg!("Std dev: {}", std_dev);
     return std_dev * 1000 / average;
 }
 

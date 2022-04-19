@@ -74,7 +74,6 @@ describe("super-liquidity", () => {
     maxSol = midSol.add(midSol.muln(tolerance).div(BASIS_POINTS).divn(2)),
     maxUsdc = midUsdc.add(midUsdc.muln(tolerance).div(BASIS_POINTS).divn(2));
 
-    console.log(Number(minSol))
   function Lamport(value) {
     return new BN(value * 10 ** 9);
   }
