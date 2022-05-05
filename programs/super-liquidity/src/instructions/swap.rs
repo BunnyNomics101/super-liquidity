@@ -1,5 +1,6 @@
 use crate::states::*;
 use anchor_lang::prelude::*;
+use std::cmp;
 use anchor_spl::token::{Token, TokenAccount, Transfer};
 use delphor_oracle_aggregator::{check_token_position as check_token_aggregator, GlobalAccount};
 
@@ -70,21 +71,41 @@ impl<'info> Swap<'info> {
             ErrorCode::PriceUnderLimitPrice
         );
 
-        let mut buy_fee = 10;
-        let mut sell_fee = 10;
+        let mut usd_value: u64 = 0;
+        let tokens_len = self.global_state.tokens.len();
+
+        let mut buy_fee = 0;
+        let mut sell_fee = 0;
 
         match self.user_vault.vault_type{
             VaultType::LiquidityProvider => {
                 buy_fee = user_vault_sell.buy_fee;
                 sell_fee = user_vault_buy.sell_fee;
+            },
+            VaultType::PortfolioManager{auto_fee: true, tolerance: _} => {
+                for i in 0..tokens_len {
+                    if i != position_buy as usize && i != position_sell as usize {
+                        usd_value += (self.delphor_aggregator_prices.tokens[i as usize].price as u128 * self.user_vault.vaults[i].amount as u128 / u128::pow(10, self.delphor_aggregator_prices.tokens[i as usize].decimals as u32)) as u64;
+                    }
+                }
+
+                let buy_token_usd_in_vault = ((buy_coin_price as u128 * user_vault_buy.amount as u128) / u128::pow(10, buy_coin_decimals as u32)) as u64;
+                let sell_token_usd_in_vault = ((user_vault_sell.amount as u128  * sell_coin_price as u128)  / u128::pow(10, sell_coin_decimals as u32)) as u64;
+                let current_usd_value = usd_value + buy_token_usd_in_vault + sell_token_usd_in_vault;
+                let buy_token_current_percentage = (buy_token_usd_in_vault  as u128 * 10000 / current_usd_value as u128) as u64;
+                let sell_token_current_percentage = (sell_token_usd_in_vault  as u128 * 10000 / current_usd_value as u128) as u64;
+
+                buy_fee = ((cmp::min(buy_token_current_percentage, user_vault_buy.mid) * 10000 / cmp::max(buy_token_current_percentage, user_vault_buy.mid) * 25 / 10000) + 5) as u16;
+                sell_fee = (cmp::min(sell_token_current_percentage, user_vault_sell.mid) * 10000 / cmp::max(sell_token_current_percentage, user_vault_sell.mid) * 25 / 10000 + 5) as u16;
             }
             _ => ()
         }
 
-        let token_price: u128 = (sell_coin_price as u128 * (10000 - buy_fee as u128)
+        let token_price: u128 = (sell_coin_price as u128 * (10000 - sell_fee as u128)
             / 10000)
             * u128::pow(10, buy_coin_decimals as u32)
-            / (buy_coin_price as u128 * (10000 + sell_fee as u128) / 10000);
+            / (buy_coin_price as u128 * (10000 + buy_fee as u128) / 10000);
+        
         // Calculate final amount with oracle price and fees
         let amount_to_send: u64 =
             ((swap_amount as u128 * token_price) / u128::pow(10, sell_coin_decimals as u32)) as u64;
@@ -94,19 +115,12 @@ impl<'info> Swap<'info> {
 
         match self.user_vault.vault_type{
             VaultType::PortfolioManager {auto_fee: _, tolerance: _}=> {
-                let mut usd_value: u64 = 0;
-                let tokens_len = self.global_state.tokens.len();
-                for i in 0..tokens_len {
-                    if i == position_sell as usize {
-                        usd_value += (sell_coin_price as u128 * (self.user_vault.vaults[i].amount + swap_amount) as u128 / u128::pow(10, sell_coin_decimals as u32)) as u64;
-                    } else if i == position_buy as usize {
-                        usd_value += (buy_coin_price as u128 * (self.user_vault.vaults[i].amount - amount_to_send) as u128 / u128::pow(10, buy_coin_decimals as u32)) as u64;
-                    }else {
-                        usd_value += (self.delphor_aggregator_prices.tokens[i as usize].price as u128 * self.user_vault.vaults[i].amount as u128 / u128::pow(10, self.delphor_aggregator_prices.tokens[i as usize].decimals as u32)) as u64;
-                    }
-                }
-                require!((((user_vault_buy.amount - amount_to_send) as u128 * buy_coin_price as u128 / u128::pow(10, buy_coin_decimals as u32) * 10000) / usd_value as u128) as u64 >= user_vault_buy.min, ErrorCode::ExceedsMinAmount);
-                require!((((user_vault_sell.amount + swap_amount) as u128  * sell_coin_price as u128  / u128::pow(10, sell_coin_decimals as u32) * 10000) / usd_value as u128) as u64  <= user_vault_sell.max, ErrorCode::ExceedsMaxAmount);
+                let end_buy_usd = (buy_coin_price as u128 * (user_vault_buy.amount - amount_to_send) as u128 / u128::pow(10, buy_coin_decimals as u32)) as u64;
+                let end_sell_usd = (sell_coin_price as u128 * (user_vault_sell.amount + swap_amount) as u128 / u128::pow(10, sell_coin_decimals as u32)) as u64;
+                usd_value += end_sell_usd + end_buy_usd;
+    
+                require!(((end_buy_usd * 10000) / usd_value) as u64 >= user_vault_buy.min, ErrorCode::ExceedsMinAmount);
+                require!(((end_sell_usd * 10000) / usd_value) as u64  <= user_vault_sell.max, ErrorCode::ExceedsMaxAmount);
             },
             VaultType::LiquidityProvider => {
                 require!(user_vault_buy.amount - amount_to_send >= user_vault_buy.min, ErrorCode::ExceedsMinAmount);

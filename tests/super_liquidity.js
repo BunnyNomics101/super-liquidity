@@ -56,26 +56,31 @@ describe("super-liquidity", () => {
     aggregatorGlobalAccount,
     finalAmount;
 
+  const DECIMALS = 10 ** 9;
+
   let sellFee = 100,
     buyFee = 300,
-    min = new anchor.BN(1 * 10 ** 9),
-    max = new anchor.BN(10 * 10 ** 9),
+    min = new anchor.BN(1 * DECIMALS),
+    max = new anchor.BN(10 * DECIMALS),
     positionMockSOL = 0,
     positionMockUSDC = 1;
 
-  const BASIS_POINTS = new BN(10000);
+  const BASIS_POINTS = 10000;
+  const BASIS_POINTS_BN = new BN(BASIS_POINTS);
   const tolerance = 2000;
 
   let midUsdc = new BN(1000);
   let midSol = new BN(9000);
 
-  let minUsdc = midUsdc.sub(midUsdc.muln(tolerance).div(BASIS_POINTS).divn(2)),
-    minSol = midSol.sub(midSol.muln(tolerance).div(BASIS_POINTS).divn(2)),
-    maxSol = midSol.add(midSol.muln(tolerance).div(BASIS_POINTS).divn(2)),
-    maxUsdc = midUsdc.add(midUsdc.muln(tolerance).div(BASIS_POINTS).divn(2));
+  let minUsdc = midUsdc.sub(
+      midUsdc.muln(tolerance).div(BASIS_POINTS_BN).divn(2)
+    ),
+    minSol = midSol.sub(midSol.muln(tolerance).div(BASIS_POINTS_BN).divn(2)),
+    maxSol = midSol.add(midSol.muln(tolerance).div(BASIS_POINTS_BN).divn(2)),
+    maxUsdc = midUsdc.add(midUsdc.muln(tolerance).div(BASIS_POINTS_BN).divn(2));
 
   function Lamport(value) {
-    return new BN(value * 10 ** 9);
+    return new BN(value * DECIMALS);
   }
 
   let mintMockSOLAmountToAlice = Lamport(100);
@@ -969,38 +974,39 @@ describe("super-liquidity", () => {
     const swapSellFee = (
       await superLiquidityProgram.account.userVault.fetch(aliceLP)
     ).vaults[positionMockSOL].sellFee;
+
     finalAmount = new BN(
       (bobSwapAmountSOLForUSDC *
         Math.trunc(
-          ((mockSOL.price * (10000 - swapBuyFee)) /
-            10000 /
-            ((mockUSDC.price * (10000 + swapSellFee)) / 10000)) *
-            10 ** 9
+          ((mockSOL.price * (BASIS_POINTS - swapSellFee)) /
+            BASIS_POINTS /
+            ((mockUSDC.price * (BASIS_POINTS + swapBuyFee)) / BASIS_POINTS)) *
+            DECIMALS
         )) /
-        10 ** 9
+        DECIMALS
     );
 
-    assert.ok(
-      checkEqualValues(
-        [
-          bobMockSOLCurrentBalance,
-          delphorMockSOLCurrentBalance,
-          delphorMockUSDCCurrentBalance,
-          aliceLPmockSOLCurrentBalance,
-          bobMockUSDCCurrentBalance,
-          aliceLPmockUSDCCurrentBalance,
-        ],
-        [
-          bobMockSOLBeforeBalance.sub(bobSwapAmountSOLForUSDC),
-          delphorMockSOLBeforeBalance.add(bobSwapAmountSOLForUSDC),
-          delphorMockUSDCBeforeBalance.sub(finalAmount),
-          aliceLPmockSOLBeforeBalance.add(bobSwapAmountSOLForUSDC),
-          bobMockUSDCBeforeBalance.add(finalAmount),
-          aliceLPmockUSDCBeforeBalance.sub(finalAmount),
-        ]
-      )
+    expect(bobMockSOLCurrentBalance).bignumber.equal(
+      bobMockSOLBeforeBalance.sub(bobSwapAmountSOLForUSDC)
+    );
+    expect(delphorMockSOLCurrentBalance).bignumber.equal(
+      delphorMockSOLBeforeBalance.add(bobSwapAmountSOLForUSDC)
+    );
+    expect(bobMockUSDCCurrentBalance).bignumber.equal(
+      bobMockUSDCBeforeBalance.add(finalAmount)
+    );
+    expect(delphorMockUSDCCurrentBalance).bignumber.equal(
+      delphorMockUSDCBeforeBalance.sub(finalAmount)
+    );
+    expect(aliceLPmockSOLCurrentBalance).bignumber.equal(
+      aliceLPmockSOLBeforeBalance.add(bobSwapAmountSOLForUSDC)
+    );
+    expect(aliceLPmockUSDCCurrentBalance).bignumber.equal(
+      aliceLPmockUSDCBeforeBalance.sub(finalAmount)
     );
   });
+
+  return
 
   it("Alice withdraw mockSOL tokens from LP", async () => {
     const aliceMockSOLBeforeBalance = (
@@ -1311,7 +1317,7 @@ describe("super-liquidity", () => {
     );
   });
 
-  it("Bob swap mockSOL for mockUSDC from LP alice", async () => {
+  it("Bob swap mockSOL for mockUSDC from PM alice", async () => {
     const bobMockSOLBeforeBalance = (
       await getTokenAccount(provider, bobmockSOL)
     ).amount;
@@ -1330,6 +1336,66 @@ describe("super-liquidity", () => {
     const alicePMmockUSDCBeforeBalance = (
       await superLiquidityProgram.account.userVault.fetch(alicePM)
     ).vaults[positionMockUSDC].amount;
+
+    const aggTokens = (
+      await delphorAggregatorProgram.account.globalAccount.fetch(
+        aggregatorGlobalAccount
+      )
+    ).tokens;
+
+    const alicePMData = await superLiquidityProgram.account.userVault.fetch(
+      alicePM
+    );
+
+    let sell_token_usd_in_vault =
+      (aggTokens[positionMockSOL].price *
+        alicePMData.vaults[positionMockSOL].amount) /
+      10 ** aggTokens[positionMockSOL].decimals;
+    let buy_token_usd_in_vault =
+      (aggTokens[positionMockUSDC].price *
+        alicePMData.vaults[positionMockUSDC].amount) /
+      10 ** aggTokens[positionMockUSDC].decimals;
+
+    let usd_value = buy_token_usd_in_vault + sell_token_usd_in_vault;
+
+    let buy_token_current_percentage =
+      (buy_token_usd_in_vault * BASIS_POINTS) / usd_value;
+    let sell_token_current_percentage =
+      (sell_token_usd_in_vault * BASIS_POINTS) / usd_value;
+
+    let pmBuyFee =
+      (Math.min(
+        buy_token_current_percentage,
+        alicePMData.vaults[positionMockUSDC].mid
+      ) /
+        Math.max(
+          buy_token_current_percentage,
+          alicePMData.vaults[positionMockUSDC].mid
+        )) *
+        25 +
+      5;
+    let pmSellFee =
+      (Math.min(
+        sell_token_current_percentage,
+        alicePMData.vaults[positionMockSOL].mid
+      ) /
+        Math.max(
+          sell_token_current_percentage,
+          alicePMData.vaults[positionMockSOL].mid
+        )) *
+        25 +
+      5;
+
+    pmBuyFee = parseInt(pmBuyFee);
+    pmSellFee = parseInt(pmSellFee);
+
+    let tokenPrice = Math.trunc(
+      ((mockSOL.price * (BASIS_POINTS - pmSellFee)) /
+        BASIS_POINTS /
+        ((mockUSDC.price * (BASIS_POINTS + pmBuyFee)) / BASIS_POINTS)) *
+        DECIMALS
+    );
+    finalAmount = new BN(bobSwapAmountSOLForUSDC * (tokenPrice / DECIMALS));
 
     await programCall(
       superLiquidityProgram,
@@ -1374,25 +1440,6 @@ describe("super-liquidity", () => {
     const alicePMmockUSDCCurrentBalance = (
       await superLiquidityProgram.account.userVault.fetch(alicePM)
     ).vaults[positionMockUSDC].amount;
-
-    /*
-    const swapBuyFee = (
-      await superLiquidityProgram.account.userVault.fetch(alicePM)
-    ).vaults[positionMockSOL].buyFee;
-    const swapSellFee = (
-      await superLiquidityProgram.account.userVault.fetch(alicePM)
-    ).vaults[positionMockSOL].sellFee;
-    */
-    finalAmount = new BN(
-      (bobSwapAmountSOLForUSDC *
-        Math.trunc(
-          ((mockSOL.price * (10000 - 10)) /
-            10000 /
-            ((mockUSDC.price * (10000 + 10)) / 10000)) *
-            10 ** 9
-        )) /
-        10 ** 9
-    );
 
     expect(bobMockSOLCurrentBalance).bignumber.equal(
       bobMockSOLBeforeBalance.sub(bobSwapAmountSOLForUSDC)
