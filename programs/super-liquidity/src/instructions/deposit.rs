@@ -36,14 +36,8 @@ impl<'info> Deposit<'info> {
     )]
     pub fn process(&mut self, amount: u64, position: u8) -> Result<()> {
         let vault = &mut self.user_vault.vaults[position as usize];
-        if self.get_token_from.amount < amount {
-            msg!(
-                "Requested to deposit {} but you have only {}",
-                amount,
-                self.get_token_from.amount
-            );
-            return Err(ProgramError::InsufficientFunds.into());
-        }
+
+        require!(self.get_token_from.amount >= amount, ErrorCode::InsufficientFunds);
 
         vault.amount += amount;
 
@@ -62,4 +56,14 @@ impl<'info> Deposit<'info> {
         vault.timestamp = Clock::get().unwrap().unix_timestamp as u32;
         Ok(())
     }
+}
+
+// ------------
+// -- Errors --
+// ------------
+
+#[error_code]
+pub enum ErrorCode {
+    #[msg("Insufficient funds in user account")]
+    InsufficientFunds,
 }

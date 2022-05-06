@@ -38,14 +38,8 @@ impl<'info> Withdraw<'info> {
     )]
     pub fn process(&mut self, bump: u8, amount: u64, position: u8) -> Result<()> {
         let vault = &mut self.user_vault.vaults[position as usize];
-        if vault.amount < amount {
-            msg!(
-                "Requested to withdraw {} but you have only {}",
-                amount,
-                vault.amount
-            );
-            return Err(ProgramError::InsufficientFunds.into());
-        }
+
+        require!(vault.amount >= amount, ErrorCode::InsufficientFunds);
 
         let seeds: &[&[u8]] = &[b"store_auth", &[bump]];
         let signer = &[&seeds[..]];
@@ -67,4 +61,14 @@ impl<'info> Withdraw<'info> {
 
         Ok(())
     }
+}
+
+// ------------
+// -- Errors --
+// ------------
+
+#[error_code]
+pub enum ErrorCode {
+    #[msg("Insufficient funds in user vault")]
+    InsufficientFunds,
 }
