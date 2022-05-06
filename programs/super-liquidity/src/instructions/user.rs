@@ -24,19 +24,22 @@ impl<'info> InitUserLiquidityProvider<'info> {
             bump,
             user: self.user_account.key(),
             vault_type: VaultType::LiquidityProvider,
-            vaults: vec![UserCoinVault{
-                amount: 0,
-                min: 0,
-                mid: 0,
-                max: u64::MAX,
-                buy_fee: 10,
-                sell_fee: 10,
-                timestamp: 0,
-                receive_status: false,
-                provide_status: false,
-                limit_price_status: false,
-                limit_price: 0,
-            }; 50],
+            vaults: vec![
+                UserCoinVault {
+                    amount: 0,
+                    min: 0,
+                    mid: 0,
+                    max: u64::MAX,
+                    buy_fee: 10,
+                    sell_fee: 10,
+                    timestamp: 0,
+                    receive_status: false,
+                    provide_status: false,
+                    limit_price_status: false,
+                    limit_price: 0,
+                };
+                50
+            ],
         };
         Ok(())
     }
@@ -104,20 +107,26 @@ impl<'info> InitUserPortfolio<'info> {
         *self.user_vault = UserVault {
             bump,
             user: self.user_account.key(),
-            vault_type: VaultType::PortfolioManager{ auto_fee: true, tolerance: 1000},
-            vaults: vec![UserCoinVault{
-                amount: 0,
-                min: 0,
-                mid: 0,
-                max: u64::MAX,
-                buy_fee: 10,
-                sell_fee: 10,
-                timestamp: 0,
-                receive_status: true,
-                provide_status: true,
-                limit_price_status: false,
-                limit_price: 0,
-            }; 50],
+            vault_type: VaultType::PortfolioManager {
+                auto_fee: true,
+                tolerance: 1000,
+            },
+            vaults: vec![
+                UserCoinVault {
+                    amount: 0,
+                    min: 0,
+                    mid: 0,
+                    max: u64::MAX,
+                    buy_fee: 10,
+                    sell_fee: 10,
+                    timestamp: 0,
+                    receive_status: true,
+                    provide_status: true,
+                    limit_price_status: false,
+                    limit_price: 0,
+                };
+                50
+            ],
         };
         Ok(())
     }
@@ -150,12 +159,14 @@ impl<'info> UpdateUserPortfolio<'info> {
         mid: u64,
         limit_price_status: bool,
         limit_price: u64,
-        tolerance: u16
+        tolerance: u16,
     ) -> Result<()> {
         let mut current_tolerance = 0;
 
-        if let VaultType::PortfolioManager{tolerance, ..} = self.user_vault.vault_type{current_tolerance = tolerance};
-        
+        if let VaultType::PortfolioManager { tolerance, .. } = self.user_vault.vault_type {
+            current_tolerance = tolerance
+        };
+
         let vault = &mut self.user_vault.vaults[position as usize];
 
         require!(mid <= 10000, ErrorCode::ExceedsBasisPoints);
@@ -168,12 +179,14 @@ impl<'info> UpdateUserPortfolio<'info> {
         if current_tolerance == tolerance {
             vault.max = mid + mid * tolerance as u64 / 10000 / 2;
             vault.min = mid - mid * tolerance as u64 / 10000 / 2;
-        }else{
+        } else {
             let tokens_len = self.global_state.tokens.len();
-                for i in 0..tokens_len {
-                    self.user_vault.vaults[i].max = self.user_vault.vaults[i].mid + self.user_vault.vaults[i].mid * tolerance as u64 / 10000 / 2;
-                    self.user_vault.vaults[i].min = self.user_vault.vaults[i].mid - self.user_vault.vaults[i].mid * tolerance as u64 / 10000 / 2;
-                }
+            for i in 0..tokens_len {
+                self.user_vault.vaults[i].max = self.user_vault.vaults[i].mid
+                    + self.user_vault.vaults[i].mid * tolerance as u64 / 10000 / 2;
+                self.user_vault.vaults[i].min = self.user_vault.vaults[i].mid
+                    - self.user_vault.vaults[i].mid * tolerance as u64 / 10000 / 2;
+            }
         }
         Ok(())
     }
