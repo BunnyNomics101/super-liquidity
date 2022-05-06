@@ -39,7 +39,7 @@ impl<'info> Deposit<'info> {
 
         require!(self.get_token_from.amount >= amount, ErrorCode::InsufficientFunds);
 
-        vault.amount += amount;
+        vault.amount = vault.amount.checked_add(amount).unwrap();
 
         anchor_spl::token::transfer(
             CpiContext::new(
