@@ -44,7 +44,7 @@ impl<'info> Withdraw<'info> {
         let seeds: &[&[u8]] = &[b"store_auth", &[bump]];
         let signer = &[&seeds[..]];
 
-        vault.amount = vault.amount.checked_sub(amount).unwrap();
+        vault.amount -= amount;
 
         anchor_spl::token::transfer(
             CpiContext::new_with_signer(
