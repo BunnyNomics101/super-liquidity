@@ -71,7 +71,7 @@ pub mod delphor_oracle_aggregator {
         });
         Ok(())
     }
-
+    
     pub fn update_token_price(ctx: Context<UpdateCoinPrice>, position: u8) -> Result<()> {
         let token_data = &mut ctx.accounts.global_account.tokens[position as usize];
         let delphor_oracle = &mut ctx.accounts.delphor_oracle;

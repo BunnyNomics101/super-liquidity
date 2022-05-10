@@ -466,80 +466,15 @@
       }
     },
     {
-      "name": "ErrorCode",
+      "name": "DelphorError",
       "type": {
         "kind": "enum",
         "variants": [
           {
-            "name": "AdminAccessError"
+            "name": "AccessDenied"
           },
           {
-            "name": "TokenAlreadyAdded"
-          }
-        ]
-      }
-    },
-    {
-      "name": "ErrorCode",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "InsufficientFunds"
-          }
-        ]
-      }
-    },
-    {
-      "name": "ErrorCode",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "InsufficientAmount"
-          },
-          {
-            "name": "VaultInsufficientAmount"
-          },
-          {
-            "name": "ExceedsMaxAmount"
-          },
-          {
-            "name": "ExceedsMinAmount"
-          },
-          {
-            "name": "VaultProvideOff"
-          },
-          {
-            "name": "VaultRecieveOff"
-          },
-          {
-            "name": "PriceUnderLimitPrice"
-          },
-          {
-            "name": "SwapAmountOverflow"
-          }
-        ]
-      }
-    },
-    {
-      "name": "ErrorCode",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "ExceedsBasisPoints"
-          }
-        ]
-      }
-    },
-    {
-      "name": "ErrorCode",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "InsufficientFunds"
+            "name": "NotTheOwner"
           }
         ]
       }
@@ -567,32 +502,16 @@
           }
         ]
       }
-    },
-    {
-      "name": "ErrorCode",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "InvalidTokenPosition"
-          },
-          {
-            "name": "InvalidVaultAccount"
-          }
-        ]
-      }
     }
   ],
   "errors": [
     {
       "code": 6000,
-      "name": "AccessDenied",
-      "msg": "Access denied"
+      "name": "AdminAccessError"
     },
     {
       "code": 6001,
-      "name": "NotTheOwner",
-      "msg": "Not the owner"
+      "name": "TokenAlreadyAdded"
     }
   ],
   "metadata": {
