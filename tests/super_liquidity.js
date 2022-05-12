@@ -1006,8 +1006,6 @@ describe("super-liquidity", () => {
     );
   });
 
-  return
-
   it("Alice withdraw mockSOL tokens from LP", async () => {
     const aliceMockSOLBeforeBalance = (
       await getTokenAccount(provider, alicemockSOL)
