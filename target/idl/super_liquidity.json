@@ -373,6 +373,10 @@
             "type": "publicKey"
           },
           {
+            "name": "baseFee",
+            "type": "u16"
+          },
+          {
             "name": "tokens",
             "type": {
               "vec": "publicKey"

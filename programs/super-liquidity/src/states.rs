@@ -14,6 +14,7 @@ pub struct GlobalState {
     pub bump: u8,
     // Authority (admin address)
     pub admin_account: Pubkey,
+    pub base_fee: u16,
     pub tokens: Vec<Pubkey>,
 }
 

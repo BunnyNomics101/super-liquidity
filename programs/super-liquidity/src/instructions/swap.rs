@@ -73,6 +73,7 @@ impl<'info> Swap<'info> {
 
         let ten_pow_buy_token_decimals = TEN.checked_pow(buy_token_decimals as u32).unwrap();
         let ten_pow_sell_token_decimals = TEN.checked_pow(sell_token_decimals as u32).unwrap();
+        let delphor_base_fee = self.global_state.base_fee as u128;
 
         require!(
             !user_vault_buy.limit_price_status
@@ -115,13 +116,13 @@ impl<'info> Swap<'info> {
                     / cmp::max(buy_token_current_percentage, user_vault_buy.mid.into())
                     * 25
                     / BASIS_POINTS_128)
-                    + 5;
+                    + delphor_base_fee;
                 sell_fee = (cmp::min(sell_token_current_percentage, user_vault_sell.mid.into())
                     * BASIS_POINTS_128
                     / cmp::max(sell_token_current_percentage, user_vault_sell.mid.into())
                     * 25
                     / BASIS_POINTS_128)
-                    + 5;
+                    + delphor_base_fee;
             }
             _ => (),
         }

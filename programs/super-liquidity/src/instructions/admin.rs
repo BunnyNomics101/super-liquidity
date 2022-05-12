@@ -29,6 +29,7 @@ impl<'info> InitGlobalState<'info> {
         *self.global_state = GlobalState {
             admin_account: self.admin_account.key(),
             bump,
+            base_fee: 5, // 0.05%
             tokens: vec![],
         };
         Ok(())
