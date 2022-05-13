@@ -57,6 +57,7 @@ describe("super-liquidity", () => {
     finalAmount;
 
   const DECIMALS = 10 ** 9;
+  const DELPHOR_BASE_FEE = 5;
 
   let sellFee = 100,
     buyFee = 300,
@@ -109,7 +110,7 @@ describe("super-liquidity", () => {
     decimals: 9,
   };
 
-  const totalGenericTokens = 10;
+  const totalGenericTokens = 0;
   const genericMints = new Array(totalGenericTokens);
   const genericOracleTokensPDAs = new Array(totalGenericTokens);
   const genericTokenStores = new Array(totalGenericTokens);
@@ -978,10 +979,13 @@ describe("super-liquidity", () => {
     finalAmount = new BN(
       (bobSwapAmountSOLForUSDC *
         Math.trunc(
-          ((mockSOL.price * (BASIS_POINTS - swapSellFee)) /
-            BASIS_POINTS /
-            ((mockUSDC.price * (BASIS_POINTS + swapBuyFee)) / BASIS_POINTS)) *
-            DECIMALS
+          (((((((mockSOL.price * (BASIS_POINTS - swapSellFee)) / BASIS_POINTS) *
+            DECIMALS) /
+            mockUSDC.price) *
+            (BASIS_POINTS + swapBuyFee)) /
+            BASIS_POINTS) *
+            (BASIS_POINTS - DELPHOR_BASE_FEE)) /
+            BASIS_POINTS
         )) /
         DECIMALS
     );
@@ -1362,38 +1366,43 @@ describe("super-liquidity", () => {
       (sell_token_usd_in_vault * BASIS_POINTS) / usd_value;
 
     let pmBuyFee =
-      (Math.min(
+      (((Math.min(
         buy_token_current_percentage,
         alicePMData.vaults[positionMockUSDC].mid
-      ) /
+      ) *
+        BASIS_POINTS) /
         Math.max(
           buy_token_current_percentage,
           alicePMData.vaults[positionMockUSDC].mid
         )) *
-        25 +
-      5;
+        25) /
+      BASIS_POINTS;
     let pmSellFee =
-      (Math.min(
+      (((Math.min(
         sell_token_current_percentage,
         alicePMData.vaults[positionMockSOL].mid
-      ) /
+      ) *
+        BASIS_POINTS) /
         Math.max(
           sell_token_current_percentage,
           alicePMData.vaults[positionMockSOL].mid
         )) *
-        25 +
-      5;
+        25) /
+      BASIS_POINTS;
 
     pmBuyFee = parseInt(pmBuyFee);
     pmSellFee = parseInt(pmSellFee);
 
     let tokenPrice = Math.trunc(
-      ((mockSOL.price * (BASIS_POINTS - pmSellFee)) /
-        BASIS_POINTS /
-        ((mockUSDC.price * (BASIS_POINTS + pmBuyFee)) / BASIS_POINTS)) *
-        DECIMALS
+      (((((((mockSOL.price * (BASIS_POINTS - pmSellFee)) / BASIS_POINTS) *
+        DECIMALS) /
+        mockUSDC.price) *
+        (BASIS_POINTS + pmBuyFee)) /
+        BASIS_POINTS) *
+        (BASIS_POINTS - DELPHOR_BASE_FEE)) /
+        BASIS_POINTS
     );
-    finalAmount = new BN(bobSwapAmountSOLForUSDC * (tokenPrice / DECIMALS));
+    finalAmount = new BN((bobSwapAmountSOLForUSDC * tokenPrice) / DECIMALS);
 
     await programCall(
       superLiquidityProgram,

@@ -14,7 +14,7 @@ pub struct Swap<'info> {
     #[account(
         seeds = [
             get_admin().as_ref(),
-        ], 
+        ],
         bump = global_state.bump
     )]
     pub global_state: Account<'info, GlobalState>,
@@ -111,26 +111,25 @@ impl<'info> Swap<'info> {
                 let sell_token_current_percentage =
                     sell_token_usd_in_vault * BASIS_POINTS_128 / current_vault_usd_value;
 
-                buy_fee = (cmp::min(buy_token_current_percentage, user_vault_buy.mid.into())
+                buy_fee = cmp::min(buy_token_current_percentage, user_vault_buy.mid.into())
                     * BASIS_POINTS_128
                     / cmp::max(buy_token_current_percentage, user_vault_buy.mid.into())
                     * 25
-                    / BASIS_POINTS_128)
-                    + delphor_base_fee;
-                sell_fee = (cmp::min(sell_token_current_percentage, user_vault_sell.mid.into())
+                    / BASIS_POINTS_128;
+                sell_fee = cmp::min(sell_token_current_percentage, user_vault_sell.mid.into())
                     * BASIS_POINTS_128
                     / cmp::max(sell_token_current_percentage, user_vault_sell.mid.into())
                     * 25
-                    / BASIS_POINTS_128)
-                    + delphor_base_fee;
+                    / BASIS_POINTS_128;
             }
             _ => (),
         }
 
-        let token_price: u128 = (sell_token_price * (BASIS_POINTS_128 - sell_fee)
-            / BASIS_POINTS_128)
+        let token_price: u128 = sell_token_price * (BASIS_POINTS_128 - sell_fee) / BASIS_POINTS_128
             * ten_pow_buy_token_decimals
-            / (buy_token_price * (BASIS_POINTS_128 + buy_fee) / BASIS_POINTS_128);
+            / buy_token_price
+            * (BASIS_POINTS_128 + buy_fee)
+            / BASIS_POINTS_128 * (BASIS_POINTS_128 - delphor_base_fee) / BASIS_POINTS_128;
 
         // Calculate final amount with oracle price and fees
         let amount_to_send: u64 =
